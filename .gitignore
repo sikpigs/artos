@@ -1,0 +1,16 @@
+# Generated build output and local CMake settings.
+/build/
+/compile_commands.json
+/CMakeUserPresets.json
+/.cache/
+*.elf
+*.o
+*.obj
+*.map
+*.bin
+*.hex
+
+# Local Python environment and bytecode.
+/.venv/
+__pycache__/
+*.py[cod]

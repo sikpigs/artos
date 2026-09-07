@@ -1,0 +1,37 @@
+mainmenu "NUCLEO firmware configuration"
+
+choice BOARD
+    prompt "Board"
+    default BOARD_NUCLEO_F411RE
+
+source "bsp/nucleo_f411re/Kconfig"
+
+endchoice
+
+menu "ARTOS"
+
+config ARTOS
+    bool "Enable ARTOS"
+    default y
+    help
+      Build the kernel and Cortex-M port and start the kernel tick.
+      The serial monitor can run without ARTOS.
+
+config ARTOS_TICK_HZ
+    int "Kernel ticks per second"
+    range 1 1000000
+    default 1000
+    depends on ARTOS
+    help
+      The CPU port checks that the board timer clock divides exactly by
+      this frequency and that the reload fits the hardware timer.
+
+config ARTOS_PRIORITY_LEVELS
+    int "Scheduler priority levels"
+    range 1 256
+    default 16
+    depends on ARTOS
+
+endmenu
+
+source "modules/monitor/Kconfig"

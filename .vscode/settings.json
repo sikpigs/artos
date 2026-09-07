@@ -1,0 +1,36 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "cmake.automaticReconfigure": true,
+  "cmake.preferredGenerators": [
+    "Ninja"
+  ],
+  "cmake.options.statusBarVisibility": "visible",
+  "cmake.options.advanced": {
+    "configure": {
+      "projectStatusVisibility": "visible"
+    },
+    "configurePreset": {
+      "statusBarVisibility": "visible"
+    },
+    "build": {
+      "statusBarVisibility": "visible",
+      "projectStatusVisibility": "visible"
+    },
+    "buildPreset": {
+      "statusBarVisibility": "visible"
+    }
+  },
+  "clangd.arguments": [
+    "--query-driver=/usr/bin/arm-none-eabi-*"
+  ],
+  "clangd.fallbackFlags": [
+    "-std=c++23",
+    "-I${workspaceFolder}/include"
+  ],
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "files.associations": {
+    "*.ld": "plaintext"
+  }
+}

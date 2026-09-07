@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug NUCLEO-F411RE (ST-LINK/OpenOCD)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/debug/nucleo_f411re_baremetal.elf",
+      "preLaunchTask": "Build Debug firmware",
+      "configFiles": [
+        "${workspaceFolder}/openocd.cfg"
+      ],
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "none",
+      "device": "STM32F411RE",
+      "linux": {
+        "gdbPath": "gdb-multiarch",
+        "objdumpPath": "arm-none-eabi-objdump"
+      }
+    },
+    {
+      "name": "Attach NUCLEO-F411RE (ST-LINK/OpenOCD)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/debug/nucleo_f411re_baremetal.elf",
+      "configFiles": [
+        "${workspaceFolder}/openocd.cfg"
+      ],
+      "showDevDebugOutput": "none",
+      "device": "STM32F411RE",
+      "linux": {
+        "gdbPath": "gdb-multiarch",
+        "objdumpPath": "arm-none-eabi-objdump"
+      }
+    }
+  ]
+}
