@@ -1,0 +1,8 @@
+{
+  "corrections": [],
+  "aliases": {},
+  "exclude_peripherals": [],
+  "device": "STM32F439",
+  "namespace": "stm32f439",
+  "svd_sha256": "c3de4e42c9fa2e0196f364efa25d163e4a9813b6c6b2fd0f5a8ffb64158851c9"
+}

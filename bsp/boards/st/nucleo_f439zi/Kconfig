@@ -1,0 +1,6 @@
+config BOARD_NUCLEO_F439ZI
+    bool "ST NUCLEO-F439ZI (STM32F439ZI, Cortex-M4F)"
+    select SOC_STM32F439
+    help
+      2 MiB flash, 192 KiB system SRAM and 64 KiB CCM SRAM.
+      USART3 console on PD8/PD9, green LED on PB0. Start on 16 MHz HSI.

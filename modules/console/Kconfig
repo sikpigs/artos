@@ -1,0 +1,21 @@
+menu "Console"
+
+config CONSOLE
+    bool "Enable buffered system console"
+    depends on ARTOS
+    default y
+    help
+      Build the system console on the UART selected by DTS artos,console.
+      Requires ARTOS blocking waits and deferred RX processing.
+      The receive buffer has one ISR producer and one thread consumer.
+
+config CONSOLE_RX_BUFFER_SIZE
+    int "Console receive buffer bytes"
+    depends on CONSOLE
+    range 2 65536
+    default 256
+    help
+      Size of the static receive ring buffer. One slot is reserved, so
+      usable capacity is one byte smaller. The linker checks RAM usage.
+
+endmenu

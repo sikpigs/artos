@@ -2,31 +2,10 @@ menu "Monitor"
 
 config MONITOR
     bool "Enable serial monitor"
+    depends on CONSOLE
     default y
     help
-      Build the USART console and Woz monitor. Disabling this removes their
-      code, receive buffer, and reserved workspace. Main idles after startup.
-
-if MONITOR
-
-config MONITOR_RX_BUFFER_SIZE
-    int "Receive buffer bytes"
-    range 2 65536
-    default 256
-    help
-      Size of the static single-producer/single-consumer ring buffer.
-      One slot is reserved, so usable capacity is one byte smaller.
-      The linker checks whether the complete firmware fits in RAM.
-
-config MONITOR_WORKSPACE_SIZE
-    int "Reserved workspace bytes"
-    range 160 65536
-    default 4096
-    help
-      RAM reserved for the monitor workspace, including its 128-byte command
-      buffer and state. The receive buffer is allocated separately.
-      The linker checks that monitor objects fit this reservation.
-
-endif
+      Build command parsing and line editing on the system console.
+      Disabling the monitor leaves the console available to other clients.
 
 endmenu

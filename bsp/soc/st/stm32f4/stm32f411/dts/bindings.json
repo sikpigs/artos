@@ -1,0 +1,23 @@
+{
+  "soc": "stm32f411",
+  "uart": {
+    "address": 1073759232,
+    "irq": 38,
+    "name": "usart2",
+    "label": "uart2",
+    "registers": "stm32f411::usart::registers_t",
+    "tx": [
+      "a",
+      2
+    ],
+    "rx": [
+      "a",
+      3
+    ],
+    "af": 7,
+    "address_symbol": "stm32f411::usart::usart2_address"
+  },
+  "gpio_ports": [
+    "a"
+  ]
+}

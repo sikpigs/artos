@@ -18,7 +18,8 @@
       "linux": {
         "gdbPath": "gdb-multiarch",
         "objdumpPath": "arm-none-eabi-objdump"
-      }
+      },
+      "svdFile": "${workspaceFolder}/bsp/soc/st/stm32f4/stm32f411/svd/STM32F411.svd"
     },
     {
       "name": "Attach NUCLEO-F411RE (ST-LINK/OpenOCD)",
@@ -35,7 +36,46 @@
       "linux": {
         "gdbPath": "gdb-multiarch",
         "objdumpPath": "arm-none-eabi-objdump"
-      }
+      },
+      "svdFile": "${workspaceFolder}/bsp/soc/st/stm32f4/stm32f411/svd/STM32F411.svd"
+    },
+    {
+      "name": "Debug NUCLEO-F439ZI (ST-LINK/OpenOCD)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/f439-debug/nucleo_f439zi_baremetal.elf",
+      "preLaunchTask": "Build F439 Debug firmware",
+      "configFiles": [
+        "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
+      ],
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "none",
+      "device": "STM32F439ZI",
+      "linux": {
+        "gdbPath": "gdb-multiarch",
+        "objdumpPath": "arm-none-eabi-objdump"
+      },
+      "svdFile": "${workspaceFolder}/bsp/soc/st/stm32f4/stm32f439/svd/STM32F439.svd"
+    },
+    {
+      "name": "Attach NUCLEO-F439ZI (ST-LINK/OpenOCD)",
+      "type": "cortex-debug",
+      "request": "attach",
+      "servertype": "openocd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/f439-debug/nucleo_f439zi_baremetal.elf",
+      "configFiles": [
+        "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
+      ],
+      "showDevDebugOutput": "none",
+      "device": "STM32F439ZI",
+      "linux": {
+        "gdbPath": "gdb-multiarch",
+        "objdumpPath": "arm-none-eabi-objdump"
+      },
+      "svdFile": "${workspaceFolder}/bsp/soc/st/stm32f4/stm32f439/svd/STM32F439.svd"
     }
   ]
 }

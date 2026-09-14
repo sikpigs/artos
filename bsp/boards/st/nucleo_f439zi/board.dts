@@ -1,0 +1,26 @@
+/dts-v1/;
+/include/ "stm32f439.dtsi"
+
+/ {
+    model = "ST NUCLEO-F439ZI";
+    compatible = "st,nucleo-f439zi", "st,stm32f439";
+    chosen {
+        artos,console = <&uart3>;
+        artos,kernel-tick = <&systick>;
+        artos,heartbeat = <&heartbeat>;
+    };
+    leds {
+        compatible = "gpio-leds";
+        heartbeat: heartbeat {
+            gpios = <&gpiob 0 0>;
+        };
+    };
+};
+
+&uart3 {
+    status = "okay";
+    current-speed = <115200>;
+    artos,tx-pin = <&gpiod 8 0>;
+    artos,rx-pin = <&gpiod 9 0>;
+    artos,alternate-function = <7>;
+};

@@ -1,0 +1,5 @@
+add_library(console INTERFACE)
+add_library(console::console ALIAS console)
+target_include_directories(console INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(console INTERFACE bsp::headers)
+target_sources(console INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src/console.cpp)

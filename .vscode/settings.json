@@ -22,6 +22,8 @@
     }
   },
   "clangd.arguments": [
+    "--clang-tidy",
+    "--background-index",
     "--query-driver=/usr/bin/arm-none-eabi-*"
   ],
   "clangd.fallbackFlags": [
@@ -29,8 +31,13 @@
     "-I${workspaceFolder}/include"
   ],
   "C_Cpp.intelliSenseEngine": "disabled",
+  "[c][cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.formatOnSave": true
+  },
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "files.associations": {
     "*.ld": "plaintext"
-  }
+  },
+  "cortex-debug.variableUseNaturalFormat": false
 }

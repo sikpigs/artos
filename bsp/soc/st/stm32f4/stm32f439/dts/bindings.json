@@ -1,0 +1,24 @@
+{
+  "soc": "stm32f439",
+  "uart": {
+    "address": 1073760256,
+    "irq": 39,
+    "name": "usart3",
+    "label": "uart3",
+    "registers": "stm32f439::usart::usart3::registers_t",
+    "tx": [
+      "d",
+      8
+    ],
+    "rx": [
+      "d",
+      9
+    ],
+    "af": 7,
+    "address_symbol": "stm32f439::usart::usart3::usart3_address"
+  },
+  "gpio_ports": [
+    "b",
+    "d"
+  ]
+}

@@ -74,6 +74,79 @@
       "problemMatcher": [
         "$gcc"
       ]
+    },
+    {
+      "label": "Serial console NUCLEO-F411RE",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/serial_console.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "detail": "ST-LINK virtual COM port at 115200 baud; Ctrl+] exits. Set NUCLEO_SERIAL_PORT to override auto-detection (Linux/POSIX)."
+    },
+    {
+      "label": "Flash NUCLEO-F439ZI",
+      "type": "process",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "f439-debug",
+        "--target",
+        "flash"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "dependsOn": [
+        "Configure F439 Debug firmware"
+      ]
+    },
+    {
+      "label": "Configure F439 Debug firmware",
+      "type": "process",
+      "command": "cmake",
+      "args": [
+        "--preset",
+        "f439-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build F439 Debug firmware",
+      "type": "process",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "f439-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "Configure F439 Debug firmware"
+      ],
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

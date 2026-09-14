@@ -1,165 +1,224 @@
+#include <array>
+#include <cctype>
+#include <charconv>
+#include <cstdint>
+#include <iterator>
+#include <limits>
+#include <span>
+#include <system_error>
+
+#include <console/console.h>
 #include <monitor/monitor.h>
 
-#include <array>
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
-#include <type_traits>
+static constexpr std::array<char, 2>   new_line_buffer = { '\n', '\r' };
+static constexpr std::array<char, 1>   escape_buffer = { '\\' };
+static constexpr std::span<const char> new_line { new_line_buffer };
+static constexpr std::span<const char> escape { escape_buffer };
 
-#include <board_devices.h>
-#include <build_config.h>
-#include <irq.h>
-
-namespace usart = stm32f411::usart;
-
-static std::array<std::uint8_t, build_config::monitor::rx_buffer_size> rx_buffer {};
-
-template<auto usart>
-struct console_t
+static std::uint32_t read_line(artos::console::buffered_console_t& console, std::span<char> line_in) noexcept
 {
-    console_t() noexcept
+    auto       p = line_in.begin();
+    const auto end = line_in.end();
+    bool       overflow = false;
+    while (true)
     {
-        usart.configure(board::devices::console_config);
-        irq::install<&console_t::irq_handler>(usart, *this);
-        irq::enable(usart.irq_number);
-    }
-
-    ~console_t() noexcept
-    {
-        irq::disable(usart.irq_number);
-        irq::uninstall(usart.irq_number);
-    }
-
-    void irq_handler() const
-    {
-        const auto sr = usart.status();
-        if (usart::sr::ore.decode(sr))
+        std::uint8_t c;
+        c = console.read_byte();
+        console.write(c);
+        if (c == '\n')
         {
-            // Counts hardware overrun events, not the number of lost bytes.
-            rx_overrun_events.fetch_add(1, std::memory_order_relaxed);
+            continue;
         }
-        // Reading SR followed by DR also clears an overrun, even if RXNE is clear.
-        if (usart::sr::rxne.decode(sr) || usart::sr::ore.decode(sr))
+        if (c == '\r')
         {
-            const auto byte = usart.read_data_register();
-            const auto write = write_ix.load(std::memory_order_relaxed);
-            const auto next = static_cast<std::uint32_t>((write + 1) % rx_buffer.size());
-            if (usart::sr::rxne.decode(sr))
+            break;
+        }
+        if (overflow)
+        {
+            continue; // Discard the rest of an oversized command through CR.
+        }
+        if (c == 0x08 || c == 0x7F)
+        {
+            if (p > line_in.begin())
             {
-                if (next != read_ix.load(std::memory_order_acquire))
+                --p;
+                console.write(' ');
+                console.write(0x08);
+            }
+            continue;
+        }
+
+        if (p == end)
+        {
+            overflow = true;
+            continue;
+        }
+        *p = c;
+        ++p;
+    }
+
+    return overflow ? std::numeric_limits<std::uint32_t>::max()
+                    : static_cast<std::uint32_t>(std::distance(line_in.begin(), p));
+}
+
+void to_chars_hex(std::span<char> in, std::uint32_t value)
+{
+    for (auto it = in.rbegin(); it != in.rend(); ++it)
+    {
+        const std::uint_fast8_t n = value & 0x0F;
+        value >>= 4;
+        if (n < 0x0A)
+        {
+            *it = static_cast<char>(n + static_cast<std::uint_fast8_t>(0x30));
+        }
+        else
+        {
+            *it = static_cast<char>(n + static_cast<std::uint_fast8_t>(0x37));
+        }
+    }
+}
+
+void dump(artos::console::buffered_console_t& usart, std::span<const volatile std::uint32_t> words)
+{
+    std::array<char, 8> buffer;
+    for (std::size_t row = 0; row < words.size();)
+    {
+        std::array<char, 18> interp;
+        interp.fill(' ');
+        interp.front() = '|';
+        interp.back() = '|';
+
+        usart.write(new_line);
+        to_chars_hex(buffer, static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(words.data() + row)));
+        usart.write(buffer);
+        usart.write(' ');
+
+        for (std::size_t column = 0; column < 4; ++column)
+        {
+            usart.write(' ');
+            if (row < words.size())
+            {
+                // Exactly one 32-bit hardware read per word; format the local copy.
+                const std::uint32_t value = words[row++];
+                to_chars_hex(buffer, value);
+                usart.write(buffer);
+                const auto* bytes = reinterpret_cast<const unsigned char*>(&value);
+                for (std::size_t byte = 0; byte < sizeof(value); ++byte)
                 {
-                    rx_buffer[write] = byte;
-                    write_ix.store(next, std::memory_order_release);
-                }
-                else
-                {
-                    rx_dropped_bytes.fetch_add(1, std::memory_order_relaxed);
+                    interp[1 + column * sizeof(value) + byte]
+                        = std::isprint(bytes[byte]) ? static_cast<char>(bytes[byte]) : '.';
                 }
             }
+            else
+            {
+                buffer.fill(' ');
+                usart.write(buffer);
+            }
+            if (column == 1)
+            {
+                usart.write(' ');
+            }
         }
+        usart.write(' ');
+        usart.write(interp);
     }
+}
 
-    bool try_read(uint8_t& byte) const noexcept
+static bool process_line(artos::console::buffered_console_t& console, std::span<const char> line)
+{
+    if (line.empty())
     {
-        const auto read = read_ix.load(std::memory_order_relaxed);
-        if (read != write_ix.load(std::memory_order_acquire))
-        {
-            byte = rx_buffer[read];
-            const auto next = static_cast<std::uint32_t>((read + 1) % rx_buffer.size());
-            read_ix.store(next, std::memory_order_release);
-            return true;
-        }
-
         return false;
     }
+    auto*       cursor = line.data();
+    const auto* end = cursor + line.size();
+    const auto  skip_space = [&] {
+        while (cursor != end && std::isspace(static_cast<unsigned char>(*cursor)))
+        {
+            ++cursor;
+        }
+    };
+    const auto parse_hex = [&](std::uint32_t& value) {
+        const auto [next, ec] = std::from_chars(cursor, end, value, 16);
+        cursor = next;
+        return ec == std::errc {};
+    };
 
-    std::uint32_t size() const noexcept
+    std::uint32_t address;
+    skip_space();
+    if (!parse_hex(address) || address % sizeof(std::uint32_t) != 0)
     {
-        constexpr auto capacity = static_cast<std::uint32_t>(rx_buffer.size());
-        // Foreground-consumer snapshot; the ISR may add bytes after this load.
-        const auto read = read_ix.load(std::memory_order_relaxed);
-        const auto write = write_ix.load(std::memory_order_acquire);
-        return (write + capacity - read) % capacity;
+        return false;
     }
-
-    void write(const std::uint8_t data) const noexcept
+    skip_space();
+    // Bound counts without overflowing the 32-bit address space.
+    const auto    available_words = (std::numeric_limits<std::uint32_t>::max() - address) / sizeof(std::uint32_t) + 1;
+    std::uint32_t count = 1;
+    if (cursor != end && *cursor == ':')
     {
-        while (!usart.is_txe())
-            ;
-        usart.write_data_register(data);
+        ++cursor;
+        // A 128-character line holds at most 64 whitespace-separated values.
+        // Validate the entire command before performing any hardware writes.
+        std::array<std::uint32_t, 64> values;
+        std::size_t                   value_count = 0;
+        skip_space();
+        while (cursor != end)
+        {
+            if (value_count == values.size() || !parse_hex(values[value_count]))
+            {
+                return false;
+            }
+            ++value_count;
+            if (cursor != end && !std::isspace(static_cast<unsigned char>(*cursor)))
+            {
+                return false;
+            }
+            skip_space();
+        }
+        if (value_count == 0 || value_count > available_words)
+        {
+            return false;
+        }
+        auto* destination = reinterpret_cast<volatile std::uint32_t*>(address);
+        for (std::size_t i = 0; i < value_count; ++i)
+        {
+            destination[i] = values[i];
+        }
+        return true;
     }
-
-    static_assert(std::atomic<std::uint32_t>::is_always_lock_free);
-    mutable std::atomic<std::uint32_t> write_ix { 0 };
-    mutable std::atomic<std::uint32_t> read_ix { 0 };
-    // Debugger diagnostics: inspect console_usart2 after reproducing a paste.
-    mutable std::atomic<std::uint32_t> rx_dropped_bytes { 0 };
-    mutable std::atomic<std::uint32_t> rx_overrun_events { 0 };
-};
-
-using getchar_t = int (*)(void*);
-using putchar_t = void (*)(void*, int);
-
-constexpr auto XAM = static_cast<std::uint8_t>(0x00);
-
-struct monitor_workspace
-{
-    void*                         ctx;
-    getchar_t                     getchar;
-    putchar_t                     putchar;
-    std::array<std::uint8_t, 128> in;
-    std::uintptr_t                xam;
-    std::uintptr_t                st;
-    std::uintptr_t                hex;
-    std::uint8_t                  ysav;
-    std::uint8_t                  mode;
-};
-
-[[gnu::section(".monitor_workspace"), gnu::used]]
-monitor_workspace workspace;
-
-static_assert(sizeof(monitor_workspace) <= build_config::monitor::workspace_size);
-static_assert(std::is_standard_layout_v<monitor_workspace>);
-static_assert(offsetof(monitor_workspace, ctx) == 0);
-static_assert(offsetof(monitor_workspace, getchar) == 4);
-static_assert(offsetof(monitor_workspace, putchar) == 8);
-static_assert(offsetof(monitor_workspace, in) == 12);
-static_assert(offsetof(monitor_workspace, xam) == 140);
-static_assert(offsetof(monitor_workspace, st) == 144);
-static_assert(offsetof(monitor_workspace, hex) == 148);
-static_assert(offsetof(monitor_workspace, ysav) == 152);
-static_assert(offsetof(monitor_workspace, mode) == 153);
-
-extern "C" void wozmon(monitor_workspace* workspace);
-
-extern "C" void start_wozmon(void* ctx, getchar_t getchar, putchar_t putchar)
-{
-
-    workspace = {};
-    workspace.ctx = ctx;
-    workspace.getchar = getchar;
-    workspace.putchar = putchar;
-    workspace.mode = XAM;
-    wozmon(&workspace);
+    if (cursor != end && *cursor == '.')
+    {
+        ++cursor;
+        skip_space();
+        if (!parse_hex(count))
+        {
+            return false;
+        }
+        skip_space();
+    }
+    if (cursor != end || count == 0 || count > available_words)
+    {
+        return false;
+    }
+    const auto* start = reinterpret_cast<const volatile std::uint32_t*>(address);
+    dump(console, std::span(start, count));
+    return true;
 }
 
 void monitor::run()
 {
-    board::init_console();
-    using console_usart2_t = console_t<board::devices::console>;
-    console_usart2_t console_usart2;
-
-    start_wozmon(
-        &console_usart2,
-        +[](void* ctx) -> int {
-            std::uint8_t byte;
-            auto*        console = static_cast<console_usart2_t*>(ctx);
-            while (!console->try_read(byte))
-                ;
-            return byte;
-        },
-        +[](void* ctx, int data) -> void {
-            auto* console = static_cast<console_usart2_t*>(ctx);
-            console->write(static_cast<std::uint8_t>(data));
-        });
+    auto&                 console = artos::console::system_console();
+    std::array<char, 128> in_buffer;
+    bool                  valid = false;
+    while (true)
+    {
+        if (!valid)
+        {
+            console.write(escape);
+        }
+        console.write(new_line);
+        const auto line_len = read_line(console, in_buffer);
+        valid = line_len != std::numeric_limits<std::uint32_t>::max()
+                && process_line(console, std::span<const char>(in_buffer.data(), line_len));
+    }
 }

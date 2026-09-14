@@ -21,7 +21,8 @@
       "displayName": "STM32F411 Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f411re_defconfig"
       }
     },
     {
@@ -29,7 +30,26 @@
       "displayName": "STM32F411 Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f411re_defconfig"
+      }
+    },
+    {
+      "name": "f439-debug",
+      "displayName": "NUCLEO-F439ZI Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f439zi_defconfig"
+      }
+    },
+    {
+      "name": "f439-release",
+      "displayName": "NUCLEO-F439ZI Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f439zi_defconfig"
       }
     }
   ],
@@ -43,6 +63,14 @@
       "name": "release",
       "displayName": "STM32F411 Release",
       "configurePreset": "release"
+    },
+    {
+      "name": "f439-debug",
+      "configurePreset": "f439-debug"
+    },
+    {
+      "name": "f439-release",
+      "configurePreset": "f439-release"
     }
   ]
 }

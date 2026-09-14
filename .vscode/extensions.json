@@ -1,8 +1,9 @@
 {
   "recommendations": [
+    "llvm-vs-code-extensions.vscode-clangd",
     "ms-vscode.cmake-tools",
     "ms-vscode.cpptools",
-    "marus25.cortex-debug"
+    "marus25.cortex-debug",
+    "mcu-debug.peripheral-viewer"
   ]
 }
-

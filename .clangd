@@ -1,3 +1,12 @@
 CompileFlags:
   # Allow intentional anonymous register layouts without extension warnings.
   Add: [-Wno-gnu-anonymous-struct, -Wno-nested-anon-types]
+
+Style:
+  # Prefer angle brackets for all headers inserted by clangd.
+  AngledHeaders: ['.*']
+
+Diagnostics:
+  ClangTidy:
+    # Read the check list from .clang-tidy, including slower supported checks.
+    FastCheckFilter: None

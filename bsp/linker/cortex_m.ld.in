@@ -1,0 +1,123 @@
+ENTRY(Reset_Handler)
+
+__main_stack_size = 4K;
+
+MEMORY
+{
+  FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = @MCU_FLASH_KIB@K
+  RAM   (xrw) : ORIGIN = 0x20000000, LENGTH = @MCU_RAM_KIB@K - __main_stack_size
+  STACK (rw)  : ORIGIN = 0x20000000 + @MCU_RAM_KIB@K - __main_stack_size, LENGTH = __main_stack_size
+}
+
+SECTIONS
+{
+  .isr_vector :
+  {
+    . = ALIGN(4);
+    KEEP(*(.isr_vector))
+    . = ALIGN(4);
+  } > FLASH
+
+  .text :
+  {
+    . = ALIGN(4);
+    *(.text)
+    *(.text*)
+    *(.rodata)
+    *(.rodata*)
+    KEEP(*(.init))
+    KEEP(*(.fini))
+    . = ALIGN(4);
+    _etext = .;
+  } > FLASH
+
+  .ARM.extab :
+  {
+    *(.ARM.extab* .gnu.linkonce.armextab.*)
+  } > FLASH
+
+  .ARM.exidx :
+  {
+    __exidx_start = .;
+    *(.ARM.exidx*)
+    __exidx_end = .;
+  } > FLASH
+
+  .preinit_array :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN(__preinit_array_start = .);
+    KEEP(*(.preinit_array))
+    PROVIDE_HIDDEN(__preinit_array_end = .);
+    . = ALIGN(4);
+  } > FLASH
+
+  .init_array :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN(__init_array_start = .);
+    KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+    KEEP(*(.init_array))
+    PROVIDE_HIDDEN(__init_array_end = .);
+    . = ALIGN(4);
+  } > FLASH
+
+  .fini_array :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN(__fini_array_start = .);
+    KEEP(*(SORT_BY_INIT_PRIORITY(.fini_array.*)))
+    KEEP(*(.fini_array))
+    PROVIDE_HIDDEN(__fini_array_end = .);
+    . = ALIGN(4);
+  } > FLASH
+
+  .data :
+  {
+    . = ALIGN(4);
+    _sdata = .;
+    *(.data)
+    *(.data*)
+    . = ALIGN(4);
+    _edata = .;
+  } > RAM AT > FLASH
+
+  _sidata = LOADADDR(.data);
+  
+  .bss (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _sbss = .;
+    *(.bss)
+    *(.bss*)
+    *(COMMON)
+    . = ALIGN(4);
+    _ebss = .;
+  } > RAM
+
+  __arena_start = ALIGN(_ebss, 8);
+  __arena_end = ORIGIN(RAM) + LENGTH(RAM);
+
+  __heap_start = __arena_start;
+  __heap_end = __arena_end;
+
+  PROVIDE(end = __heap_start);
+  PROVIDE(_end = __heap_start);
+
+  .main.stack (NOLOAD) :
+  {
+    __stack_limit = .;
+    . += __main_stack_size;
+    __stack_top = .;
+  } > STACK
+
+  _estack = __stack_top;
+
+  ASSERT(__arena_start <= __arena_end, "Globals and monitor workspace exceed available RAM")
+  ASSERT((__stack_top & 7) == 0, "Main stack must be eight-byte aligned")
+
+  /DISCARD/ :
+  {
+    *(.note.GNU-stack)
+  }
+}

@@ -1,0 +1,50 @@
+// Minimal supported device inventory; addresses and IRQs belong to the SoC.
+/ {
+    #address-cells = <1>;
+    #size-cells = <1>;
+    clocks {
+        hsi: hsi {
+            compatible = "fixed-clock";
+            #clock-cells = <0>;
+            clock-frequency = <16000000>;
+        };
+    };
+    soc {
+        compatible = "simple-bus";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+        nvic: interrupt-controller@e000e100 {
+            compatible = "arm,v7m-nvic";
+            reg = <0xe000e100 0xc00>;
+            interrupt-controller;
+            #address-cells = <0>;
+            #interrupt-cells = <1>;
+        };
+        systick: timer@e000e010 {
+            compatible = "artos,cortex-m-systick";
+            reg = <0xe000e010 0x10>;
+            clocks = <&hsi>;
+        };
+        gpiob: gpio@40020400 {
+            compatible = "artos,stm32f4-gpio";
+            reg = <0x40020400 0x400>;
+            gpio-controller;
+            #gpio-cells = <2>;
+        };
+        gpiod: gpio@40020c00 {
+            compatible = "artos,stm32f4-gpio";
+            reg = <0x40020c00 0x400>;
+            gpio-controller;
+            #gpio-cells = <2>;
+        };
+        uart3: serial@40004800 {
+            compatible = "artos,stm32f4-usart";
+            reg = <0x40004800 0x400>;
+            interrupt-parent = <&nvic>;
+            interrupts = <39>;
+            clocks = <&hsi>;
+            status = "disabled";
+        };
+    };
+};

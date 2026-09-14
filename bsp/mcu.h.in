@@ -1,0 +1,24 @@
+#pragma once
+#include <cstddef>
+#include <cstdint>
+
+// Generated from the selected MCU variant; shared by all boards using that part.
+// clang-format off
+namespace mcu {
+    inline constexpr char           name[] = "@CONFIG_MCU_VARIANT@";
+    inline constexpr char           package[] = "@MCU_PACKAGE@";
+    inline constexpr std::uintptr_t flash_start = 0x08000000;
+    inline constexpr std::size_t    flash_size = @MCU_FLASH_KIB@ * 1024;
+    inline constexpr std::uintptr_t ram_start = 0x20000000;
+    inline constexpr std::size_t    ram_size = @MCU_RAM_KIB@ * 1024;
+    inline constexpr std::uintptr_t ccm_start = 0x10000000;
+    inline constexpr std::size_t    ccm_size = @MCU_CCM_KIB@ * 1024;
+    constexpr bool                  readable_ram(std::uintptr_t address, std::size_t size)
+    {
+        const auto within = [=](std::uintptr_t base, std::size_t length) {
+            return size <= length && address >= base && address - base <= length - size;
+        };
+        return within(ram_start, ram_size) || (ccm_size != 0 && within(ccm_start, ccm_size));
+    }
+}
+// clang-format on

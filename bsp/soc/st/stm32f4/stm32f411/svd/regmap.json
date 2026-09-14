@@ -1,0 +1,409 @@
+{
+  "svd_sha256": "9e1df0b4dd3f0da0bd02ccd2eefec58ef599bae29facc8fa5e9b48c748ff3717",
+  "corrections": [
+    {
+      "kind": "register",
+      "peripheral": "RCC",
+      "reason": "Missing dedicated clocks configuration register (RM0383 RCC register map).",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "DCKCFGR",
+        "offset": 140,
+        "access": "read-write",
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "fields": [
+          {
+            "name": "TIMPRE",
+            "position": 24,
+            "width": 1,
+            "access": "read-write"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "APB2RSTR",
+      "reason": "Missing SPI4RST; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "SPI4RST",
+        "position": 13,
+        "width": 1,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "APB2RSTR",
+      "reason": "Missing SPI5RST; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "SPI5RST",
+        "position": 20,
+        "width": 1,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "APB2ENR",
+      "reason": "Missing SPI5EN; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "SPI5EN",
+        "position": 20,
+        "width": 1,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "APB2LPENR",
+      "reason": "Missing SPI5LPEN; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "SPI5LPEN",
+        "position": 20,
+        "width": 1,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "PLLI2SCFGR",
+      "reason": "Missing PLLI2SM; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "PLLI2SM",
+        "position": 0,
+        "width": 6,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "field",
+      "peripheral": "RCC",
+      "register": "BDCR",
+      "reason": "Missing LSEMOD; present in ST STM32F411xE CMSIS register definitions.",
+      "source": "https://github.com/STMicroelectronics/cmsis-device-f4/blob/master/Include/stm32f411xe.h",
+      "value": {
+        "name": "LSEMOD",
+        "position": 3,
+        "width": 1,
+        "access": "read-write"
+      }
+    },
+    {
+      "kind": "register",
+      "peripheral": "I2C1",
+      "reason": "Missing I2C filter register; RM0383 section 18.6.10.",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "FLTR",
+        "offset": 36,
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "access": "read-write",
+        "fields": [
+          {
+            "name": "DNF",
+            "position": 0,
+            "width": 4,
+            "access": "read-write"
+          },
+          {
+            "name": "ANOFF",
+            "position": 4,
+            "width": 1,
+            "access": "read-write"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "register",
+      "peripheral": "I2C2",
+      "reason": "Missing I2C filter register; RM0383 section 18.6.10.",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "FLTR",
+        "offset": 36,
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "access": "read-write",
+        "fields": [
+          {
+            "name": "DNF",
+            "position": 0,
+            "width": 4,
+            "access": "read-write"
+          },
+          {
+            "name": "ANOFF",
+            "position": 4,
+            "width": 1,
+            "access": "read-write"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "register",
+      "peripheral": "I2C3",
+      "reason": "Missing I2C filter register; RM0383 section 18.6.10.",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "FLTR",
+        "offset": 36,
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "access": "read-write",
+        "fields": [
+          {
+            "name": "DNF",
+            "position": 0,
+            "width": 4,
+            "access": "read-write"
+          },
+          {
+            "name": "ANOFF",
+            "position": 4,
+            "width": 1,
+            "access": "read-write"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "register",
+      "peripheral": "OTG_FS_GLOBAL",
+      "reason": "Missing receive-status read-and-pop register, same fields as GRXSTSR. Reads consume queue entries (RM0383 OTG_FS register map).",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "FS_GRXSTSP_Device",
+        "offset": 32,
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "access": "read-only",
+        "alternate": null,
+        "fields": [
+          {
+            "name": "EPNUM",
+            "position": 0,
+            "width": 4,
+            "access": "read-only"
+          },
+          {
+            "name": "BCNT",
+            "position": 4,
+            "width": 11,
+            "access": "read-only"
+          },
+          {
+            "name": "DPID",
+            "position": 15,
+            "width": 2,
+            "access": "read-only"
+          },
+          {
+            "name": "PKTSTS",
+            "position": 17,
+            "width": 4,
+            "access": "read-only"
+          },
+          {
+            "name": "FRMNUM",
+            "position": 21,
+            "width": 4,
+            "access": "read-only"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "register",
+      "peripheral": "OTG_FS_GLOBAL",
+      "reason": "Missing receive-status read-and-pop register, same fields as GRXSTSR. Reads consume queue entries (RM0383 OTG_FS register map).",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "value": {
+        "name": "FS_GRXSTSP_Host",
+        "offset": 32,
+        "reset": 0,
+        "reset_mask": 4294967295,
+        "access": "read-only",
+        "alternate": "FS_GRXSTSP_Device",
+        "fields": [
+          {
+            "name": "EPNUM",
+            "position": 0,
+            "width": 4,
+            "access": "read-only"
+          },
+          {
+            "name": "BCNT",
+            "position": 4,
+            "width": 11,
+            "access": "read-only"
+          },
+          {
+            "name": "DPID",
+            "position": 15,
+            "width": 2,
+            "access": "read-only"
+          },
+          {
+            "name": "PKTSTS",
+            "position": 17,
+            "width": 4,
+            "access": "read-only"
+          },
+          {
+            "name": "FRMNUM",
+            "position": 21,
+            "width": 4,
+            "access": "read-only"
+          }
+        ]
+      }
+    }
+  ],
+  "aliases": {
+    "RCC.PLLCFGR": {
+      "pllm": [
+        "PLLM0",
+        "PLLM1",
+        "PLLM2",
+        "PLLM3",
+        "PLLM4",
+        "PLLM5"
+      ],
+      "plln": [
+        "PLLN0",
+        "PLLN1",
+        "PLLN2",
+        "PLLN3",
+        "PLLN4",
+        "PLLN5",
+        "PLLN6",
+        "PLLN7",
+        "PLLN8"
+      ],
+      "pllp": [
+        "PLLP0",
+        "PLLP1"
+      ],
+      "pllq": [
+        "PLLQ0",
+        "PLLQ1",
+        "PLLQ2",
+        "PLLQ3"
+      ]
+    },
+    "RCC.CFGR": {
+      "sw": [
+        "SW0",
+        "SW1"
+      ],
+      "sws": [
+        "SWS0",
+        "SWS1"
+      ]
+    },
+    "RCC.BDCR": {
+      "rtcsel": [
+        "RTCSEL0",
+        "RTCSEL1"
+      ]
+    },
+    "RCC.APB1RSTR": {
+      "usart2rst": [
+        "UART2RST"
+      ]
+    },
+    "RCC.CSR": {
+      "iwdgrstf": [
+        "WDGRSTF"
+      ],
+      "pinrstf": [
+        "PADRSTF"
+      ]
+    },
+    "RCC.PLLI2SCFGR": {
+      "plli2sn": [
+        "PLLI2SNx"
+      ],
+      "plli2sr": [
+        "PLLI2SRx"
+      ]
+    },
+    "USART1.DR": {
+      "data": [
+        "DR"
+      ]
+    },
+    "TIM2.CCR1": {
+      "ccr1": [
+        "CCR1_L",
+        "CCR1_H"
+      ]
+    },
+    "TIM2.CCR2": {
+      "ccr2": [
+        "CCR2_L",
+        "CCR2_H"
+      ]
+    },
+    "TIM2.CCR3": {
+      "ccr3": [
+        "CCR3_L",
+        "CCR3_H"
+      ]
+    },
+    "TIM2.CCR4": {
+      "ccr4": [
+        "CCR4_L",
+        "CCR4_H"
+      ]
+    },
+    "TIM5.CCR1": {
+      "ccr1": [
+        "CCR1_L",
+        "CCR1_H"
+      ]
+    },
+    "TIM5.CCR2": {
+      "ccr2": [
+        "CCR2_L",
+        "CCR2_H"
+      ]
+    },
+    "TIM5.CCR3": {
+      "ccr3": [
+        "CCR3_L",
+        "CCR3_H"
+      ]
+    },
+    "TIM5.CCR4": {
+      "ccr4": [
+        "CCR4_L",
+        "CCR4_H"
+      ]
+    }
+  },
+  "exclude_peripherals": [
+    {
+      "name": "TIM8",
+      "reason": "RM0383 section 12 explicitly states TIM8 is not available on STM32F411xC/E.",
+      "source": "https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf"
+    }
+  ],
+  "device": "STM32F411",
+  "namespace": "stm32f411"
+}

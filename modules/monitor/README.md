@@ -1,30 +1,34 @@
 # Serial monitor module
 
-Optional USART console and ARM Thumb adaptation of the Woz monitor.
+`monitor::run()` edits command lines and processes memory commands using the
+system console initialized by startup. It owns no UART ISR or RX buffer. Input
+uses blocking `read_byte()`; output still polls through the console.
 
-- `include/monitor/monitor.h`: public `monitor::run()` entry point.
-- `src/monitor.cpp`: console driver integration, receive buffer, workspace, callbacks.
-- `src/wozmon.s`: command parsing, memory access, and program execution.
-- `Kconfig`: enable switch, receive-buffer size, and workspace reservation.
-- `CMakeLists.txt`: `monitor::monitor` target.
-- `PROVENANCE.md`: source ancestry and unresolved licensing status.
+`CONFIG_MONITOR` depends on `CONFIG_CONSOLE`. The console depends on
+ARTOS, enforced by Kconfig; see [configuration guidance](../../docs/configuration.md).
+Disabling the monitor leaves the console available to other clients. The monitor
+is the sole RX consumer and uses a 4096-byte thread stack in the application.
 
-The application includes `<monitor/monitor.h>` and calls `monitor::run()` after
-`board::init()`. The module initializes the BSP console through
-`board::init_console()` and uses `board::devices::console`. This adapter currently
-depends on the STM32 USART driver; the module is not yet board-independent.
-It does not depend on ARTOS.
+## Commands
 
-CMake adds this directory only when `CONFIG_MONITOR=y`. Its interface target
-supplies sources directly to the firmware, inheriting the firmware's compilation
-settings; it is not a separately installed or precompiled library. Disabled builds
-receive neither its sources nor its public include path.
+All numbers are hexadecimal without a `0x` prefix. Addresses must be aligned to
+four bytes; counts are numbers of 32-bit words, not bytes or end addresses.
 
-The module places its workspace in `.monitor_workspace`. The BSP linker template
-owns physical RAM placement and reserves `CONFIG_MONITOR_WORKSPACE_SIZE` bytes
-(default 4096, minimum 160). The receive buffer is separate. Disabling the module
-sets both sizes to zero, leaving no monitor reservation. The generated configuration
-is supplied by the root Kconfig integration.
+| Input | Operation |
+| --- | --- |
+| `08000000` | Read one word |
+| `08000000.4` | Read four words |
+| `address: value value ...` | Write successive 32-bit words |
 
-Moving these files does not change their licensing status. See the provenance
-notes before including this module under any project-wide license declaration.
+The monitor accepts CR or CRLF line endings; LF alone is ignored. Backspace and
+Delete erase input. Lines longer than 128 characters are discarded through CR.
+A backslash prompt follows an empty or invalid command. There is no run command.
+
+Memory reads/writes are direct and volatile. The parser checks syntax, alignment
+and address-space overflow, not whether a region is mapped or writable. Invalid
+addresses can fault; peripheral reads can have side effects. Use the flash-read
+examples for RX testing rather than writing to arbitrary RAM.
+
+See [console buffering and smoke tests](../console/README.md). The current C++ monitor is independently written and covered by the root
+[MIT license](../../LICENSE). The earlier ARM adaptation of the Woz monitor was
+removed; this license statement does not relicense that historical implementation.

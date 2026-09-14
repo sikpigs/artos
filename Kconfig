@@ -1,12 +1,30 @@
-mainmenu "NUCLEO firmware configuration"
+mainmenu "Firmware configuration"
 
 choice BOARD
     prompt "Board"
     default BOARD_NUCLEO_F411RE
 
-source "bsp/nucleo_f411re/Kconfig"
+source "bsp/boards/st/nucleo_f411re/Kconfig"
+source "bsp/boards/st/nucleo_f439zi/Kconfig"
 
 endchoice
+
+source "bsp/soc/st/stm32f4/Kconfig"
+
+config BOARD_NAME
+    string
+    default "nucleo_f411re" if BOARD_NUCLEO_F411RE
+    default "nucleo_f439zi" if BOARD_NUCLEO_F439ZI
+
+config BOARD_PATH
+    string
+    default "st/nucleo_f411re" if BOARD_NUCLEO_F411RE
+    default "st/nucleo_f439zi" if BOARD_NUCLEO_F439ZI
+
+config MCU_VARIANT
+    string
+    default "stm32f411re" if BOARD_NUCLEO_F411RE
+    default "stm32f439zi" if BOARD_NUCLEO_F439ZI
 
 menu "ARTOS"
 
@@ -15,7 +33,7 @@ config ARTOS
     default y
     help
       Build the kernel and Cortex-M port and start the kernel tick.
-      The serial monitor can run without ARTOS.
+      The buffered console and serial monitor require ARTOS.
 
 config ARTOS_TICK_HZ
     int "Kernel ticks per second"
@@ -26,6 +44,26 @@ config ARTOS_TICK_HZ
       The CPU port checks that the board timer clock divides exactly by
       this frequency and that the reload fits the hardware timer.
 
+config ARTOS_MAX_THREADS
+    int "Maximum number of threads (including idle)"
+    range 2 64
+    default 8
+    depends on ARTOS
+    help
+      Maximum number of registered threads, including the kernel idle
+      thread. Each thread's TCB and stack are allocated separately.
+
+config ARTOS_MAX_DEFERRED_WORK_ITEMS
+    int "Maximum number of registered deferred work items"
+    range 1 64
+    default 8
+    depends on ARTOS
+    help
+      Capacity of the static deferred callback registration table.
+      Each slot represents one registered callback, not one interrupt or
+      event occurrence. Multiple pending requests can coalesce in a slot.
+      This limit is independent of the maximum number of threads.
+
 config ARTOS_PRIORITY_LEVELS
     int "Scheduler priority levels"
     range 1 256
@@ -34,4 +72,5 @@ config ARTOS_PRIORITY_LEVELS
 
 endmenu
 
+source "modules/console/Kconfig"
 source "modules/monitor/Kconfig"

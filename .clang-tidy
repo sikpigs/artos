@@ -1,0 +1,37 @@
+---
+# Manual runs are advisory; the pre-commit hook promotes warnings to errors.
+Checks: >-
+  -*,
+  clang-analyzer-core.*,
+  clang-analyzer-cplusplus.*,
+  clang-analyzer-deadcode.*,
+  bugprone-argument-comment,
+  bugprone-assert-side-effect,
+  bugprone-dangling-handle,
+  bugprone-integer-division,
+  bugprone-macro-parentheses,
+  bugprone-macro-repeated-side-effects,
+  bugprone-misplaced-widening-cast,
+  bugprone-narrowing-conversions,
+  bugprone-sizeof-expression,
+  bugprone-suspicious-memset-usage,
+  bugprone-suspicious-semicolon,
+  bugprone-use-after-move,
+  bugprone-unused-raii,
+  misc-const-correctness,
+  modernize-use-nullptr,
+  readability-identifier-naming
+
+# Data members use snake_case without naming prefixes or suffixes.
+CheckOptions:
+  readability-identifier-naming.MemberCase: lower_case
+  readability-identifier-naming.MemberPrefix: ''
+  readability-identifier-naming.MemberSuffix: ''
+
+WarningsAsErrors: ''
+# Include handwritten headers; omit generated board and SVD register headers.
+# Use a positive filter for compatibility with clang-tidy 18.
+HeaderFilterRegex: '/include/([^/]+|soc/[^/]+|stm32/[^/]+|stm32f[0-9]+/[^/]+)$'
+SystemHeaders: false
+FormatStyle: file
+...

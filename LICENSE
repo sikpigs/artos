@@ -1,9 +1,8 @@
 License scope
 =============
 
-The MIT License below applies to the main project code and documentation.
-The entire modules/monitor/ directory is excluded from this license grant;
-its licensing status is documented in modules/monitor/PROVENANCE.md.
+The MIT License below applies to the project code and documentation,
+including the independently written C++ monitor in modules/monitor/.
 Third-party dependencies retain their respective licenses.
 
 MIT License

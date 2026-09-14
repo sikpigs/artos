@@ -1,139 +1,105 @@
 # Configuration and port boundaries
 
-The board/chip headers are handwritten examples of future generator output.
-Kconfiglib now resolves board selection and software policy at build time; there
-is no DTS parser, DTB, or SVD generator yet.
+## Sources of truth
 
-| File | Responsibility | Future producer |
+| Source | Owns | Generated output / consumer |
 | --- | --- | --- |
-| `include/mmio.h` | Generic typed register and field operations | Handwritten |
-| `bsp/nucleo_f411re/include/stm32f411/regmap.h` | Existing STM32 register descriptions and peripheral drivers | SVD for declarations; drivers remain handwritten |
-| `bsp/nucleo_f411re/include/board.h` | Hardware nodes, clocks, pins, labels, chosen devices | DTS generator |
-| `build/<preset>/generated/build_config.h` | ARTOS/monitor enable, tick rate, priority levels, monitor buffer/workspace sizes | Kconfig generator |
-| `bsp/nucleo_f411re/include/board_devices.h` | Bind board nodes to peripheral drivers | Handwritten |
-| `bsp/nucleo_f411re/src/board.cpp` | Board initialization and explicit console clock enables | Handwritten bring-up |
-| `modules/monitor/src/monitor.cpp`, `modules/monitor/src/wozmon.s` | Optional console and monitor | Handwritten |
-| `include/artos_port.h` | ARTOS port interface and selected CPU traits | Handwritten |
-| `src/ports/cortex_m4.cpp` | SysTick access, ISR bridge, initial thread stack frame | Handwritten CPU port |
-| `src/artos.cpp` | Tick accounting and thread metadata | Handwritten kernel |
+| `Kconfig`, board/SoC/module Kconfig files, `configs/*_defconfig` | Board selection and software resource limits | `scripts/configure.py` produces `autoconf.h`, `build_config.h`, and CMake selections |
+| `bsp/boards/st/<board>/board.dts` and SoC DTSI | Selected console, pins, baud rate, initial clocks and device descriptions | dtc produces a DTB; `scripts/dtb_to_board.py` produces board headers |
+| SoC `dts/bindings.json` | Reviewed mappings from hardware to C++ types | Validates the selected devices and pin/AF combinations |
+| SoC SVD and `svd/regmap.json` | Register descriptions and reviewed corrections | `scripts/svd_to_regmap.py` produces checked-in register headers |
+| MCU variant CMake file and `bsp/linker/cortex_m.ld.in` | Memory allocation and linker layout | Generated linker script and `mcu.h` |
 
-## Description contract
+Build-generated configuration and board headers live under `build/<preset>/generated/`.
+Do not edit them. The DTB is a build intermediate, not a runtime device tree.
+Generated node types expose constexpr properties; chosen roles select driver
+bindings through `board::devices`. See [BSP generation and validation](../bsp/README.md#board-header-generation).
 
-Nodes are nested types. Properties are typed `static constexpr` members.
-References, labels, and chosen roles are type aliases to the same node, preserving
-identity. Clock dependencies are explicit references rather than inferred from
-node containment. Future overlays must be resolved before generating this header.
-There is no runtime tree, lookup table, or static initialization of devices.
+Both supported boards retain reset HSI at 16 MHz with unity bus dividers.
+Changing a DTS clock value does not program a PLL. The Cortex-M port checks tick
+clock divisibility and SysTick reload range. At 1 kHz the reload is 15,999.
 
-`board::chosen::console` selects the UART node. `board::devices::console` binds
-that node to the current USART driver with its clock as a template argument.
-`board::chosen::kernel_tick` selects the timer description used by the CPU port.
-The current adapter and bring-up support this board's USART2 and Cortex-M SysTick;
-choosing another peripheral requires its corresponding adapter and bring-up.
-Pin compatibility and resource conflict validation are not implemented yet.
+## Kconfig workflow
 
-Hardware facts belong in the board/chip description. Software policy belongs in
-`build_config`. A tick frequency, for example, lives only in `build_config`, and
-the port combines it with the board's timer clock. The port rejects inexact tick
-divisors and reloads outside the usable SysTick range at compile time.
+```sh
+cmake --preset f439-debug
+cmake --build --preset f439-debug --target menuconfig
+cmake --build --preset f439-debug
+cmake --build --preset f439-debug --target savedefconfig
+```
 
-## Startup and current scope
+Use `debug`/`release` for F411 and `f439-debug`/`f439-release` for F439.
+Each build directory's `.config` is authoritative once created. The preset's
+`KCONFIG_DEFCONFIG` seeds only a new configuration. `savedefconfig` writes a
+minimal seed to that build's `defconfig`; copy it into `configs/` to retain it.
+The old `-DBSP` selector is retired.
 
-`main()` calls `board::init()` before constructing the console and, when enabled,
-ARTOS. Disabling `CONFIG_ARTOS` excludes its implementation and CPU port from
-the firmware and leaves the monitor operating directly through IRQs.
-Monitor startup calls `board::init_console()` to enable GPIOA and USART2 and
-read back their enable registers before peripheral access. `board::init()`
-retains the reset clock tree: 16 MHz HSI,
-AHB /1, APB1 /1. Changing a frequency constant alone does not program a PLL;
-clock-tree changes need matching bring-up code.
+Kconfiglib rejects unknown settings and out-of-range values. CMake tracks the
+schemas, generator, seed and saved configuration; outputs are rewritten only when
+content changes. No Kconfig processing occurs on the MCU.
 
-The tick reload is now 15,999 for the configured 1 kHz tick. Previously the
-hardcoded reload of 99,999 assumed a 100 MHz clock that startup did not configure.
+| Setting | Default / range | Meaning |
+| --- | --- | --- |
+| `CONFIG_ARTOS_TICK_HZ` | 1000 / 1–1000000 | Tick frequency; hardware divisibility/reload checks also apply |
+| `CONFIG_ARTOS_MAX_THREADS` | 8 / 2–64 | Registry slots including idle; TCBs and stacks are separately supplied |
+| `CONFIG_ARTOS_PRIORITY_LEVELS` | 16 / 1–256 | Smaller numeric values have higher scheduling priority |
+| `CONFIG_ARTOS_MAX_DEFERRED_WORK_ITEMS` | 8 / 1–64 | Registered callbacks, independent of thread count |
+| `CONFIG_CONSOLE_RX_BUFFER_SIZE` | 256 / 2–65536 | RX array bytes; usable capacity is N−1 |
 
-The CPU port owns stack word size, eight-byte alignment, and the basic 64-byte
-initial context. Thread storage rejects undersized or misaligned byte counts,
-and aligns the opaque TCB storage. TCB size remains a kernel implementation
-detail, checked against the internal structure. The public creation wrapper now
-forwards the stack byte count to the internal function.
+Typed values appear in `build_config::artos` and `build_config::console`.
+`CONFIG_MONITOR` depends on `CONFIG_CONSOLE`. Disabling the monitor leaves the
+console and its buffer available. Disabling the console also disables the monitor.
+Rename legacy `CONFIG_MONITOR_RX_BUFFER_SIZE` to `CONFIG_CONSOLE_RX_BUFFER_SIZE` in
+saved configurations. The former monitor workspace setting no longer exists.
 
-Thread scheduling and context switching remain unfinished, as before. The initial
-frame covers the basic integer context; floating-point context switching is not
-implemented. The existing placeholder thread ID behavior is unchanged.
+`CONFIG_CONSOLE` depends on `CONFIG_ARTOS`, and `CONFIG_MONITOR` depends on
+`CONFIG_CONSOLE`. Disabling ARTOS therefore disables both console and monitor,
+even if an input configuration requests them. Disabled-kernel typed defaults
+support compile-only declarations; they do not supply kernel implementations.
 
-The chip register namespace is `stm32f411`, with declarations in the BSP header
-`stm32f411/regmap.h`. Splitting its peripheral drivers from SVD-generated
-declarations is a later step. The BSP owns startup, IRQ support, memory layout,
-and debugger settings; the generic MMIO helpers and ARTOS CPU port stay outside it.
+## Startup and source layout
+
+`app/main.cpp` initializes board hardware, then the static system console, then
+ARTOS. The console registers deferred RX work before UART IRQ enable and before
+the kernel starts SysTick. Registration failure traps. Kernel initialization
+resets the thread registry and tick count, creates idle, initializes the port,
+and starts the tick. Main then creates monitor/blinky threads when configured
+and starts the first thread through PendSV.
+
+| Location | Responsibility |
+| --- | --- |
+| `runtime/` | C/C++ initialization, guards, abort and newlib hooks |
+| `arch/arm/cortex_m4/` | Reset, IRQ dispatch, faults, interrupt masking, SysTick and context switching |
+| `kernel/kernel.cpp` | Kernel initialization, startup and tick orchestration |
+| `kernel/thread.cpp` | Thread creation and sleep |
+| `kernel/scheduler.cpp` | Registry, current/next thread, selection and switch bookkeeping |
+| `kernel/blocking.cpp` | Wait registration and blocked-to-ready transitions |
+| `kernel/wait.cpp` | Queue membership only |
+| `kernel/deferred.cpp` | Fixed callback registrations, pending flags and dispatch |
+| `kernel/internal/` | Private TCB and cross-file declarations |
+| `modules/console/` | DTS-bound buffered transport and blocking byte reads |
+| `modules/monitor/` | Line editing and memory commands |
+
+The port's initial context is 68 bytes, including EXC_RETURN; that is not a usable
+thread stack budget. `thread::minimum_stack_bytes` is 1024 bytes including saved
+context. Idle and blinky use this minimum; the monitor has 4096 bytes. Main has
+an independent 4096-byte stack reservation. PendSV preserves integer state and
+conditionally saves/restores the high floating-point registers. Fault capture
+uses a separate emergency stack. See [runtime constraints](../runtime/README.md).
+
+The scheduler scans a fixed thread registry, chooses the highest-priority runnable
+application thread, and rotates equal-priority ties relative to the current slot.
+Slot zero is idle fallback. Declared ready-list storage is not yet used for
+selection. Thread IDs pack a slot index and generation; deletion/reuse lifecycle
+support is not implemented. See [wait and deferred contracts](../kernel/README.md).
 
 ## Verification
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug
-cmake --build --preset debug --target configuration-checks kconfig-checks
-cmake --preset release
-cmake --build --preset release
-cmake --build --preset release --target configuration-checks
+cmake --build --preset f439-debug --target bsp-checks configuration-checks kconfig-checks devicetree-checks
+cmake --build --preset debug --target bsp-checks regmap-checks
 ```
 
-`configuration-checks` is a compile-only target. It checks node identity, valid
-and invalid stack sizes/priorities for the selected configuration, and instantiates the
-public thread creation wrapper. It does not execute or flash firmware. Hardware
-verification should check the console and measure SysTick timing on the board.
-
-## Kconfig flow
-
-`Kconfig` includes the board choice entry from `bsp/nucleo_f411re/Kconfig`
-and the monitor options from `modules/monitor/Kconfig`.
-`scripts/configure.py` uses Kconfiglib to resolve the build directory's `.config`
-(or the defconfig seed on first configure). It emits CMake board/source selections,
-a conventional `autoconf.h`, and the typed `build_config.h`. Outputs are rewritten
-only when their contents change. Unknown symbols and invalid ranges fail the
-configuration step rather than silently accepting fallback values.
-
-`cmake/kconfig.cmake` tracks the saved configuration, Kconfig files, and generator
-so editing options triggers regeneration before compilation. `menuconfig` edits
-that build's `.config`; `savedefconfig` exports a minimal seed into that build's
-`defconfig`. A seed selected with `KCONFIG_DEFCONFIG` is used only when `.config`
-is absent. Defaults do not override saved user choices.
-
-The only board currently supported is NUCLEO-F411RE. Adding another board requires
-a Kconfig choice entry, a generator mapping to its package, and matching BSP/CPU
-support. The existing Arm toolchain still supplies Cortex-M4F compiler flags.
-
-When ARTOS is disabled, its typed configuration retains inert defaults for public
-header declarations; the implementation is not linked. Kconfig's own generated
-`autoconf.h` omits the disabled subsystem values. Firmware code should use
-`CONFIG_ARTOS` or `build_config::artos::enabled` to test availability.
-
-`kconfig-checks` runs host-side generator tests for saved choices, stable outputs,
-disabled ARTOS, and invalid inputs. No Kconfig code runs on the MCU.
-
-## Optional monitor and memory
-
-`CONFIG_MONITOR` controls compilation of `modules/monitor/src/monitor.cpp` and `modules/monitor/src/wozmon.s`.
-When off, there is no monitor call, receive buffer, workspace object, or console
-clock initialization. Main enters a `wfi` idle loop after optional ARTOS startup.
-The BSP's IRQ support remains available for future application consumers.
-
-`CONFIG_MONITOR_WORKSPACE_SIZE` controls the reserved workspace (default 4096
-bytes, minimum 160). This includes the command buffer and monitor state; the
-receive ring buffer is separate. The generated BSP linker script receives this
-size from the same Kconfig resolution as the C++ header. With the monitor off,
-both generated buffer/workspace sizes are zero and the workspace section reserves
-no bytes. Linker and C++ assertions check that the workspace object fits when on.
-The independent main stack remains 4096 bytes in every configuration.
-
-Verified all four ARTOS/monitor combinations in Release, including symbol absence
-for disabled monitor code/data and zero workspace reservation. With ARTOS enabled,
-the current linked RAM usage outside the main stack drops from 4480 to 12 bytes
-when the monitor is disabled. A configuration-only change to a 160-byte workspace
-also regenerated and relinked successfully.
-
-The monitor is packaged under `modules/monitor` and linked through the
-`monitor::monitor` CMake target only when enabled. Its public header is
-`<monitor/monitor.h>`. Kconfig dependency tracking includes module schemas, so
-changes to its options regenerate the build. The BSP retains the physical linker
-layout; the module owns the workspace objects and option definitions. Provenance
-and unresolved upstream licensing are recorded in the module's `PROVENANCE.md`.
+Compile-only and linked-image checks do not execute firmware. Hardware checks
+should verify blocking/resumption, RX drop/overrun counters and tick timing.
+See [native tests](../tests/host/README.md) and the [console smoke test](../modules/console/README.md#hardware-smoke-test).

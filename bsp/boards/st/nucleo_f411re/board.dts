@@ -1,0 +1,26 @@
+/dts-v1/;
+/include/ "stm32f411.dtsi"
+
+/ {
+    model = "ST NUCLEO-F411RE";
+    compatible = "st,nucleo-f411re", "st,stm32f411";
+    chosen {
+        artos,console = <&uart2>;
+        artos,kernel-tick = <&systick>;
+        artos,heartbeat = <&heartbeat>;
+    };
+    leds {
+        compatible = "gpio-leds";
+        heartbeat: heartbeat {
+            gpios = <&gpioa 5 0>;
+        };
+    };
+};
+
+&uart2 {
+    status = "okay";
+    current-speed = <115200>;
+    artos,tx-pin = <&gpioa 2 0>;
+    artos,rx-pin = <&gpioa 3 0>;
+    artos,alternate-function = <7>;
+};

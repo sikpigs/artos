@@ -1,5 +1,0 @@
-config BOARD_NUCLEO_F411RE
-    bool "ST NUCLEO-F411RE (STM32F411RE, Cortex-M4F)"
-    help
-      512 KiB flash, 128 KiB SRAM, and a USART2 console on PA2/PA3.
-      Hardware clock and pin configuration live in this BSP's board.h.

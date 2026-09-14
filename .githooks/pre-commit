@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+root=$(git rev-parse --show-toplevel)
+python3 "$root/scripts/pre_commit_clang_format.py"
+exec python3 "$root/scripts/pre_commit_clang_tidy.py"

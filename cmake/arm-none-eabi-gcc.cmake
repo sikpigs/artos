@@ -11,13 +11,3 @@ find_program(CMAKE_AR NAMES ${TOOLCHAIN_PREFIX}-ar REQUIRED)
 find_program(CMAKE_OBJCOPY NAMES ${TOOLCHAIN_PREFIX}-objcopy REQUIRED)
 find_program(CMAKE_SIZE NAMES ${TOOLCHAIN_PREFIX}-size REQUIRED)
 
-set(MCU_FLAGS
-    -mcpu=cortex-m4
-    -mthumb
-    -mfpu=fpv4-sp-d16
-    -mfloat-abi=hard
-)
-
-add_compile_options(${MCU_FLAGS})
-add_link_options(${MCU_FLAGS})
-
