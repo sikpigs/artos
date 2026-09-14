@@ -98,6 +98,8 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(len(output), 20)  # 19 group headers plus umbrella
         for name, peripheral in self.model.items():
             text = output['generated/' + peripheral['group'].lower() + '.h']
+            # Verify declarations independently of formatter alignment/line wraps.
+            text = ' '.join(text.split())
             self.assertIn(f'const {name} = reinterpret_cast', text)
             for reg in peripheral['registers']:
                 # The layout assertions must account for every source register/view.

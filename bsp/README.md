@@ -57,7 +57,10 @@ python3 scripts/svd_to_regmap.py --soc stm32f411 --check
 python3 scripts/svd_to_regmap.py --soc stm32f439 --check
 ```
 
-Omit `--check` to regenerate. `--soc-dir` can point to another SoC directory;
+Omit `--check` to regenerate. Generation and freshness checks run clang-format
+with the root `.clang-format` before comparing or writing headers. Install
+clang-format (LLVM 18 is the current baseline); use `CLANG_FORMAT` to select
+an executable consistently with the formatting hook. `--soc-dir` can point to another SoC directory;
 its `svd/regmap.json` specifies the device, C++ namespace and pinned SVD hash.
 The generator has no board-specific paths. Generated layouts are deliberately
 chip-specific; matching SVD group names do not imply hardware compatibility.

@@ -8,8 +8,10 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -277,6 +279,16 @@ def emit(model, profile, svd_hash, profile_hash):
     umbrella = banner(svd_hash, profile_hash, profile) + ['']
     umbrella += [f'#include <{namespace}/generated/{group}.h>' for group in sorted(groups)]
     output['regmap.h'] = '\n'.join(umbrella) + '\n'
+    # Use the same formatting contract as editor saves and the pre-commit hook.
+    # Format before both writing and freshness checks, so they compare identical text.
+    formatter = os.environ.get('CLANG_FORMAT', 'clang-format')
+    for name, text in output.items():
+        result = subprocess.run(
+            [formatter, f'--style=file:{ROOT / ".clang-format"}',
+             f'--assume-filename={name}'],
+            input=text, capture_output=True, text=True)
+        require(result.returncode == 0, f'clang-format failed for {name}: {result.stderr}')
+        output[name] = result.stdout
     return output
 
 

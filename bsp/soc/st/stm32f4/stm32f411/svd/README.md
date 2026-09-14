@@ -22,7 +22,8 @@ python3 scripts/svd_to_regmap.py --soc stm32f411 --check
 cmake --build --preset debug --target regmap-checks
 ```
 
-The script uses Python's standard library. It generates `include/stm32f411/regmap.h`
+The script uses Python's standard library and invokes clang-format using the
+root style file (override the executable with `CLANG_FORMAT`). It generates `include/stm32f411/regmap.h`
 as an umbrella and one header per inherited SVD `groupName` in
 `include/stm32f411/generated/`. All 46 retained SVD peripherals are emitted in
 19 groups. TIM8 is explicitly excluded because RM0383 states it is not present

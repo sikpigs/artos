@@ -16,7 +16,7 @@ uses these to suspend the monitor while waiting for RX input.
 On Debian/Ubuntu:
 
 ```sh
-sudo apt install cmake ninja-build gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib openocd gdb-multiarch python3-venv device-tree-compiler
+sudo apt install cmake ninja-build gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib openocd gdb-multiarch python3-venv device-tree-compiler clang-format
 code --install-extension marus25.cortex-debug
 ```
 
