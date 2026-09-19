@@ -20,28 +20,28 @@ namespace {
     {
         check(list.empty() == (nodes.size() == 0), "empty() disagrees with expected size");
         auto*        current = list.front();
-        list_hook_t* previous = nullptr;
+        list_hook_t* previous = list.end();
         for (auto* expected : nodes)
         {
-            check(current != nullptr, "forward traversal ended before expected node");
+            check(current != list.end(), "forward traversal ended before expected node");
             check(current == expected, "forward traversal has wrong/missing node");
             check(current->prev == previous, "prev does not point to preceding node");
             previous = current;
             current = current->next;
         }
-        check(current == nullptr, "forward traversal has extra node or cycle");
+        check(current == list.end(), "forward traversal has extra node or cycle");
 
         // Bound traversal by the expected sequence: corrupt cycles cannot hang a test.
-        current = previous;
+        current = nodes.size() == 0 ? list.end() : previous;
         auto it = nodes.end();
         while (it != nodes.begin())
         {
             --it;
-            check(current != nullptr, "backward traversal ended before expected node");
+            check(current != list.end(), "backward traversal ended before expected node");
             check(current == *it, "backward traversal has wrong/missing node");
             current = current->prev;
         }
-        check(current == nullptr, "backward traversal has extra node or cycle");
+        check(current == list.end(), "backward traversal has extra node or cycle");
     }
 
     void expect_detached(const list_hook_t& node)
@@ -62,10 +62,6 @@ namespace {
             list.push_back(a);
             list.push_back(b);
             list.push_back(c);
-            a = { nullptr, &b };
-            b = { &a, &c };
-            c = { &b, nullptr };
-            expect_list(list, { &a, &b, &c });
         }
     };
 

@@ -193,6 +193,41 @@ def banner(svd_hash, profile_hash, profile):
             '// Field access is metadata; mmio field operations do not enforce it.']
 
 
+def emit_gpio_pin_fields(p):
+    registers = {r['name']: r for r in p['registers']}
+
+    def field(register, name):
+        require(register in registers, f'GPIO driver view requires {register}')
+        fields = {f['name']: f for f in registers[register]['fields']}
+        require(name in fields, f'GPIO driver view requires {register}.{name}')
+        return f'{lower_name(register)}::{lower_name(name)}'
+
+    lines = ['', '    // Indexed view used by the shared GPIO driver. Each member aliases',
+             '    // an SVD-generated field rather than reconstructing its position.',
+             '    template<std::uint32_t Pin>', '    struct pin_fields;', '']
+    for pin in range(16):
+        alternate_register = 'AFRL' if pin < 8 else 'AFRH'
+        alternate_field = f'AFRL{pin}' if pin < 8 else f'AFRH{pin}'
+        members = {
+            'mode': field('MODER', f'MODER{pin}'),
+            'output_type': field('OTYPER', f'OT{pin}'),
+            'output_speed': field('OSPEEDR', f'OSPEEDR{pin}'),
+            'pull': field('PUPDR', f'PUPDR{pin}'),
+            'input': field('IDR', f'IDR{pin}'),
+            'output': field('ODR', f'ODR{pin}'),
+            'set': field('BSRR', f'BS{pin}'),
+            'reset': field('BSRR', f'BR{pin}'),
+            'alternate_function': field(alternate_register, alternate_field),
+        }
+        lines += ['    template<>', f'    struct pin_fields<{pin}>', '    {',
+                  f'        static constexpr std::uint32_t number = {pin};']
+        lines += [f'        inline static constexpr auto {name} = {source};'
+                  for name, source in members.items()]
+        lines += [f'        static {alternate_register}& alternate_function_register(registers_t& registers) noexcept',
+                  '        {', f'            return registers.{alternate_register};', '        }', '    };', '']
+    return lines
+
+
 def emit_block(model, profile, ns, instances):
     namespace = profile['namespace']
     p = model[instances[0]]
@@ -239,6 +274,8 @@ def emit_block(model, profile, ns, instances):
     for r in p['registers']:
         lines.append(f"    static_assert(offsetof(registers_t, {cpp_name(r['name'])}) == 0x{r['offset']:02X});")
     lines.append(f'    static_assert(sizeof(registers_t) == 0x{end:X});')
+    if ns == 'gpio':
+        lines += emit_gpio_pin_fields(p)
     for name in instances:
         address_name = 'address' if ns == 'rcc' else lower_name(name) + '_address'
         lines += ['', f"    inline constexpr std::uintptr_t {address_name} = 0x{model[name]['address']:08X}UL;",

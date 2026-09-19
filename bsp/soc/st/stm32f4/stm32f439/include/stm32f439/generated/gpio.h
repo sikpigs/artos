@@ -251,6 +251,315 @@ namespace stm32f439::gpio {
     static_assert(offsetof(registers_t, AFRH) == 0x24);
     static_assert(sizeof(registers_t) == 0x28);
 
+    // Indexed view used by the shared GPIO driver. Each member aliases
+    // an SVD-generated field rather than reconstructing its position.
+    template<std::uint32_t Pin>
+    struct pin_fields;
+
+    template<>
+    struct pin_fields<0>
+    {
+        static constexpr std::uint32_t number = 0;
+        inline static constexpr auto   mode = moder::moder0;
+        inline static constexpr auto   output_type = otyper::ot0;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr0;
+        inline static constexpr auto   pull = pupdr::pupdr0;
+        inline static constexpr auto   input = idr::idr0;
+        inline static constexpr auto   output = odr::odr0;
+        inline static constexpr auto   set = bsrr::bs0;
+        inline static constexpr auto   reset = bsrr::br0;
+        inline static constexpr auto   alternate_function = afrl::afrl0;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<1>
+    {
+        static constexpr std::uint32_t number = 1;
+        inline static constexpr auto   mode = moder::moder1;
+        inline static constexpr auto   output_type = otyper::ot1;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr1;
+        inline static constexpr auto   pull = pupdr::pupdr1;
+        inline static constexpr auto   input = idr::idr1;
+        inline static constexpr auto   output = odr::odr1;
+        inline static constexpr auto   set = bsrr::bs1;
+        inline static constexpr auto   reset = bsrr::br1;
+        inline static constexpr auto   alternate_function = afrl::afrl1;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<2>
+    {
+        static constexpr std::uint32_t number = 2;
+        inline static constexpr auto   mode = moder::moder2;
+        inline static constexpr auto   output_type = otyper::ot2;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr2;
+        inline static constexpr auto   pull = pupdr::pupdr2;
+        inline static constexpr auto   input = idr::idr2;
+        inline static constexpr auto   output = odr::odr2;
+        inline static constexpr auto   set = bsrr::bs2;
+        inline static constexpr auto   reset = bsrr::br2;
+        inline static constexpr auto   alternate_function = afrl::afrl2;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<3>
+    {
+        static constexpr std::uint32_t number = 3;
+        inline static constexpr auto   mode = moder::moder3;
+        inline static constexpr auto   output_type = otyper::ot3;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr3;
+        inline static constexpr auto   pull = pupdr::pupdr3;
+        inline static constexpr auto   input = idr::idr3;
+        inline static constexpr auto   output = odr::odr3;
+        inline static constexpr auto   set = bsrr::bs3;
+        inline static constexpr auto   reset = bsrr::br3;
+        inline static constexpr auto   alternate_function = afrl::afrl3;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<4>
+    {
+        static constexpr std::uint32_t number = 4;
+        inline static constexpr auto   mode = moder::moder4;
+        inline static constexpr auto   output_type = otyper::ot4;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr4;
+        inline static constexpr auto   pull = pupdr::pupdr4;
+        inline static constexpr auto   input = idr::idr4;
+        inline static constexpr auto   output = odr::odr4;
+        inline static constexpr auto   set = bsrr::bs4;
+        inline static constexpr auto   reset = bsrr::br4;
+        inline static constexpr auto   alternate_function = afrl::afrl4;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<5>
+    {
+        static constexpr std::uint32_t number = 5;
+        inline static constexpr auto   mode = moder::moder5;
+        inline static constexpr auto   output_type = otyper::ot5;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr5;
+        inline static constexpr auto   pull = pupdr::pupdr5;
+        inline static constexpr auto   input = idr::idr5;
+        inline static constexpr auto   output = odr::odr5;
+        inline static constexpr auto   set = bsrr::bs5;
+        inline static constexpr auto   reset = bsrr::br5;
+        inline static constexpr auto   alternate_function = afrl::afrl5;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<6>
+    {
+        static constexpr std::uint32_t number = 6;
+        inline static constexpr auto   mode = moder::moder6;
+        inline static constexpr auto   output_type = otyper::ot6;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr6;
+        inline static constexpr auto   pull = pupdr::pupdr6;
+        inline static constexpr auto   input = idr::idr6;
+        inline static constexpr auto   output = odr::odr6;
+        inline static constexpr auto   set = bsrr::bs6;
+        inline static constexpr auto   reset = bsrr::br6;
+        inline static constexpr auto   alternate_function = afrl::afrl6;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<7>
+    {
+        static constexpr std::uint32_t number = 7;
+        inline static constexpr auto   mode = moder::moder7;
+        inline static constexpr auto   output_type = otyper::ot7;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr7;
+        inline static constexpr auto   pull = pupdr::pupdr7;
+        inline static constexpr auto   input = idr::idr7;
+        inline static constexpr auto   output = odr::odr7;
+        inline static constexpr auto   set = bsrr::bs7;
+        inline static constexpr auto   reset = bsrr::br7;
+        inline static constexpr auto   alternate_function = afrl::afrl7;
+        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRL;
+        }
+    };
+
+    template<>
+    struct pin_fields<8>
+    {
+        static constexpr std::uint32_t number = 8;
+        inline static constexpr auto   mode = moder::moder8;
+        inline static constexpr auto   output_type = otyper::ot8;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr8;
+        inline static constexpr auto   pull = pupdr::pupdr8;
+        inline static constexpr auto   input = idr::idr8;
+        inline static constexpr auto   output = odr::odr8;
+        inline static constexpr auto   set = bsrr::bs8;
+        inline static constexpr auto   reset = bsrr::br8;
+        inline static constexpr auto   alternate_function = afrh::afrh8;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<9>
+    {
+        static constexpr std::uint32_t number = 9;
+        inline static constexpr auto   mode = moder::moder9;
+        inline static constexpr auto   output_type = otyper::ot9;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr9;
+        inline static constexpr auto   pull = pupdr::pupdr9;
+        inline static constexpr auto   input = idr::idr9;
+        inline static constexpr auto   output = odr::odr9;
+        inline static constexpr auto   set = bsrr::bs9;
+        inline static constexpr auto   reset = bsrr::br9;
+        inline static constexpr auto   alternate_function = afrh::afrh9;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<10>
+    {
+        static constexpr std::uint32_t number = 10;
+        inline static constexpr auto   mode = moder::moder10;
+        inline static constexpr auto   output_type = otyper::ot10;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr10;
+        inline static constexpr auto   pull = pupdr::pupdr10;
+        inline static constexpr auto   input = idr::idr10;
+        inline static constexpr auto   output = odr::odr10;
+        inline static constexpr auto   set = bsrr::bs10;
+        inline static constexpr auto   reset = bsrr::br10;
+        inline static constexpr auto   alternate_function = afrh::afrh10;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<11>
+    {
+        static constexpr std::uint32_t number = 11;
+        inline static constexpr auto   mode = moder::moder11;
+        inline static constexpr auto   output_type = otyper::ot11;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr11;
+        inline static constexpr auto   pull = pupdr::pupdr11;
+        inline static constexpr auto   input = idr::idr11;
+        inline static constexpr auto   output = odr::odr11;
+        inline static constexpr auto   set = bsrr::bs11;
+        inline static constexpr auto   reset = bsrr::br11;
+        inline static constexpr auto   alternate_function = afrh::afrh11;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<12>
+    {
+        static constexpr std::uint32_t number = 12;
+        inline static constexpr auto   mode = moder::moder12;
+        inline static constexpr auto   output_type = otyper::ot12;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr12;
+        inline static constexpr auto   pull = pupdr::pupdr12;
+        inline static constexpr auto   input = idr::idr12;
+        inline static constexpr auto   output = odr::odr12;
+        inline static constexpr auto   set = bsrr::bs12;
+        inline static constexpr auto   reset = bsrr::br12;
+        inline static constexpr auto   alternate_function = afrh::afrh12;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<13>
+    {
+        static constexpr std::uint32_t number = 13;
+        inline static constexpr auto   mode = moder::moder13;
+        inline static constexpr auto   output_type = otyper::ot13;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr13;
+        inline static constexpr auto   pull = pupdr::pupdr13;
+        inline static constexpr auto   input = idr::idr13;
+        inline static constexpr auto   output = odr::odr13;
+        inline static constexpr auto   set = bsrr::bs13;
+        inline static constexpr auto   reset = bsrr::br13;
+        inline static constexpr auto   alternate_function = afrh::afrh13;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<14>
+    {
+        static constexpr std::uint32_t number = 14;
+        inline static constexpr auto   mode = moder::moder14;
+        inline static constexpr auto   output_type = otyper::ot14;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr14;
+        inline static constexpr auto   pull = pupdr::pupdr14;
+        inline static constexpr auto   input = idr::idr14;
+        inline static constexpr auto   output = odr::odr14;
+        inline static constexpr auto   set = bsrr::bs14;
+        inline static constexpr auto   reset = bsrr::br14;
+        inline static constexpr auto   alternate_function = afrh::afrh14;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
+    template<>
+    struct pin_fields<15>
+    {
+        static constexpr std::uint32_t number = 15;
+        inline static constexpr auto   mode = moder::moder15;
+        inline static constexpr auto   output_type = otyper::ot15;
+        inline static constexpr auto   output_speed = ospeedr::ospeedr15;
+        inline static constexpr auto   pull = pupdr::pupdr15;
+        inline static constexpr auto   input = idr::idr15;
+        inline static constexpr auto   output = odr::odr15;
+        inline static constexpr auto   set = bsrr::bs15;
+        inline static constexpr auto   reset = bsrr::br15;
+        inline static constexpr auto   alternate_function = afrh::afrh15;
+        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+        {
+            return registers.AFRH;
+        }
+    };
+
     inline constexpr std::uintptr_t gpioa_address = 0x40020000UL;
     inline registers_t* const       GPIOA = reinterpret_cast<registers_t*>(gpioa_address);
     namespace metadata::gpioa {

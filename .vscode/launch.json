@@ -45,8 +45,8 @@
       "request": "launch",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/f439-debug/nucleo_f439zi_baremetal.elf",
-      "preLaunchTask": "Build F439 Debug firmware",
+      "executable": "${workspaceFolder}/build/debug/nucleo_f439zi_baremetal.elf",
+      "preLaunchTask": "Build Debug firmware",
       "configFiles": [
         "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
       ],
@@ -65,7 +65,7 @@
       "request": "attach",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/f439-debug/nucleo_f439zi_baremetal.elf",
+      "executable": "${workspaceFolder}/build/debug/nucleo_f439zi_baremetal.elf",
       "configFiles": [
         "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
       ],

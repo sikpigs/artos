@@ -1,6 +1,5 @@
 #include <cassert>
 
-#include <utility>
 #include <wait.h>
 
 namespace artos {
@@ -20,17 +19,18 @@ namespace artos {
     void wait_queue_t::remove(wait_node_t& node) noexcept
     {
         assert(node.queue == this);
+
         waiters.erase(node.hook);
         node.queue = nullptr;
     }
 
-    const wait_node_t* wait_queue_t::front() const noexcept
+    wait_queue_iterator_t wait_queue_t::begin() noexcept
     {
-        return reinterpret_cast<const wait_node_t*>(waiters.front());
+        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(waiters.front()) };
     }
 
-    wait_node_t* wait_queue_t::front() noexcept
+    wait_queue_iterator_t wait_queue_t::end() noexcept
     {
-        return const_cast<wait_node_t*>(std::as_const(*this).front());
+        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(waiters.end()) };
     }
 }

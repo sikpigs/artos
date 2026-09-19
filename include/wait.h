@@ -27,6 +27,38 @@ namespace artos {
         wait_queue_t*            queue { nullptr };
     };
 
+    class wait_queue_iterator_t
+    {
+    public:
+        wait_queue_iterator_t(wait_node_t* wait_node) noexcept
+            : node { wait_node }
+        {
+        }
+
+        ~wait_queue_iterator_t() noexcept = default;
+
+        wait_node_t& operator*() noexcept
+        {
+            return *node;
+        }
+
+        wait_node_t* operator->() noexcept
+        {
+            return node;
+        }
+
+        bool operator==(const wait_queue_iterator_t& other) const noexcept = default;
+
+        wait_queue_iterator_t operator++() noexcept
+        {
+            node = reinterpret_cast<wait_node_t*>(node->hook.next);
+            return *this;
+        }
+
+    private:
+        wait_node_t* node {};
+    };
+
     class wait_queue_t
     {
     public:
@@ -34,8 +66,8 @@ namespace artos {
         void push_back(wait_node_t& node) noexcept;
         void remove(wait_node_t& node) noexcept;
 
-        wait_node_t*       front() noexcept;
-        const wait_node_t* front() const noexcept;
+        wait_queue_iterator_t begin() noexcept;
+        wait_queue_iterator_t end() noexcept;
 
     private:
         intrusive_list_t waiters {};

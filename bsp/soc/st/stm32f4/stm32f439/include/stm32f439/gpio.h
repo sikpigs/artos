@@ -10,7 +10,8 @@ namespace stm32f439::gpio {
     using stm32::gpio::alternate_function_t;
     using stm32::gpio::config_t;
     template<std::uint32_t Pin, std::uintptr_t Address>
-    using pin_t = stm32::gpio::pin_t<registers_t, Pin, Address>;
+    requires(Pin < 16)
+    using pin_t = stm32::gpio::pin_t<registers_t, pin_fields<Pin>, Address>;
 
     template<std::uint32_t Pin>
     inline constexpr pin_t<Pin, gpioa_address> PA {};

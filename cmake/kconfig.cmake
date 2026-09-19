@@ -3,7 +3,7 @@ if(NOT DEFINED Python3_EXECUTABLE AND EXISTS "${CMAKE_SOURCE_DIR}/.venv/bin/pyth
     set(Python3_EXECUTABLE "${CMAKE_SOURCE_DIR}/.venv/bin/python")
 endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
-set(KCONFIG_DEFCONFIG "${CMAKE_SOURCE_DIR}/configs/nucleo_f411re_defconfig"
+set(KCONFIG_DEFCONFIG "${CMAKE_SOURCE_DIR}/configs/default_defconfig"
     CACHE FILEPATH "Initial Kconfig seed (used only when build/.config is absent)")
 get_filename_component(KCONFIG_DEFCONFIG "${KCONFIG_DEFCONFIG}" ABSOLUTE BASE_DIR "${CMAKE_SOURCE_DIR}")
 set(kconfig_command "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/scripts/configure.py"

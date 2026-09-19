@@ -12,64 +12,31 @@ namespace artos {
     class intrusive_list_t
     {
     public:
+        intrusive_list_t() noexcept
+        {
+            root.prev = std::addressof(root);
+            root.next = std::addressof(root);
+        }
+
+        [[nodiscard]]
         bool empty() const noexcept
         {
-            return head == nullptr;
+            return root.next == std::addressof(root);
         }
 
         void push_front(list_hook_t& node) noexcept
         {
-            node.prev = nullptr;
-            node.next = head;
-
-            if (head)
-            {
-                head->prev = std::addressof(node);
-            }
-            else
-            {
-                tail = std::addressof(node);
-            }
-
-            head = std::addressof(node);
+            link_before(*root.next, node);
         }
 
         void push_back(list_hook_t& node) noexcept
         {
-            node.next = nullptr;
-            node.prev = tail;
-
-            if (tail)
-            {
-                tail->next = std::addressof(node);
-            }
-            else
-            {
-                head = std::addressof(node);
-            }
-
-            tail = std::addressof(node);
+            link_before(root, node);
         }
 
         void erase(list_hook_t& node) noexcept
         {
-            if (node.prev)
-            {
-                node.prev->next = node.next;
-            }
-            else
-            {
-                head = node.next;
-            }
-
-            if (node.next)
-            {
-                node.next->prev = node.prev;
-            }
-            else
-            {
-                tail = node.prev;
-            }
+            unlink(node);
 
             node.prev = nullptr;
             node.next = nullptr;
@@ -77,36 +44,45 @@ namespace artos {
 
         void insert(list_hook_t& location, list_hook_t& node) noexcept
         {
-            node.prev = location.prev;
-
-            if (location.prev)
-            {
-                location.prev->next = std::addressof(node);
-                node.prev = location.prev;
-                node.next = std::addressof(location);
-            }
-            else
-            {
-                node.next = head;
-                tail = head;
-                head = std::addressof(node);
-            }
-
-            location.prev = std::addressof(node);
+            link_before(location, node);
         }
 
         list_hook_t* front() noexcept
         {
-            return head;
+            return root.next;
         }
 
         const list_hook_t* front() const noexcept
         {
-            return head;
+            return root.next;
+        }
+
+        list_hook_t* end() noexcept
+        {
+            return std::addressof(root);
+        }
+
+        const list_hook_t* end() const noexcept
+        {
+            return std::addressof(root);
         }
 
     private:
-        list_hook_t* head {};
-        list_hook_t* tail {};
+        list_hook_t root {};
+
+        static void link_before(list_hook_t& location, list_hook_t& node) noexcept
+        {
+            node.prev = location.prev;
+            node.next = std::addressof(location);
+
+            location.prev->next = std::addressof(node);
+            location.prev = std::addressof(node);
+        }
+
+        static void unlink(list_hook_t& node) noexcept
+        {
+            node.prev->next = node.next;
+            node.next->prev = node.prev;
+        }
     };
 }

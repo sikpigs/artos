@@ -107,6 +107,18 @@ class GeneratorTests(unittest.TestCase):
         self.assertNotIn('TIM8', output['generated/tim.h'])
         self.assertIn('namespace stm32f411::tim::tim10', output['generated/tim.h'])
         self.assertIn('namespace stm32f411::usb_otg_fs::otg_fs_device', output['generated/usb_otg_fs.h'])
+        self.assert_gpio_pin_view(output['generated/gpio.h'])
+
+    def assert_gpio_pin_view(self, header):
+        header = ' '.join(header.split())
+        for pin in range(16):
+            alternate_register = 'afrl' if pin < 8 else 'afrh'
+            alternate_field = f'{alternate_register}{pin}'
+            self.assertIn(f'struct pin_fields<{pin}>', header)
+            self.assertIn(f'auto mode = moder::moder{pin};', header)
+            self.assertIn(f'auto set = bsrr::bs{pin};', header)
+            self.assertIn(f'auto reset = bsrr::br{pin};', header)
+            self.assertIn(f'auto alternate_function = {alternate_register}::{alternate_field};', header)
 
     def test_alternate_views_and_invalid_references(self):
         svd.validate(self.model)
@@ -155,6 +167,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertNotIn('stm32f411', ''.join(output.values()))
         self.assertIn('namespace stm32f439::usart::usart3', output['generated/usart.h'])
         self.assertIn('TIM8', output['generated/tim.h'])
+        self.assert_gpio_pin_view(output['generated/gpio.h'])
         subprocess.run([sys.executable, str(svd.ROOT / 'scripts/svd_to_regmap.py'),
                         '--soc', 'stm32f439', '--check'], check=True)
 

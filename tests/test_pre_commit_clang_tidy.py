@@ -84,7 +84,7 @@ class TidyHookTests(unittest.TestCase):
         self.assertIn(b'missing from compilation database: new.cpp', result.stderr)
 
     def test_multiple_builds_cover_board_and_host_sources(self):
-        for directory, name in [('build/f439-debug', 'board.cpp'),
+        for directory, name in [('build/secondary', 'board.cpp'),
                                 ('build/host-tests', 'native.cpp')]:
             self.stage(name, 'int value;\n')
             build = self.root / directory
@@ -110,7 +110,7 @@ class TidyHookTests(unittest.TestCase):
             self.assertIn(name.encode(), result.stdout)
         self.assertEqual(before, self.git('write-tree'))
         result = self.run_hook(CLANG_TIDY_BUILD_DIRS=os.pathsep.join(
-            ['build/debug', 'build/f439-debug', 'build/host-tests']))
+            ['build/debug', 'build/secondary', 'build/host-tests']))
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_active_database_wins_for_shared_source(self):

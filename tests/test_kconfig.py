@@ -1,4 +1,5 @@
 """Host-side tests for generation, validation, and saved configuration behavior."""
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -24,6 +25,19 @@ class ConfigurationTests(unittest.TestCase):
              "--defconfig", str(self.seed)], capture_output=True, text=True)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
+
+    def test_cmake_presets_only_select_build_modes(self):
+        presets = json.loads((SOURCE / "CMakePresets.json").read_text())
+        configure = {preset["name"]: preset for preset in presets["configurePresets"]}
+        self.assertEqual(set(configure), {"base", "debug", "release", "min-size"})
+        self.assertEqual(configure["debug"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Debug")
+        self.assertEqual(configure["release"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Release")
+        self.assertEqual(configure["min-size"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "MinSizeRel")
+        self.assertNotIn("KCONFIG_DEFCONFIG", json.dumps(presets))
+        self.assertEqual({preset["name"] for preset in presets["buildPresets"]},
+                         {"debug", "release", "min-size"})
+        self.assertIn('configs/default_defconfig',
+                      (SOURCE / "cmake/kconfig.cmake").read_text())
 
     def test_defaults_and_unchanged_output(self):
         self.generate("")

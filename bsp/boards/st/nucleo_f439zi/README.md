@@ -11,10 +11,11 @@ LED and USART communication sections. VCP uses the board's standard solder-bridg
 configuration. Memory source: [STM32F439ZI datasheet](https://www.st.com/resource/en/datasheet/stm32f439zi.pdf).
 
 ```sh
-cmake --preset f439-debug
-cmake --build --preset f439-debug --target all bsp-checks
+cmake --preset debug
+cmake --build --preset debug --target menuconfig # select NUCLEO-F439ZI
+cmake --build --preset debug --target all bsp-checks
 # After connecting this board:
-cmake --build --preset f439-debug --target flash
+cmake --build --preset debug --target flash
 ```
 
 Use the F439-specific VS Code launch/attach configurations. The F411 root

@@ -3,15 +3,15 @@ set(SOC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/soc/${CONFIG_SOC_PATH}")
 include("${SOC_DIR}/variants/${CONFIG_MCU_VARIANT}.cmake")
 configure_file(mcu.h.in "${CMAKE_BINARY_DIR}/generated/mcu.h" @ONLY)
 
-add_library(soc_headers INTERFACE)
-add_library(soc::headers ALIAS soc_headers)
-target_include_directories(soc_headers INTERFACE "${SOC_DIR}/include")
-target_link_libraries(soc_headers INTERFACE firmware_headers)
-
 add_library(stm32_drivers INTERFACE)
 add_library(stm32::drivers ALIAS stm32_drivers)
 target_include_directories(stm32_drivers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/drivers/include")
 target_link_libraries(stm32_drivers INTERFACE firmware_headers)
+
+add_library(soc_headers INTERFACE)
+add_library(soc::headers ALIAS soc_headers)
+target_include_directories(soc_headers INTERFACE "${SOC_DIR}/include")
+target_link_libraries(soc_headers INTERFACE stm32::drivers)
 
 add_custom_target(svd-regmap-check
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/svd_to_regmap.py" --soc-dir "${SOC_DIR}" --check
@@ -43,7 +43,7 @@ add_custom_command(
 add_custom_target(board-headers DEPENDS "${BOARD_GENERATED}/board.h" "${BOARD_GENERATED}/board_devices.h")
 add_dependencies(bsp_headers board-headers)
 target_include_directories(bsp_headers INTERFACE "${BOARD_GENERATED}")
-target_link_libraries(bsp_headers INTERFACE soc::headers stm32::drivers)
+target_link_libraries(bsp_headers INTERFACE soc::headers)
 add_library(bsp INTERFACE)
 add_library(bsp::board ALIAS bsp)
 target_link_libraries(bsp INTERFACE bsp::headers)

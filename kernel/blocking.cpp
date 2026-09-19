@@ -27,23 +27,35 @@ namespace artos::kernel {
 
         bool wake_one(wait_queue_t& queue) noexcept
         {
-            auto* node = queue.front();
-            if (!node)
+            if (queue.empty())
             {
                 return false;
             }
 
-            auto* thread = node->thread;
+            auto it = queue.begin();
+
+            wait_node_t& selected = *it;
+
+            while (it != queue.end())
+            {
+                if (selected.thread->priority < it->thread->priority)
+                {
+                    selected = *it;
+                }
+
+                ++it;
+            }
+
+            auto* thread = selected.thread;
 
             assert(thread->state == thread::internal::thread_state_t::blocked);
-            assert(node->wake == wake_reason_t::none);
+            assert(selected.wake == wake_reason_t::none);
 
-            queue.remove(*node);
-            node->wake = wake_reason_t::signaled;
+            queue.remove(selected);
+            selected.wake = wake_reason_t::signaled;
             thread->state = thread::internal::thread_state_t::ready;
 
-            // todo reconsider scheduling
-            return true;
+            return thread->priority > thread::internal::current_thread->priority;
         }
     }
 

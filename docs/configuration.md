@@ -22,17 +22,17 @@ clock divisibility and SysTick reload range. At 1 kHz the reload is 15,999.
 ## Kconfig workflow
 
 ```sh
-cmake --preset f439-debug
-cmake --build --preset f439-debug --target menuconfig
-cmake --build --preset f439-debug
-cmake --build --preset f439-debug --target savedefconfig
+cmake --preset debug
+cmake --build --preset debug --target menuconfig
+cmake --build --preset debug
+cmake --build --preset debug --target savedefconfig
 ```
 
-Use `debug`/`release` for F411 and `f439-debug`/`f439-release` for F439.
-Each build directory's `.config` is authoritative once created. The preset's
-`KCONFIG_DEFCONFIG` seeds only a new configuration. `savedefconfig` writes a
-minimal seed to that build's `defconfig`; copy it into `configs/` to retain it.
-The old `-DBSP` selector is retired.
+The `debug`, `release`, and `min-size` presets select only optimization/debugging
+behavior. Each build directory's `.config` selects its board and is authoritative
+once created. `KCONFIG_DEFCONFIG` can seed a new configuration explicitly;
+`savedefconfig` writes a minimal seed to that build's `defconfig` for retention
+under `configs/`. The old `-DBSP` selector is retired.
 
 Kconfiglib rejects unknown settings and out-of-range values. CMake tracks the
 schemas, generator, seed and saved configuration; outputs are rewritten only when
@@ -96,8 +96,7 @@ support is not implemented. See [wait and deferred contracts](../kernel/README.m
 ## Verification
 
 ```sh
-cmake --build --preset f439-debug --target bsp-checks configuration-checks kconfig-checks devicetree-checks
-cmake --build --preset debug --target bsp-checks regmap-checks
+cmake --build --preset debug --target bsp-checks configuration-checks kconfig-checks devicetree-checks regmap-checks
 ```
 
 Compile-only and linked-image checks do not execute firmware. Hardware checks

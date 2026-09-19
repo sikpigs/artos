@@ -18,59 +18,41 @@
     },
     {
       "name": "debug",
-      "displayName": "STM32F411 Debug",
+      "displayName": "Debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f411re_defconfig"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "release",
-      "displayName": "STM32F411 Release",
+      "displayName": "Release",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f411re_defconfig"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "f439-debug",
-      "displayName": "NUCLEO-F439ZI Debug",
+      "name": "min-size",
+      "displayName": "Minimum Size",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f439zi_defconfig"
-      }
-    },
-    {
-      "name": "f439-release",
-      "displayName": "NUCLEO-F439ZI Release",
-      "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "KCONFIG_DEFCONFIG": "${sourceDir}/configs/nucleo_f439zi_defconfig"
+        "CMAKE_BUILD_TYPE": "MinSizeRel"
       }
     }
   ],
   "buildPresets": [
     {
       "name": "debug",
-      "displayName": "STM32F411 Debug",
       "configurePreset": "debug"
     },
     {
       "name": "release",
-      "displayName": "STM32F411 Release",
       "configurePreset": "release"
     },
     {
-      "name": "f439-debug",
-      "configurePreset": "f439-debug"
-    },
-    {
-      "name": "f439-release",
-      "configurePreset": "f439-release"
+      "name": "min-size",
+      "configurePreset": "min-size"
     }
   ]
 }

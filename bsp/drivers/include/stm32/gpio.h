@@ -1,7 +1,6 @@
 #pragma once
 
-#include <cstddef>
-#include <mmio.h>
+#include <cstdint>
 #include <utility>
 
 // STM32 GPIO peripheral with MODER/AFR registers (F4-compatible layout).
@@ -64,32 +63,26 @@ namespace stm32::gpio {
         alternate_function_t alt_func { alternate_function_t::AF0 };
     };
 
-    template<typename Registers, std::uint32_t Pin, std::uintptr_t Address>
-    requires(Pin < 16)
+    template<typename Registers, typename Fields, std::uintptr_t Address>
     struct pin_t
     {
-        static_assert(offsetof(Registers, MODER) == 0x00);
-        static_assert(offsetof(Registers, BSRR) == 0x18);
-        static_assert(offsetof(Registers, AFRH) == 0x24);
         static constexpr auto address = Address;
-        static constexpr auto number = Pin;
+        static constexpr auto number = Fields::number;
 
     private:
         static Registers* gpio() noexcept
         {
             return reinterpret_cast<Registers*>(Address);
         }
-        template<typename Register, std::uint32_t Position, std::uint32_t Width = 1>
-        static constexpr artos::mmio::field_t<typename Register::tag_type, Position, Width> field {};
 
     public:
         [[nodiscard]] bool read_output() const noexcept
         {
-            return gpio()->ODR.read(field<decltype(Registers::ODR), Pin>);
+            return gpio()->ODR.read(Fields::output);
         }
         [[nodiscard]] bool read() const noexcept
         {
-            return gpio()->IDR.read(field<decltype(Registers::IDR), Pin>);
+            return gpio()->IDR.read(Fields::input);
         }
         void write(bool value) const noexcept
         {
@@ -97,24 +90,21 @@ namespace stm32::gpio {
         }
         void set() const noexcept
         {
-            gpio()->BSRR.set(field<decltype(Registers::BSRR), Pin>);
+            gpio()->BSRR.set(Fields::set);
         }
         void reset() const noexcept
         {
-            gpio()->BSRR.set(field<decltype(Registers::BSRR), Pin + 16>);
+            gpio()->BSRR.set(Fields::reset);
         }
         void configure(const config_t& cfg) const noexcept
         {
-            gpio()->OTYPER.write(field<decltype(Registers::OTYPER), Pin>, std::to_underlying(cfg.output_type));
-            gpio()->OSPEEDR.write(field<decltype(Registers::OSPEEDR), Pin * 2, 2>,
-                                  std::to_underlying(cfg.output_speed));
-            gpio()->PUPDR.write(field<decltype(Registers::PUPDR), Pin * 2, 2>, std::to_underlying(cfg.pull_up_down));
-            if constexpr (Pin < 8)
-                gpio()->AFRL.write(field<decltype(Registers::AFRL), Pin * 4, 4>, std::to_underlying(cfg.alt_func));
-            else
-                gpio()->AFRH.write(field<decltype(Registers::AFRH), (Pin - 8) * 4, 4>,
-                                   std::to_underlying(cfg.alt_func));
-            gpio()->MODER.write(field<decltype(Registers::MODER), Pin * 2, 2>, std::to_underlying(cfg.port_mode));
+            auto* registers = gpio();
+            registers->OTYPER.write(Fields::output_type, std::to_underlying(cfg.output_type));
+            registers->OSPEEDR.write(Fields::output_speed, std::to_underlying(cfg.output_speed));
+            registers->PUPDR.write(Fields::pull, std::to_underlying(cfg.pull_up_down));
+            Fields::alternate_function_register(*registers)
+                .write(Fields::alternate_function, std::to_underlying(cfg.alt_func));
+            registers->MODER.write(Fields::mode, std::to_underlying(cfg.port_mode));
         }
     };
 }

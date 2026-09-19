@@ -25,25 +25,6 @@
       "detail": "Build using the preset selected in CMake Tools"
     },
     {
-      "label": "Flash NUCLEO-F411RE",
-      "type": "process",
-      "command": "cmake",
-      "args": [
-        "--build",
-        "--preset",
-        "debug",
-        "--target",
-        "flash"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "dependsOn": [
-        "Configure Debug firmware"
-      ]
-    },
-    {
       "label": "Configure Debug firmware",
       "type": "process",
       "command": "cmake",
@@ -76,7 +57,26 @@
       ]
     },
     {
-      "label": "Serial console NUCLEO-F411RE",
+      "label": "Flash configured board",
+      "type": "process",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "debug",
+        "--target",
+        "flash"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "dependsOn": [
+        "Configure Debug firmware"
+      ]
+    },
+    {
+      "label": "Serial console",
       "type": "process",
       "command": "python3",
       "args": [
@@ -96,57 +96,6 @@
         "instanceLimit": 1
       },
       "detail": "ST-LINK virtual COM port at 115200 baud; Ctrl+] exits. Set NUCLEO_SERIAL_PORT to override auto-detection (Linux/POSIX)."
-    },
-    {
-      "label": "Flash NUCLEO-F439ZI",
-      "type": "process",
-      "command": "cmake",
-      "args": [
-        "--build",
-        "--preset",
-        "f439-debug",
-        "--target",
-        "flash"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "dependsOn": [
-        "Configure F439 Debug firmware"
-      ]
-    },
-    {
-      "label": "Configure F439 Debug firmware",
-      "type": "process",
-      "command": "cmake",
-      "args": [
-        "--preset",
-        "f439-debug"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Build F439 Debug firmware",
-      "type": "process",
-      "command": "cmake",
-      "args": [
-        "--build",
-        "--preset",
-        "f439-debug"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "dependsOn": [
-        "Configure F439 Debug firmware"
-      ],
-      "problemMatcher": [
-        "$gcc"
-      ]
     }
   ]
 }

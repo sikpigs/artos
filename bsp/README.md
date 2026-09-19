@@ -36,19 +36,17 @@ validation is future board-description work.
 ```sh
 cmake --preset debug
 cmake --build --preset debug --target all bsp-checks regmap-checks kconfig-checks
-cmake --preset f439-debug
-cmake --build --preset f439-debug --target all bsp-checks
-cmake --preset f439-release
-cmake --build --preset f439-release
+cmake --preset min-size
+cmake --build --preset min-size
 ```
 
-`debug`/`release` seed the F411 board; `f439-debug`/`f439-release` seed the F439.
-Saved `.config` files remain authoritative. Use separate build directories for
-each board, or change the board through `menuconfig`. Firmware filenames follow
-the selected board, e.g. `nucleo_f439zi_baremetal.elf`. The `flash` and
-`debug-server` targets select the board's OpenOCD file. The root `openocd.cfg`
-remains a compatibility entry point for F411. VS Code has separate launch/attach
-configurations and build tasks for the two boards.
+Presets select Debug, Release, or Minimum Size behavior only. Each preset's saved
+`.config` is authoritative and selects the board through Kconfig; use
+`menuconfig` to change it. Firmware filenames follow the selected board, e.g.
+`nucleo_f439zi_baremetal.elf`. The `flash` and `debug-server` targets select the
+board's OpenOCD file. The root `openocd.cfg` remains a compatibility entry point
+for F411. VS Code retains board-specific launch/attach metadata but uses the
+shared Debug configure/build task.
 
 ## Register generation
 
@@ -64,9 +62,10 @@ an executable consistently with the formatting hook. `--soc-dir` can point to an
 its `svd/regmap.json` specifies the device, C++ namespace and pinned SVD hash.
 The generator has no board-specific paths. Generated layouts are deliberately
 chip-specific; matching SVD group names do not imply hardware compatibility.
-GPIO/USART implementation reuse is through explicit register-type template
-parameters, with layout checks and board-contract tests. F411's existing driver
-names remain thin compatibility adapters; the board bindings use the shared API.
+GPIO implementation reuse is through generated-regmap pin adapters; USART uses
+explicit register-type template parameters. Layout checks and board-contract
+tests cover both. F411's existing driver names remain thin compatibility adapters;
+the board bindings use the shared API.
 
 ## Adding another board or chip
 

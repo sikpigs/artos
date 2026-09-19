@@ -3,8 +3,8 @@
 A C/C++23 and assembly project for NUCLEO-F411RE and NUCLEO-F439ZI, using GNU Arm
 Embedded and CMake/Ninja without a vendor HAL. The monitor uses USART2 (PA2/PA3)
 on F411 or USART3 (PD8/PD9) on F439, at 115200 baud. Both start at 16 MHz HSI.
-See [board/SoC architecture and F439 setup](bsp/README.md). The commands below
-default to F411; use the `f439-debug` / `f439-release` presets for F439.
+See [board/SoC architecture and F439 setup](bsp/README.md). CMake presets select
+only the build mode; Kconfig selects the board and firmware features.
 
 C/C++ startup and library hooks live in [runtime/](runtime/README.md).
 The [kernel](kernel/README.md) provides priority scheduling, blocking waits and
@@ -67,7 +67,6 @@ Configure the board builds and host tests needed by your staged changes:
 
 ```sh
 cmake --preset debug
-cmake --preset f439-debug
 cmake -S tests/host -B build/host-tests -G Ninja
 ```
 
@@ -79,7 +78,7 @@ generated headers and compiler target. Host builds export their database automat
 
 `CLANG_TIDY_BUILD_DIR` restricts analysis to one build. Alternatively,
 `CLANG_TIDY_BUILD_DIRS` supplies an ordered list separated by the platform path
-separator (`:` on Linux), for example `build/f439-debug:build/debug:build/host-tests`.
+separator (`:` on Linux), for example `build/debug:build/host-tests`.
 `CLANG_TIDY` selects the executable. GNU Arm library paths are discovered from
 the selected command's compiler. The analysis snapshot omits GCC’s ARM
 `-mgeneral-regs-only` flag because Clang 18 rejects it; the firmware build retains
@@ -105,7 +104,7 @@ headers in the current include layout and omits generated board/register headers
 Extend the filter when adding new nested include directories. Main source file
 diagnostics are always reported.
 
-Install clang-tidy, configure the desired board preset, and validate the settings:
+Install clang-tidy, configure the desired build-mode preset, and validate the settings:
 
 ```sh
 sudo apt install clang-tidy
@@ -126,9 +125,8 @@ clang-tidy -p build/debug runtime/cxa_guard.cpp \
   --extra-arg=-isystem/usr/lib/arm-none-eabi/include
 ```
 
-Use `-p build/f439-debug` for the F439 compilation database. Run checks on `.cpp`
-translation units to analyze their included headers in context. Omit `--fix`
-while reviewing the initial findings.
+Run checks on `.cpp` translation units to analyze their included headers in
+context. Omit `--fix` while reviewing the initial findings.
 
 The installed Clang 18 / GNU Arm 13.2.1 combination does not expose
 `std::expected`. `include/expected_compat.h` automatically selects the local
@@ -150,7 +148,8 @@ cmake --build --preset debug --target flash
 
 Artifacts are in `build/debug/`: ELF with symbols, HEX, BIN and linker map.
 Debug builds use `-O0 -g3` for source stepping and macro information. Release
-builds are available through the `release` configure/build presets.
+and size-optimized builds are available through the `release` and `min-size`
+configure/build presets.
 
 The `flash` target builds, programs, verifies and resets the board. It is
 available when OpenOCD is found at configure time. Set
@@ -165,10 +164,14 @@ openocd -f openocd.cfg \
 ## VS Code formatting and diagnostics
 
 Install the recommended **clangd** extension (`llvm-vs-code-extensions.vscode-clangd`)
-and let it install its language server if prompted. Configure a board preset so
-the root `compile_commands.json` link points to the desired build. After changing
-the server arguments, run **clangd: Restart language server** from the Command
-Palette (or reload the window).
+and let it install its language server if prompted. Configure a build-mode preset
+so the root `compile_commands.json` link points to the desired build. After
+changing the server arguments, run **clangd: Restart language server** from the
+Command Palette (or reload the window).
+
+Chip-specific headers are routed by `.clangd` to `build/debug` with their own
+include roots, preventing header diagnostics from borrowing an incompatible
+board command. Configure the Debug preset before working across the SoC trees.
 
 C and C++ files use clangd as their default formatter and format on save using
 the root `.clang-format`. **Format Document** also works. Clangd uses its bundled
@@ -197,12 +200,15 @@ compiler for the target and system include paths. Update that path in
 3. Set source breakpoints, use **F10** to step over, **F11** to step into,
    and **F5** to continue. Cortex-Debug provides registers and memory views.
 
+Select the launch configuration matching the board chosen in `build/debug/.config`;
+the Debug build produces an ELF only for that configured board.
+
 **Attach NUCLEO-F411RE (ST-LINK/OpenOCD)** connects and halts without building
 or flashing. Its `build/debug/` ELF must match the firmware already on the
 board. To debug startup, change `runToEntryPoint` to `Reset_Handler` in
 `.vscode/launch.json`.
 
-**Tasks: Run Task > Flash NUCLEO-F411RE** builds/flashes the Debug preset.
+**Tasks: Run Task > Flash configured board** builds/flashes the Debug preset.
 The regular **CMake: build** task still follows the selected CMake preset.
 
 ### Peripheral registers
@@ -217,7 +223,7 @@ received data); avoid expanding data registers while using the serial monitor.
 
 ### Integrated serial console
 
-On Linux, run **Tasks: Run Task > Serial console NUCLEO-F411RE**. It opens a
+On Linux, run **Tasks: Run Task > Serial console**. It opens a
 dedicated VS Code terminal at **115200 baud, 8N1, no flow control**, using the
 ST-LINK USB virtual COM port. It works alongside F5 debugging; the firmware's
 monitor processes input only while the CPU is running. **Ctrl+]** closes the
@@ -379,10 +385,11 @@ The main stack reservation remains 4 KiB.
 Pins and device selection live in each board’s `board.dts`; CMake generates
 `board.h` and `board_devices.h` through dtc/DTB. See [board generation](bsp/README.md#board-header-generation).
 
-Each build directory has its own `.config`; Debug and Release selections are
-independent. The first configure uses the selected preset’s F411 or F439 defconfig.
-Subsequent builds use the saved `.config` and automatically regenerate the
-CMake selections and `generated/build_config.h` when it changes.
+Each build directory has its own `.config`; Debug, Release, and Minimum Size
+selections are independent. The first configure uses Kconfig's default board
+unless `KCONFIG_DEFCONFIG` names another seed. Subsequent builds use the saved
+`.config` and automatically regenerate the CMake selections and
+`generated/build_config.h` when it changes.
 
 ```sh
 cmake --build --preset debug --target savedefconfig

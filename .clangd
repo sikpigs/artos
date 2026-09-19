@@ -10,3 +10,19 @@ Diagnostics:
   ClangTidy:
     # Read the check list from .clang-tidy, including slower supported checks.
     FastCheckFilter: None
+
+---
+# Header compile-command inference can select a source from the configured board.
+# Use the stable Debug database and add each chip-specific tree's own include root.
+If:
+  PathMatch: bsp/soc/st/stm32f4/stm32f411/include/.*
+CompileFlags:
+  CompilationDatabase: build/debug
+  Add: [-I../../bsp/soc/st/stm32f4/stm32f411/include]
+
+---
+If:
+  PathMatch: bsp/soc/st/stm32f4/stm32f439/include/.*
+CompileFlags:
+  CompilationDatabase: build/debug
+  Add: [-I../../bsp/soc/st/stm32f4/stm32f439/include]
