@@ -1,12 +1,15 @@
 #pragma once
 
-#include "thread.h"
-
 #include <array>
 #include <cstddef>
 
+#include <build_config.h>
+#include <intrusive_list.h>
+
 // Private declarations for the existing shared state. Defined in scheduler.cpp.
 namespace artos::thread::internal {
+    struct tcb_t;
+
     using ready_queue_t = intrusive_list_t;
 
     extern std::array<ready_queue_t, build_config::artos::priority_levels> ready_queue;

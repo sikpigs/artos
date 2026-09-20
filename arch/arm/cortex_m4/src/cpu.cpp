@@ -45,7 +45,7 @@ namespace cpu::port {
         __asm volatile("msr basepri_max, %0" : : "r"(state) : "memory");
     }
 
-    [[nodiscard]] basepri_t irq_save_mask_below(basepri_t priority) noexcept
+    [[nodiscard]] basepri_t irq_save_raise_mask(basepri_t priority) noexcept
     {
         basepri_t state;
         __asm volatile(

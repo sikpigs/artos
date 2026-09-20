@@ -22,17 +22,16 @@ clock divisibility and SysTick reload range. At 1 kHz the reload is 15,999.
 ## Kconfig workflow
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target menuconfig
-cmake --build --preset debug
-cmake --build --preset debug --target savedefconfig
+./artos.py menuconfig
+./artos.py build
+./artos.py save-defconfig
 ```
 
 The `debug`, `release`, and `min-size` presets select only optimization/debugging
 behavior. Each build directory's `.config` selects its board and is authoritative
 once created. `KCONFIG_DEFCONFIG` can seed a new configuration explicitly;
 `savedefconfig` writes a minimal seed to that build's `defconfig` for retention
-under `configs/`. The old `-DBSP` selector is retired.
+under `configs/`.
 
 Kconfiglib rejects unknown settings and out-of-range values. CMake tracks the
 schemas, generator, seed and saved configuration; outputs are rewritten only when
@@ -49,8 +48,6 @@ content changes. No Kconfig processing occurs on the MCU.
 Typed values appear in `build_config::artos` and `build_config::console`.
 `CONFIG_MONITOR` depends on `CONFIG_CONSOLE`. Disabling the monitor leaves the
 console and its buffer available. Disabling the console also disables the monitor.
-Rename legacy `CONFIG_MONITOR_RX_BUFFER_SIZE` to `CONFIG_CONSOLE_RX_BUFFER_SIZE` in
-saved configurations. The former monitor workspace setting no longer exists.
 
 `CONFIG_CONSOLE` depends on `CONFIG_ARTOS`, and `CONFIG_MONITOR` depends on
 `CONFIG_CONSOLE`. Disabling ARTOS therefore disables both console and monitor,
@@ -96,7 +93,8 @@ support is not implemented. See [wait and deferred contracts](../kernel/README.m
 ## Verification
 
 ```sh
-cmake --build --preset debug --target bsp-checks configuration-checks kconfig-checks devicetree-checks regmap-checks
+./artos.py check
+./artos.py test
 ```
 
 Compile-only and linked-image checks do not execute firmware. Hardware checks

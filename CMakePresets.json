@@ -39,6 +39,17 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "MinSizeRel"
       }
+    },
+    {
+      "name": "host-tests",
+      "displayName": "Host Tests",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host-tests",
+      "cacheVariables": {
+        "ARTOS_HOST_TESTS": "ON",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -53,6 +64,53 @@
     {
       "name": "min-size",
       "configurePreset": "min-size"
+    },
+    {
+      "name": "host-tests",
+      "configurePreset": "host-tests"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "all",
+      "displayName": "All Tests",
+      "configurePreset": "host-tests",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 4
+      }
+    },
+    {
+      "name": "native",
+      "displayName": "Native C++ Tests",
+      "inherits": "all",
+      "filter": {
+        "include": {
+          "label": "native"
+        }
+      }
+    },
+    {
+      "name": "python",
+      "displayName": "Python Tests",
+      "inherits": "all",
+      "filter": {
+        "include": {
+          "label": "python"
+        }
+      }
+    },
+    {
+      "name": "hooks",
+      "displayName": "Pre-commit Hook Tests",
+      "inherits": "all",
+      "filter": {
+        "include": {
+          "label": "hooks"
+        }
+      }
     }
   ]
 }

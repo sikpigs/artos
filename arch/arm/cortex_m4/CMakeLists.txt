@@ -1,4 +1,4 @@
-target_sources(${FIRMWARE_TARGET} PRIVATE
+target_sources(firmware PRIVATE
     src/cpu.cpp
     src/reset.s
     src/fault_handlers.s
@@ -13,7 +13,7 @@ set_source_files_properties(src/fault_capture.cpp
     DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTIES COMPILE_OPTIONS "-mgeneral-regs-only")
 
 if(CONFIG_ARTOS)
-    target_sources(${FIRMWARE_TARGET} PRIVATE
+    target_sources(firmware PRIVATE
         src/artos.cpp
         src/pendsv.s
         src/svc.s

@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-// Always available, including builds without ARTOS. The current token is the
-// Cortex-M PRIMASK value; callers must preserve it unchanged.
 namespace cpu::port {
     using primask_t = std::uint32_t;
     using basepri_t = std::uint32_t;
@@ -18,7 +16,7 @@ namespace cpu::port {
     [[nodiscard]] primask_t irq_save_disable() noexcept;
     void                    irq_restore(primask_t state) noexcept;
 
-    [[nodiscard]] basepri_t irq_save_mask_below(basepri_t priority) noexcept;
+    [[nodiscard]] basepri_t irq_save_raise_mask(basepri_t priority) noexcept;
     void                    irq_restore_mask(basepri_t priority) noexcept;
 
     [[nodiscard]] bool is_in_irq() noexcept;

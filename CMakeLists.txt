@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.24)
 
+option(ARTOS_HOST_TESTS "Configure the host-native CTest project" OFF)
+if(ARTOS_HOST_TESTS)
+    project(artos_host_tests LANGUAGES CXX)
+    enable_testing()
+    add_subdirectory(tests/host)
+    return()
+endif()
+
 project(artos_firmware LANGUAGES C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
@@ -26,14 +34,14 @@ include(cmake/kconfig.cmake)
 # The current SoCs use ARM cores; each core owns its flags, headers and sources.
 set(ARCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/arch/arm/${CONFIG_CPU}")
 include("${ARCH_DIR}/cpu.cmake")
-set(FIRMWARE_TARGET "${CONFIG_BOARD}_baremetal")
-# Retire the old cache selector: Kconfig is the sole source of board selection.
-if(DEFINED BSP)
-    if(NOT BSP STREQUAL CONFIG_BSP)
-        message(FATAL_ERROR "BSP selection moved to Kconfig; remove -DBSP and use menuconfig")
-    endif()
-    unset(BSP CACHE)
+
+set(ARTOS_OUTPUT_NAME "artos" CACHE STRING "Base name for firmware artifacts")
+if(NOT ARTOS_OUTPUT_NAME MATCHES "^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    message(FATAL_ERROR
+        "ARTOS_OUTPUT_NAME must start with an alphanumeric character and contain only letters, numbers, '.', '_' or '-'")
 endif()
+set(FIRMWARE_OUTPUT_BASE "${CMAKE_CURRENT_BINARY_DIR}/${ARTOS_OUTPUT_NAME}")
+
 add_library(firmware_headers INTERFACE)
 target_include_directories(firmware_headers INTERFACE
     ${CMAKE_CURRENT_BINARY_DIR}/generated
@@ -42,7 +50,7 @@ target_include_directories(firmware_headers INTERFACE
 )
 add_subdirectory(bsp)
 
-add_executable(${FIRMWARE_TARGET})
+add_executable(firmware)
 
 add_subdirectory(app)
 add_subdirectory("${ARCH_DIR}" arch)
@@ -51,16 +59,16 @@ add_subdirectory(kernel)
 
 if(CONFIG_CONSOLE)
     add_subdirectory(modules/console)
-    target_link_libraries(${FIRMWARE_TARGET} PRIVATE console::console)
+    target_link_libraries(firmware PRIVATE console::console)
 endif()
 
 if(CONFIG_MONITOR)
     add_subdirectory(modules/monitor)
-    target_link_libraries(${FIRMWARE_TARGET} PRIVATE monitor::monitor)
+    target_link_libraries(firmware PRIVATE monitor::monitor)
 endif()
-target_link_libraries(${FIRMWARE_TARGET} PRIVATE bsp::board)
+target_link_libraries(firmware PRIVATE bsp::board)
 
-target_compile_options(${FIRMWARE_TARGET} PRIVATE
+target_compile_options(firmware PRIVATE
     $<$<CONFIG:Debug>:-O0>
     $<$<CONFIG:Debug>:-g3>
     -Wall
@@ -73,28 +81,32 @@ target_compile_options(${FIRMWARE_TARGET} PRIVATE
     -fdata-sections
 )
 
-target_link_options(${FIRMWARE_TARGET} PRIVATE
+target_link_options(firmware PRIVATE
     -nostartfiles
     # Firmware does not execute code on the stack; libnosys objects may lack
     # .note.GNU-stack metadata, so declare this explicitly at link time.
     -Wl,-z,noexecstack
     -Wl,--gc-sections
     -Wl,--print-memory-usage
-    -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_TARGET}.map
+    -Wl,-Map=${FIRMWARE_OUTPUT_BASE}.map
     --specs=nano.specs
     --specs=nosys.specs
 )
 
-set_target_properties(${FIRMWARE_TARGET} PROPERTIES LINKER_LANGUAGE CXX SUFFIX ".elf")
+set_target_properties(firmware PROPERTIES
+    LINKER_LANGUAGE CXX
+    OUTPUT_NAME "${ARTOS_OUTPUT_NAME}"
+    SUFFIX ".elf"
+)
 
-add_custom_command(TARGET ${FIRMWARE_TARGET} POST_BUILD
-    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${FIRMWARE_TARGET}>
+add_custom_command(TARGET firmware POST_BUILD
+    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:firmware>
     COMMAND ${CMAKE_OBJCOPY} -O ihex
-            $<TARGET_FILE:${FIRMWARE_TARGET}>
-            ${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_TARGET}.hex
+            $<TARGET_FILE:firmware>
+            ${FIRMWARE_OUTPUT_BASE}.hex
     COMMAND ${CMAKE_OBJCOPY} -O binary
-            $<TARGET_FILE:${FIRMWARE_TARGET}>
-            ${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_TARGET}.bin
+            $<TARGET_FILE:firmware>
+            ${FIRMWARE_OUTPUT_BASE}.bin
     COMMENT "Creating HEX and BIN firmware images"
 )
 
@@ -104,8 +116,8 @@ find_program(OPENOCD_EXECUTABLE NAMES openocd)
 if(OPENOCD_EXECUTABLE)
     add_custom_target(flash
         COMMAND "${OPENOCD_EXECUTABLE}" -f "${BSP_OPENOCD_CONFIG}"
-            -c "program {$<TARGET_FILE:${FIRMWARE_TARGET}>} verify reset exit"
-        DEPENDS ${FIRMWARE_TARGET}
+            -c "program {$<TARGET_FILE:firmware>} verify reset exit"
+        DEPENDS firmware
         USES_TERMINAL
         VERBATIM
         COMMENT "Flashing and verifying ${CONFIG_BOARD} via ST-LINK"
@@ -137,9 +149,9 @@ add_custom_target(regmap-checks
 
 add_custom_target(bsp-checks
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/check_firmware.py"
-        --elf "$<TARGET_FILE:${FIRMWARE_TARGET}>" --board "${CONFIG_BOARD}"
+        --elf "$<TARGET_FILE:firmware>" --board "${CONFIG_BOARD}"
         --objcopy "${CMAKE_OBJCOPY}" --nm "${CMAKE_NM}"
-    DEPENDS ${FIRMWARE_TARGET} configuration-checks
+    DEPENDS firmware configuration-checks
     VERBATIM COMMENT "Verify linked board memory and interrupt vectors")
 
 add_custom_target(kconfig-checks

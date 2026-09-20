@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Analyze an isolated copy of the index; never apply fixes or change staging."""
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ import tempfile
 
 SOURCES = {'.c', '.cc', '.cpp', '.cxx', '.C'}
 HEADERS = {'.h', '.hh', '.hpp', '.hxx'}
+DEFAULT_MAX_JOBS = 4
 
 
 def git(*args):
@@ -38,6 +40,29 @@ def arm_arguments(command):
         f'--extra-arg=-isystem{Path(path.strip()).resolve()}' for path in includes
         if path.strip() and '/lib/gcc/' not in str(Path(path.strip()).resolve())
     ]]
+
+
+def job_count(unit_count):
+    """Return a conservative parallelism level for memory-heavy tidy jobs."""
+    configured = os.environ.get('CLANG_TIDY_JOBS')
+    if configured:
+        try:
+            jobs = int(configured)
+        except ValueError as error:
+            raise RuntimeError('CLANG_TIDY_JOBS must be a positive integer') from error
+        if jobs < 1:
+            raise RuntimeError('CLANG_TIDY_JOBS must be a positive integer')
+    else:
+        jobs = min(DEFAULT_MAX_JOBS, os.cpu_count() or 1)
+    return min(jobs, unit_count)
+
+
+def run_analysis(task):
+    tidy, build, snapshot, source, extras = task
+    return subprocess.run(
+        [tidy, '-p', str(build), str(source), '--warnings-as-errors=*', *extras],
+        cwd=snapshot, capture_output=True,
+    )
 
 
 def main():
@@ -132,8 +157,8 @@ def main():
                                'CLANG_TIDY_BUILD_DIRS (path-separated build directories).')
         if all_units and not selected:
             raise RuntimeError('No staged translation units match the compilation database. Reconfigure it.')
-        failed = False
         extras_cache = {}
+        tasks = []
         for name in selected:
             arguments, build = available[name]
             command = tuple(arguments)
@@ -141,8 +166,20 @@ def main():
             if key not in extras_cache:
                 extras_cache[key] = arm_arguments(command)
             print(f'clang-tidy (staged): {name}', flush=True)
-            result = subprocess.run([tidy, '-p', str(build), str(snapshot / name),
-                                     '--warnings-as-errors=*', *extras_cache[key]], cwd=snapshot)
+            tasks.append((tidy, build, snapshot, snapshot / name, extras_cache[key]))
+
+        if not tasks:
+            return 0
+
+        # clang-tidy processes are independent and read only the completed
+        # snapshot. Capture their output to avoid interleaved diagnostics, then
+        # report it in the stable source order above.
+        with ThreadPoolExecutor(max_workers=job_count(len(tasks))) as executor:
+            results = executor.map(run_analysis, tasks)
+        failed = False
+        for result in results:
+            sys.stdout.buffer.write(result.stdout)
+            sys.stderr.buffer.write(result.stderr)
             failed |= result.returncode != 0
         if failed:
             print('Commit blocked: clang-tidy reported diagnostics or analysis errors above. '

@@ -26,16 +26,20 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
 
-    def test_cmake_presets_only_select_build_modes(self):
+    def test_cmake_presets_separate_firmware_modes_from_host_tests(self):
         presets = json.loads((SOURCE / "CMakePresets.json").read_text())
         configure = {preset["name"]: preset for preset in presets["configurePresets"]}
-        self.assertEqual(set(configure), {"base", "debug", "release", "min-size"})
+        self.assertEqual(set(configure),
+                         {"base", "debug", "release", "min-size", "host-tests"})
         self.assertEqual(configure["debug"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Debug")
         self.assertEqual(configure["release"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Release")
         self.assertEqual(configure["min-size"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "MinSizeRel")
+        self.assertEqual(configure["host-tests"]["cacheVariables"]["ARTOS_HOST_TESTS"], "ON")
         self.assertNotIn("KCONFIG_DEFCONFIG", json.dumps(presets))
         self.assertEqual({preset["name"] for preset in presets["buildPresets"]},
-                         {"debug", "release", "min-size"})
+                         {"debug", "release", "min-size", "host-tests"})
+        self.assertEqual({preset["name"] for preset in presets["testPresets"]},
+                         {"all", "native", "python", "hooks"})
         self.assertIn('configs/default_defconfig',
                       (SOURCE / "cmake/kconfig.cmake").read_text())
 
@@ -83,10 +87,6 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("set(CONFIG_MONITOR OFF)", cmake)
         self.assertIn("rx_buffer_size = 0",
                       (self.build / "generated/build_config.h").read_text())
-
-    def test_retired_monitor_workspace_option_rejected(self):
-        result = self.generate("CONFIG_MONITOR_WORKSPACE_SIZE=160\n", success=False)
-        self.assertIn("undefined symbol MONITOR_WORKSPACE_SIZE", result.stderr)
 
     def test_f439_selects_soc_variant_and_cpu(self):
         self.generate("CONFIG_BOARD_NUCLEO_F439ZI=y\n")

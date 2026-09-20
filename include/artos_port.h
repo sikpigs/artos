@@ -10,6 +10,8 @@ namespace artos::port {
     using cpu::port::irq_save_disable;
     using cpu::port::irq_restore;
 
+    inline constexpr cpu::port::basepri_t kernel_interrupt_priority = 0xF0;
+
     // Configure kernel exceptions before enabling the tick.
     void init() noexcept;
     void start_tick() noexcept;

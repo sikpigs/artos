@@ -145,6 +145,38 @@ class TidyHookTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, b'')
 
+    def test_invalid_parallelism_blocks(self):
+        result = self.run_hook(CLANG_TIDY_JOBS='0')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(b'CLANG_TIDY_JOBS must be a positive integer', result.stderr)
+
+    def test_translation_units_run_in_parallel(self):
+        database = self.root / 'build/debug/compile_commands.json'
+        commands = json.loads(database.read_text())
+        for name in ('second.cpp', 'third.cpp'):
+            self.stage(name, 'int value;\n')
+            commands.append({
+                'directory': str(database.parent),
+                'file': str(self.root / name),
+                'arguments': ['c++', '-c', str(self.root / name)],
+            })
+        database.write_text(json.dumps(commands))
+        log = self.root / 'tidy.log'
+        with self.tidy.open('a') as stream:
+            stream.write('import os, time\n'
+                         'log = pathlib.Path(os.environ["TIDY_LOG"])\n'
+                         'with log.open("a") as output:\n'
+                         '    output.write("start " + source.name + "\\n")\n'
+                         'time.sleep(0.25)\n'
+                         'with log.open("a") as output:\n'
+                         '    output.write("end " + source.name + "\\n")\n')
+        result = self.run_hook(CLANG_TIDY_JOBS='3', TIDY_LOG=str(log))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        events = log.read_text().splitlines()
+        self.assertEqual({event.split()[0] for event in events[:3]}, {'start'})
+        self.assertEqual({event.removeprefix('start ') for event in events[:3]},
+                         {'file with spaces.cpp', 'second.cpp', 'third.cpp'})
+
     @unittest.skipUnless(shutil.which('clang-tidy') and shutil.which('arm-none-eabi-g++'),
                          'clang-tidy and GNU Arm are required')
     def test_real_arm_analysis(self):

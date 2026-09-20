@@ -34,18 +34,16 @@ ordinary initialized RAM. Package identity is recorded; complete package-pin
 validation is future board-description work.
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target all bsp-checks regmap-checks kconfig-checks
-cmake --preset min-size
-cmake --build --preset min-size
+./artos.py build
+./artos.py check
+./artos.py --preset min-size build
 ```
 
 Presets select Debug, Release, or Minimum Size behavior only. Each preset's saved
 `.config` is authoritative and selects the board through Kconfig; use
-`menuconfig` to change it. Firmware filenames follow the selected board, e.g.
-`nucleo_f439zi_baremetal.elf`. The `flash` and `debug-server` targets select the
-board's OpenOCD file. The root `openocd.cfg` remains a compatibility entry point
-for F411. VS Code retains board-specific launch/attach metadata but uses the
+`menuconfig` to change it. Firmware uses the board-independent artifact name
+`artos.elf` by default. The `flash` and `debug-server` targets select the board's
+OpenOCD file. VS Code retains board-specific launch/attach metadata but uses the
 shared Debug configure/build task.
 
 ## Register generation

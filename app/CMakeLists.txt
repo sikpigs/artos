@@ -1,1 +1,1 @@
-target_sources(${FIRMWARE_TARGET} PRIVATE main.cpp)
+target_sources(firmware PRIVATE main.cpp)

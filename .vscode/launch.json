@@ -7,10 +7,10 @@
       "request": "launch",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/debug/nucleo_f411re_baremetal.elf",
+      "executable": "${workspaceFolder}/build/debug/artos.elf",
       "preLaunchTask": "Build Debug firmware",
       "configFiles": [
-        "${workspaceFolder}/openocd.cfg"
+        "${workspaceFolder}/bsp/boards/st/nucleo_f411re/openocd.cfg"
       ],
       "runToEntryPoint": "main",
       "showDevDebugOutput": "none",
@@ -27,9 +27,9 @@
       "request": "attach",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/debug/nucleo_f411re_baremetal.elf",
+      "executable": "${workspaceFolder}/build/debug/artos.elf",
       "configFiles": [
-        "${workspaceFolder}/openocd.cfg"
+        "${workspaceFolder}/bsp/boards/st/nucleo_f411re/openocd.cfg"
       ],
       "showDevDebugOutput": "none",
       "device": "STM32F411RE",
@@ -45,7 +45,7 @@
       "request": "launch",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/debug/nucleo_f439zi_baremetal.elf",
+      "executable": "${workspaceFolder}/build/debug/artos.elf",
       "preLaunchTask": "Build Debug firmware",
       "configFiles": [
         "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
@@ -65,7 +65,7 @@
       "request": "attach",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "executable": "${workspaceFolder}/build/debug/nucleo_f439zi_baremetal.elf",
+      "executable": "${workspaceFolder}/build/debug/artos.elf",
       "configFiles": [
         "${workspaceFolder}/bsp/boards/st/nucleo_f439zi/openocd.cfg"
       ],

@@ -1,9 +1,8 @@
 #pragma once
 
 #include <artos.h>
-#include <bit>
+#include <internal/thread_id.h>
 #include <intrusive_list.h>
-#include <limits>
 #include <wait.h>
 
 namespace artos::thread::internal {
@@ -13,6 +12,7 @@ namespace artos::thread::internal {
         ready,
         running,
         blocked,
+        blocked_forever,
         suspended,
         sleeping,
         finished
@@ -36,30 +36,19 @@ namespace artos::thread::internal {
 
         std::string_view name;
         priority_t       priority;
-        thread_state_t   state = thread_state_t::inactive;
-        tick_t           wake_tick = 0;
+        thread_state_t   state { thread_state_t::inactive };
 
-        list_hook_t ready;
+        tick_time_t deadline {};
+
         wait_node_t waiter;
 
-        static constexpr std::uint32_t index_bits { std::numeric_limits<std::uint32_t>::digits
-                                                    - static_cast<std::uint32_t>(
-                                                        std::countl_zero(build_config::artos::max_threads)) };
-        static constexpr std::uint32_t index_mask = ((1U << index_bits) - 1U);
-        static constexpr std::uint32_t generation_bits { std::numeric_limits<std::uint32_t>::digits - index_bits };
-        static constexpr std::uint32_t generation_mask = ((1U << generation_bits) - 1U) << index_bits;
+        using id_layout = thread_id_layout_t<id_t, build_config::artos::max_threads>;
 
-        id_t id { generation_mask };
+        id_t id { id_layout::initial_id };
 
-        constexpr id_t make_thread_id(const std::int32_t ix) noexcept
+        constexpr id_t make_thread_id(std::size_t index) noexcept
         {
-            // XXX For now we'll just rollover the generation
-            auto generation = id & generation_mask;
-            generation >>= index_bits;
-            ++generation;
-            generation <<= index_bits;
-            generation &= generation_mask;
-            id = generation | (static_cast<std::uint32_t>(ix) & index_mask);
+            id = id_layout::next(id, index);
             return id;
         }
     };

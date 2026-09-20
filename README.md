@@ -35,130 +35,79 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-CMake detects this environment automatically. An explicit
-`-DPython3_EXECUTABLE=/path/to/python` can select another interpreter with
-Kconfiglib installed. Configuration tools run only on the host.
+CMake detects this environment automatically. Run
+`./artos.py configure -D Python3_EXECUTABLE=/path/to/python` to select another
+interpreter with Kconfiglib installed. Configuration tools run only on the host.
 
-## Pre-commit formatting and clang-tidy checks
+## Development checks
 
-Install clang-format and clang-tidy and enable the versioned hook once per clone:
+Install clang-format and clang-tidy, then enable the repository hook once per
+clone:
 
 ```sh
 sudo apt install clang-format clang-tidy
 git config core.hooksPath .githooks
+./artos.py build
+./artos.py test
 ```
 
-The hook checks the full staged contents of added, copied, renamed, or modified
-C/C++ source and header files against the staged `.clang-format` configuration.
-An empty formatting diff allows the commit; otherwise it prints the diff and
-blocks the commit. Missing tools or formatter errors also block the commit with
-a reason. Working files and the Git index are left untouched, including partially
-staged changes. Deleted files and other file types are skipped.
-
-Fix reported files with `clang-format -i path/to/file.cpp`, then stage the desired
-changes again (use `git add -p` for partial staging). Set `CLANG_FORMAT` to select
-a specific executable, such as `clang-format-18`. Python 3 is also required.
-After formatting passes, clang-tidy analyzes an isolated copy of the staged tree.
-It promotes enabled warnings to errors for commits and blocks on diagnostics,
-missing tools, or parsing errors. It never applies fixes. Stage `.clang-tidy`
-along with the hook when first adding them to the repository.
-
-Configure the board builds and host tests needed by your staged changes:
-
-```sh
-cmake --preset debug
-cmake -S tests/host -B build/host-tests -G Ninja
-```
-
-The hook reads the active `compile_commands.json` first, then other databases in
-`build/*/compile_commands.json` to cover board-specific sources and native tests.
-For shared sources it selects the first available command, rather than checking
-every board or test variant. Each selected command retains its own build directory,
-generated headers and compiler target. Host builds export their database automatically.
-
-`CLANG_TIDY_BUILD_DIR` restricts analysis to one build. Alternatively,
-`CLANG_TIDY_BUILD_DIRS` supplies an ordered list separated by the platform path
-separator (`:` on Linux), for example `build/debug:build/host-tests`.
-`CLANG_TIDY` selects the executable. GNU Arm library paths are discovered from
-the selected command's compiler. The analysis snapshot omits GCC’s ARM
-`-mgeneral-regs-only` flag because Clang 18 rejects it; the firmware build retains
-that restriction. Static analysis does not verify generated instruction usage.
-
-Changed sources must appear in at least one selected database. Header changes
-(including deletions) and `.clang-tidy` changes check all available staged C/C++
-translation units. Unused headers and unconfigured variants are not covered.
-The hook copies generated artifacts from local builds, so keep them current with
-the staged configuration. It analyzes the staged source tree without applying
-fixes or changing staging. Staged symlinks are rejected.
-
-Run both hooks' tests with
-`python3 -m unittest discover -s tests -p 'test_pre_commit_clang*.py'`.
-
-## Optional clang-tidy analysis
-
-The root `.clang-tidy` enables selected correctness checks, const-correctness,
-`nullptr` modernization, and snake_case member naming without leading/trailing
-underscores. Manual runs are advisory (`WarningsAsErrors: ''`);
-the pre-commit hook overrides this with `--warnings-as-errors=*`. The header filter includes handwritten
-headers in the current include layout and omits generated board/register headers.
-Extend the filter when adding new nested include directories. Main source file
-diagnostics are always reported.
-
-Install clang-tidy, configure the desired build-mode preset, and validate the settings:
-
-```sh
-sudo apt install clang-tidy
-cmake --preset debug
-clang-tidy --verify-config
-```
-
-Clang needs the ARM target and GNU Arm standard-library headers in addition to
-the compilation database. This invocation was tested with clang-tidy 18 and
-the Ubuntu GNU Arm 13.2.1 installation; adjust the include paths for your system
-(inspect `arm-none-eabi-g++ -E -x c++ -v /dev/null`):
-
-```sh
-clang-tidy -p build/debug runtime/cxa_guard.cpp \
-  --extra-arg=--target=arm-none-eabi \
-  --extra-arg=-isystem/usr/lib/arm-none-eabi/include/c++/13.2.1 \
-  --extra-arg=-isystem/usr/lib/arm-none-eabi/include/c++/13.2.1/arm-none-eabi \
-  --extra-arg=-isystem/usr/lib/arm-none-eabi/include
-```
-
-Run checks on `.cpp` translation units to analyze their included headers in
-context. Omit `--fix` while reviewing the initial findings.
-
-The installed Clang 18 / GNU Arm 13.2.1 combination does not expose
-`std::expected`. `include/expected_compat.h` automatically selects the local
-fallback for that combination, allowing `app/main.cpp` to be analyzed. The local
-implementation supports integral/enum payloads and is covered by native tests.
-See [the expected tests](tests/host/README.md#expected-compatibility-implementation)
-for its limited contract. Compiler errors still fail analysis even with advisory
-checks.
+The hook checks the exact staged source tree without modifying the worktree or
+index. Formatting failures include a patch; clang-tidy checks changed source
+files and checks all configured translation units when a header or `.clang-tidy`
+changes. See [development tooling](docs/development.md) for design details,
+configuration-database selection, performance tuning, CTest presets, and VS Code
+test tasks.
 
 ## Build and flash
 
-Run these commands from the project root:
+The project command driver wraps the CMake workflows while leaving CMake and
+Kconfig as their sources of truth. Run it from the project root:
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug
-cmake --build --preset debug --target flash
+./artos.py build
+./artos.py flash
 ```
 
-Artifacts are in `build/debug/`: ELF with symbols, HEX, BIN and linker map.
+It uses the `debug` preset by default. Select another build mode with
+`--preset release` or `--preset min-size` (the shorter `-p` also works), or set
+`ARTOS_PRESET` for a shell-wide default. Useful commands are:
+
+| Command | Purpose |
+| --- | --- |
+| `configure` | Configure the selected CMake preset; accepts `--fresh` and repeatable `-D NAME=VALUE` |
+| `menuconfig` | Edit the selected preset's board and firmware features |
+| `save-defconfig` | Write the minimal configuration to `build/<preset>/defconfig` |
+| `build [TARGET ...]` | Configure and build all firmware, or named CMake targets |
+| `clean` | Clean products for the selected preset while retaining its configuration |
+| `flash` | Build, program, verify, and reset through OpenOCD |
+| `debug-server` | Start OpenOCD for a GDB connection on port 3333 |
+| `monitor [--port DEVICE]` | Open the 115200-baud ST-LINK serial console |
+| `flash-monitor` | Flash and then open the serial console |
+| `check` | Run firmware compile, configuration, devicetree, and register-map checks |
+| `test` | Configure, build, and run all CTest-registered native and Python tests |
+
+Firmware operations configure first, so a fresh checkout needs no separate setup
+step after the Python dependencies are installed. Use `-j N` with build-oriented
+commands to limit parallelism, `--verbose` to show compiler commands, or global
+`--dry-run` to inspect the delegated commands. Run `./artos.py COMMAND --help`
+for command-specific options.
+
+Artifacts are `artos.elf`, `artos.hex`, `artos.bin`, and `artos.map` in
+`build/debug/`. Override their base name when configuring, for example
+`./artos.py configure -D ARTOS_OUTPUT_NAME=my_firmware`; subsequent builds of
+that preset retain the cached name.
 Debug builds use `-O0 -g3` for source stepping and macro information. Release
 and size-optimized builds are available through the `release` and `min-size`
 configure/build presets.
 
 The `flash` target builds, programs, verifies and resets the board. It is
 available when OpenOCD is found at configure time. Set
-`-DOPENOCD_EXECUTABLE=/path/to/openocd` during configuration if needed.
+`./artos.py configure -D OPENOCD_EXECUTABLE=/path/to/openocd` if needed.
 The equivalent direct command is:
 
 ```sh
-openocd -f openocd.cfg \
-  -c 'program {build/debug/nucleo_f411re_baremetal.elf} verify reset exit'
+openocd -f bsp/boards/st/nucleo_f411re/openocd.cfg \
+  -c 'program {build/debug/artos.elf} verify reset exit'
 ```
 
 ## VS Code formatting and diagnostics
@@ -234,7 +183,7 @@ The dependency-free Python script selects a single ST-LINK device from
 `NUCLEO_SERIAL_PORT` in the environment used to start VS Code, or run:
 
 ```sh
-python3 scripts/serial_console.py --port /dev/serial/by-id/YOUR_STLINK_DEVICE
+./artos.py monitor --port /dev/serial/by-id/YOUR_STLINK_DEVICE
 ```
 
 An explicit `/dev/ttyACM0` also works. Close other serial terminals before
@@ -294,14 +243,14 @@ Linux GDB or binutils installation, update the `linux.gdbPath` and
 In one terminal, start OpenOCD:
 
 ```sh
-cmake --build --preset debug --target debug-server
-# Or: openocd -f openocd.cfg
+./artos.py debug-server
+# Or: openocd -f bsp/boards/st/nucleo_f411re/openocd.cfg
 ```
 
 In another terminal:
 
 ```sh
-gdb-multiarch build/debug/nucleo_f411re_baremetal.elf
+gdb-multiarch build/debug/artos.elf
 ```
 
 Use `arm-none-eabi-gdb` instead on platforms with GNU Arm's GDB. In GDB:
@@ -331,10 +280,9 @@ a time; stop the terminal server before starting an F5 session.
 
 ## OpenOCD configuration and troubleshooting
 
-CMake and VS Code use each board's OpenOCD configuration; root `openocd.cfg`
-is the F411 compatibility entry point. They use OpenOCD's Nucleo-F4 board
-configuration (ST-LINK, SWD, hardware reset), binds to localhost, and uses
-950 kHz, supported by the connected ST-LINK/V2.1. Reset hooks keep this speed
+CMake and VS Code use each board's OpenOCD configuration. They use OpenOCD's
+Nucleo-F4 board configuration (ST-LINK, SWD, hardware reset), bind to localhost,
+and use 950 kHz, supported by the connected ST-LINK/V2.1. Reset hooks keep this speed
 and leave clock initialization to firmware instead of applying the stock
 STM32F4 script's PLL changes.
 
@@ -351,8 +299,8 @@ STM32F4 script's PLL changes.
   original build paths. This warning does not indicate a connection failure;
   continue to `main` or step over library calls. An attach session also needs
   an ELF matching the flashed image to show reliable source locations.
-- **Multiple probes:** add `adapter serial YOUR_STLINK_SERIAL` to
-  `openocd.cfg` to select one.
+- **Multiple probes:** add `adapter serial YOUR_STLINK_SERIAL` to the selected
+  board's `openocd.cfg` to select one.
 
 Configuration references: [OpenOCD reset configuration](https://openocd.org/doc/html/Reset-Configuration.html)
 and [Cortex-Debug launch attributes](https://github.com/Marus/cortex-debug/blob/master/debug_attributes.md).
@@ -369,9 +317,8 @@ reviewed CPU, vector, memory and pin bindings; see [board support](bsp/README.md
 Kconfig selects the board and software settings. To edit the Debug configuration:
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target menuconfig
-cmake --build --preset debug
+./artos.py menuconfig
+./artos.py build
 ```
 
 The menu offers board selection, ARTOS settings, console enable and RX buffer
@@ -392,13 +339,13 @@ unless `KCONFIG_DEFCONFIG` names another seed. Subsequent builds use the saved
 `generated/build_config.h` when it changes.
 
 ```sh
-cmake --build --preset debug --target savedefconfig
+./artos.py save-defconfig
 ```
 
 This exports a minimal configuration to `build/debug/defconfig`. Copy it into
-`configs/` to keep it, then pass `-DKCONFIG_DEFCONFIG=/path/to/defconfig` when
-configuring a fresh build directory. The seed does not overwrite an existing
-`.config`. Board selection replaces the old `-DBSP` option.
+`configs/` to keep it, then run
+`./artos.py configure --fresh -D KCONFIG_DEFCONFIG=/path/to/defconfig` to seed a
+fresh configuration. The seed does not overwrite an existing `.config`.
 
 ARTOS accesses CPU-specific timer and stack operations through
 `include/artos_port.h`. See [configuration boundaries](docs/configuration.md)

@@ -11,16 +11,15 @@ LED and USART communication sections. VCP uses the board's standard solder-bridg
 configuration. Memory source: [STM32F439ZI datasheet](https://www.st.com/resource/en/datasheet/stm32f439zi.pdf).
 
 ```sh
-cmake --preset debug
-cmake --build --preset debug --target menuconfig # select NUCLEO-F439ZI
-cmake --build --preset debug --target all bsp-checks
+./artos.py menuconfig # select NUCLEO-F439ZI
+./artos.py build
+./artos.py check
 # After connecting this board:
-cmake --build --preset debug --target flash
+./artos.py flash
 ```
 
-Use the F439-specific VS Code launch/attach configurations. The F411 root
-`openocd.cfg` is not the F439 entry point; CMake's `flash` and `debug-server`
-targets select the correct board configuration.
+Use the F439-specific VS Code launch/attach configurations. The `flash` and
+`debug-server` targets select the configured board's OpenOCD file.
 
 Build/link checks do not verify hardware behavior. Ethernet,
 USB, external memory, high-speed clock setup and device-specific peripheral

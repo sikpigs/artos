@@ -146,13 +146,13 @@ namespace artos::console {
 
     void buffered_console_t::block_if_empty() noexcept
     {
-        const critical_section_t cs {};
+        critical_section_t cs {};
 
         if (!empty())
         {
             return;
         }
 
-        kernel::locked::block_current(rx_wait_queue);
+        kernel::locked::block_current(rx_wait_queue, artos::wait_forever, std::move(cs));
     }
 }

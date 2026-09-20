@@ -1,10 +1,14 @@
-#include "internal/scheduler.h"
-#include "internal/time.h"
+#include <internal/scheduler.h>
+#include <internal/thread.h>
+#include <internal/time.h>
 
 #include <algorithm>
-#include <artos_port.h>
 #include <cerrno>
 #include <new>
+
+#include <artos.h>
+#include <artos_port.h>
+#include <wait.h>
 
 namespace artos::thread {
     namespace internal {
@@ -44,13 +48,35 @@ namespace artos::thread {
             thread->name = name;
             thread->priority = priority;
             thread->state = thread_state_t::ready;
-            thread->wake_tick = 0;
+            thread->deadline = {};
 
             ++thread_count;
             *tcb_it = thread;
 
             const auto index = std::distance(threads.begin(), tcb_it);
-            return thread->make_thread_id(index);
+            return thread->make_thread_id(static_cast<std::size_t>(index));
+        }
+
+        void sleep_until(const tick_time_t& tick_time)
+        {
+            if (internal::current_thread == nullptr)
+            {
+                return;
+            }
+
+            const artos::critical_section_t cs {};
+
+            if (kernel::internal::deadline_reached(kernel::tick_time(), tick_time))
+            {
+                return;
+            }
+
+            internal::current_thread->deadline = tick_time;
+            internal::current_thread->state = internal::thread_state_t::sleeping;
+
+            // Select and publish a runnable destination before requesting PendSV.
+            // The switch executes after this critical section restores interrupts.
+            kernel::internal::sched();
         }
     }
 
@@ -61,29 +87,12 @@ namespace artos::thread {
             return;
         }
 
-        const auto now = kernel::ticks();
-        sleep_until(now + ticks);
+        const auto now = kernel::tick_time();
+        internal::sleep_until(now + ticks);
     }
 
-    void sleep_until(tick_t ticks) noexcept
+    void sleep_until(const tick_time_t& tick_time) noexcept
     {
-        if (internal::current_thread == nullptr)
-        {
-            return;
-        }
-
-        const artos::critical_section_t cs {};
-
-        if (kernel::internal::deadline_reached(kernel::ticks(), ticks))
-        {
-            return;
-        }
-
-        internal::current_thread->wake_tick = ticks;
-        internal::current_thread->state = internal::thread_state_t::sleeping;
-
-        // Select and publish a runnable destination before requesting PendSV.
-        // The switch executes after this critical section restores interrupts.
-        kernel::internal::sched();
+        internal::sleep_until(tick_time);
     }
 }

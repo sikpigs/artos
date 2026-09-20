@@ -19,7 +19,7 @@ From the repository root:
 ```sh
 python3 scripts/svd_to_regmap.py --soc stm32f411
 python3 scripts/svd_to_regmap.py --soc stm32f411 --check
-cmake --build --preset debug --target regmap-checks
+./artos.py build regmap-checks
 ```
 
 The script uses Python's standard library and invokes clang-format using the

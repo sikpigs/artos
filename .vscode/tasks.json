@@ -25,12 +25,27 @@
       "detail": "Build using the preset selected in CMake Tools"
     },
     {
-      "label": "Configure Debug firmware",
+      "label": "Build Debug firmware",
+      "type": "process",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/artos.py",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "Configure host tests",
       "type": "process",
       "command": "cmake",
       "args": [
         "--preset",
-        "debug"
+        "host-tests"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -38,49 +53,117 @@
       "problemMatcher": []
     },
     {
-      "label": "Build Debug firmware",
+      "label": "Build host tests",
       "type": "process",
       "command": "cmake",
       "args": [
         "--build",
         "--preset",
-        "debug"
+        "host-tests"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "dependsOn": [
-        "Configure Debug firmware"
+        "Configure host tests"
       ],
+      "dependsOrder": "sequence",
       "problemMatcher": [
         "$gcc"
       ]
     },
     {
+      "label": "Tests: all",
+      "type": "process",
+      "command": "ctest",
+      "args": [
+        "--preset",
+        "all"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "Build host tests"
+      ],
+      "dependsOrder": "sequence",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: native",
+      "type": "process",
+      "command": "ctest",
+      "args": [
+        "--preset",
+        "native"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "Build host tests"
+      ],
+      "dependsOrder": "sequence",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: python",
+      "type": "process",
+      "command": "ctest",
+      "args": [
+        "--preset",
+        "python"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "Build host tests"
+      ],
+      "dependsOrder": "sequence",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: hooks",
+      "type": "process",
+      "command": "ctest",
+      "args": [
+        "--preset",
+        "hooks"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "Build host tests"
+      ],
+      "dependsOrder": "sequence",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "Flash configured board",
       "type": "process",
-      "command": "cmake",
+      "command": "python3",
       "args": [
-        "--build",
-        "--preset",
-        "debug",
-        "--target",
+        "${workspaceFolder}/artos.py",
         "flash"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [],
-      "dependsOn": [
-        "Configure Debug firmware"
-      ]
+      "problemMatcher": []
     },
     {
       "label": "Serial console",
       "type": "process",
       "command": "python3",
       "args": [
-        "${workspaceFolder}/scripts/serial_console.py"
+        "${workspaceFolder}/artos.py",
+        "monitor"
       ],
       "options": {
         "cwd": "${workspaceFolder}"

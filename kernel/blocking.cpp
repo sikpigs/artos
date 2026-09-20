@@ -1,28 +1,58 @@
 #include "internal/scheduler.h"
+#include "internal/thread.h"
 
 #include <cassert>
+#include <optional>
+
+#include <artos.h>
 #include <wait.h>
 
 namespace artos::kernel {
     namespace locked {
-        void prepare_wait(wait_queue_t& queue) noexcept
+        wake_reason_t block_current_until(wait_queue_t&              queue,
+                                          std::optional<tick_time_t> deadline,
+                                          critical_section_t         crit_section) noexcept
         {
             auto* thread = thread::internal::current_thread;
+            {
+                auto cs = std::move(crit_section);
 
-            assert(thread);
-            assert(thread->state == thread::internal::thread_state_t::running);
-            assert(thread->waiter.thread == thread);
-            assert(thread->waiter.queue == nullptr);
+                assert(thread);
+                assert(thread->state == thread::internal::thread_state_t::running);
+                assert(thread->waiter.thread == thread);
+                assert(thread->waiter.queue == nullptr);
 
-            thread->waiter.wake = wake_reason_t::none;
-            queue.push_back(thread->waiter);
-            thread->state = thread::internal::thread_state_t::blocked;
+                thread->waiter.wake = wake_reason_t::none;
+                thread->deadline = deadline.value_or(tick_time_t {});
+                queue.push_back(thread->waiter);
+                if (deadline)
+                {
+                    thread->state = thread::internal::thread_state_t::blocked;
+                }
+                else
+                {
+                    thread->state = thread::internal::thread_state_t::blocked_forever;
+                }
+
+                internal::sched();
+            }
+
+            return thread->waiter.wake;
         }
 
-        void block_current(wait_queue_t& queue) noexcept
+        wake_reason_t block_current(wait_queue_t& queue, const tick_time_t& deadline, critical_section_t cs) noexcept
         {
-            prepare_wait(queue);
-            internal::sched();
+            if (deadline == immediately)
+            {
+                return wake_reason_t::timeout;
+            }
+
+            return block_current_until(queue, deadline, std::move(cs));
+        }
+
+        wake_reason_t block_current(wait_queue_t& queue, wait_forever_t, critical_section_t cs) noexcept
+        {
+            return block_current_until(queue, std::nullopt, std::move(cs));
         }
 
         bool wake_one(wait_queue_t& queue) noexcept
@@ -34,28 +64,29 @@ namespace artos::kernel {
 
             auto it = queue.begin();
 
-            wait_node_t& selected = *it;
+            wait_node_t* selected = &*it;
 
             while (it != queue.end())
             {
-                if (selected.thread->priority < it->thread->priority)
+                if (selected->thread->priority > it->thread->priority)
                 {
-                    selected = *it;
+                    selected = &*it;
                 }
 
                 ++it;
             }
 
-            auto* thread = selected.thread;
+            auto* thread = selected->thread;
 
-            assert(thread->state == thread::internal::thread_state_t::blocked);
-            assert(selected.wake == wake_reason_t::none);
+            assert(thread->state == thread::internal::thread_state_t::blocked
+                   || thread->state == thread::internal::thread_state_t::blocked_forever);
+            assert(selected->wake == wake_reason_t::none);
 
-            queue.remove(selected);
-            selected.wake = wake_reason_t::signaled;
+            queue.remove(*selected);
+            selected->wake = wake_reason_t::signaled;
             thread->state = thread::internal::thread_state_t::ready;
 
-            return thread->priority > thread::internal::current_thread->priority;
+            return thread->priority < thread::internal::current_thread->priority;
         }
     }
 

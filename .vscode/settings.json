@@ -2,6 +2,9 @@
   "cmake.useCMakePresets": "always",
   "cmake.configureOnOpen": true,
   "cmake.automaticReconfigure": true,
+  "cmake.ctest.testExplorerIntegrationEnabled": true,
+  "cmake.ctest.allowParallelJobs": true,
+  "cmake.ctest.parallelJobs": 4,
   "cmake.preferredGenerators": [
     "Ninja"
   ],
@@ -19,6 +22,13 @@
     },
     "buildPreset": {
       "statusBarVisibility": "visible"
+    },
+    "testPreset": {
+      "statusBarVisibility": "visible"
+    },
+    "ctest": {
+      "statusBarVisibility": "visible",
+      "projectStatusVisibility": "visible"
     }
   },
   "clangd.arguments": [

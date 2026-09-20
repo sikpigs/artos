@@ -1,31 +1,93 @@
 #pragma once
 
 #include <array>
+
+#include <compare>
 #include <cstddef>
 #include <cstdint>
-#include <expected_compat.h>
+#include <limits>
 #include <string_view>
 #include <utility>
 
 #include <artos_port.h>
 #include <build_config.h>
+#include <cpu_port.h>
+#include <expected_compat.h>
 #include <wait.h>
 
 namespace artos {
-    using tick_t = std::uint32_t;
+    using tick_t = std::uint32_t; // TODO this should be based on CPU, like word_t or something, then tick generation
+                                  // could be conditional i.e. 64-bit no generation
     using err_t = int;
 
-    struct [[nodiscard]] critical_section_t
+    struct wait_forever_t
     {
-        critical_section_t() noexcept
+        explicit constexpr wait_forever_t() noexcept = default;
+    };
+
+    inline constexpr wait_forever_t wait_forever {};
+
+    struct tick_time_t
+    {
+        tick_t ticks;
+        tick_t generation;
+
+        tick_time_t operator+(tick_t addend) const noexcept
+        {
+            const auto now = ticks;
+            auto       gen = generation;
+
+            auto tick = now + addend;
+            if (tick < now)
+            {
+                ++gen;
+            }
+
+            return { tick, gen };
+        }
+
+        bool operator==(const tick_time_t&) const = default;
+
+        constexpr tick_time_t operator-(const tick_time_t& subtrahend) const noexcept
+        {
+            const auto tick = tick_t { ticks - subtrahend.ticks };
+            const auto borrow = static_cast<tick_t>(ticks < subtrahend.ticks);
+
+            return { .ticks = tick, .generation = tick_t { generation - subtrahend.generation - borrow } };
+        }
+
+        constexpr tick_time_t operator+(const tick_time_t& addend) const noexcept
+        {
+            const auto tick = tick_t { ticks + addend.ticks };
+            const auto carry = static_cast<tick_t>(tick < ticks);
+
+            return { .ticks = tick, .generation = tick_t { generation + addend.generation + carry } };
+        }
+
+        std::strong_ordering operator<=>(const tick_time_t& other) const noexcept
+        {
+            if (generation != other.generation)
+            {
+                return generation <=> other.generation;
+            }
+
+            return ticks <=> other.ticks;
+        }
+    };
+
+    inline constexpr auto immediately = tick_time_t { .ticks = 0, .generation = 0 };
+
+    struct [[nodiscard]] global_interrupt_guard_t
+    {
+        global_interrupt_guard_t() noexcept
             : state { artos::port::irq_save_disable() }
         {
         }
 
-        critical_section_t(const critical_section_t&) = delete;
-        critical_section_t& operator=(const critical_section_t&) = delete;
+        global_interrupt_guard_t(const global_interrupt_guard_t&) = delete;
+        global_interrupt_guard_t& operator=(const global_interrupt_guard_t&) = delete;
 
-        ~critical_section_t() noexcept
+        ~global_interrupt_guard_t() noexcept
         {
             artos::port::irq_restore(state);
         }
@@ -34,13 +96,45 @@ namespace artos {
         artos::port::primask_t state;
     };
 
+    struct [[nodiscard]] critical_section_t
+    {
+        critical_section_t() noexcept
+            : previous_basepri { cpu::port::irq_save_raise_mask(port::kernel_interrupt_priority) }
+        {
+        }
+
+        ~critical_section_t() noexcept
+        {
+            reset();
+        }
+
+        critical_section_t(const critical_section_t&) = delete;
+        critical_section_t& operator=(const critical_section_t&) = delete;
+
+        critical_section_t(critical_section_t&& other)
+            : previous_basepri { std::exchange(other.previous_basepri,
+                                               std::numeric_limits<cpu::port::basepri_t>::max()) }
+        {
+        }
+
+        void reset() noexcept
+        {
+            if (previous_basepri != std::numeric_limits<cpu::port::basepri_t>::max())
+            {
+                cpu::port::irq_restore_mask(previous_basepri);
+                previous_basepri = std::numeric_limits<cpu::port::basepri_t>::max();
+            }
+        }
+
+    private:
+        cpu::port::basepri_t previous_basepri;
+    };
+
     namespace kernel {
         namespace internal {
             // Called by the selected timer ISR.
             void on_tick() noexcept;
         }
-
-        inline constexpr tick_t max_sleep_ticks = (tick_t { 1 } << 31) - 1;
 
         [[nodiscard]]
         constexpr tick_t ms_to_ticks(std::uint64_t ms) noexcept
@@ -54,12 +148,18 @@ namespace artos {
             return static_cast<std::uint64_t>(ticks) * 1000u / build_config::artos::tick_hz;
         }
 
-        void                 init() noexcept;
-        [[noreturn]] void    start() noexcept;
-        [[nodiscard]] tick_t ticks() noexcept;
+        void                      init() noexcept;
+        [[noreturn]] void         start() noexcept;
+        [[nodiscard]] tick_t      ticks() noexcept;
+        [[nodiscard]] tick_time_t tick_time() noexcept;
 
         namespace locked {
-            void block_current(wait_queue_t& queue) noexcept;
+            wake_reason_t block_current(wait_queue_t&      queue,
+                                        const tick_time_t& deadline,
+                                        critical_section_t cs) noexcept;
+            wake_reason_t block_current(wait_queue_t& queue, wait_forever_t, critical_section_t cs) noexcept;
+            [[nodiscard]] tick_time_t tick_time() noexcept;
+
             bool wake_one(wait_queue_t& queue) noexcept;
         }
     }
@@ -76,7 +176,7 @@ namespace artos {
         static_assert(minimum_stack_bytes >= port::initial_frame_bytes);
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
-        inline constexpr auto tcb_size = static_cast<std::size_t>(60);
+        inline constexpr auto tcb_size = static_cast<std::size_t>(56);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         enum class priority_t : std::uint8_t
@@ -126,6 +226,6 @@ namespace artos {
         }
 
         void sleep_for(tick_t ticks) noexcept;
-        void sleep_until(tick_t ticks) noexcept;
+        void sleep_until(const tick_time_t& ticks) noexcept;
     }
 }

@@ -1,27 +1,32 @@
-cmake_minimum_required(VERSION 3.24)
-project(artos_host_tests LANGUAGES CXX)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(ARTOS_ROOT "${CMAKE_SOURCE_DIR}")
 
-enable_testing()
-add_executable(intrusive_list_tests ../intrusive_list.cpp)
-target_include_directories(intrusive_list_tests PRIVATE ../../include)
-target_compile_features(intrusive_list_tests PRIVATE cxx_std_23)
-target_compile_options(intrusive_list_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -g -O0)
-add_test(NAME intrusive_list COMMAND intrusive_list_tests)
+function(add_artos_native_test name source)
+    add_executable(${name}_tests "${source}" ${ARGN})
+    target_include_directories(${name}_tests PRIVATE "${ARTOS_ROOT}/include")
+    target_compile_features(${name}_tests PRIVATE cxx_std_23)
+    target_compile_options(${name}_tests PRIVATE
+        -Wall -Wextra -Wpedantic -Werror -g -O0)
+    add_test(NAME ${name} COMMAND ${name}_tests)
+    set_tests_properties(${name} PROPERTIES LABELS native)
+endfunction()
 
-add_executable(expected_tests ../expected.cpp)
-target_include_directories(expected_tests PRIVATE ../../include)
-target_compile_features(expected_tests PRIVATE cxx_std_23)
-target_compile_options(expected_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -g -O0)
-add_test(NAME expected COMMAND expected_tests)
+add_artos_native_test(intrusive_list "${ARTOS_ROOT}/tests/intrusive_list.cpp")
+add_artos_native_test(expected "${ARTOS_ROOT}/tests/expected.cpp")
+add_artos_native_test(thread_id "${ARTOS_ROOT}/tests/thread_id.cpp")
+target_include_directories(thread_id_tests PRIVATE "${ARTOS_ROOT}/kernel")
+add_artos_native_test(queue
+    "${ARTOS_ROOT}/tests/queue.cpp"
+    "${ARTOS_ROOT}/kernel/queue.cpp"
+)
+target_include_directories(queue_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
 
 # Exercise the same automatic selection used by firmware consumers.
-add_executable(expected_auto_tests ../expected.cpp)
-target_include_directories(expected_auto_tests PRIVATE ../../include)
-target_compile_features(expected_auto_tests PRIVATE cxx_std_23)
+add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")
 target_compile_definitions(expected_auto_tests PRIVATE ARTOS_TEST_AUTO_EXPECTED=1)
-target_compile_options(expected_auto_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -g -O0)
-add_test(NAME expected_auto COMMAND expected_auto_tests)
 
 # Run the same contract against the standard implementation when available.
 include(CheckCXXSourceCompiles)
@@ -35,9 +40,36 @@ check_cxx_source_compiles("
 " ARTOS_HOST_HAS_STD_EXPECTED)
 unset(CMAKE_REQUIRED_FLAGS)
 if(ARTOS_HOST_HAS_STD_EXPECTED)
-    add_executable(expected_reference_tests ../expected.cpp)
-    target_compile_features(expected_reference_tests PRIVATE cxx_std_23)
+    add_artos_native_test(expected_reference "${ARTOS_ROOT}/tests/expected.cpp")
     target_compile_definitions(expected_reference_tests PRIVATE ARTOS_TEST_STD_EXPECTED=1)
-    target_compile_options(expected_reference_tests PRIVATE -Wall -Wextra -Wpedantic -Werror -g -O0)
-    add_test(NAME expected_reference COMMAND expected_reference_tests)
 endif()
+
+# Prefer the project-local environment, matching the firmware configuration.
+if(NOT DEFINED Python3_EXECUTABLE AND EXISTS "${ARTOS_ROOT}/.venv/bin/python")
+    set(Python3_EXECUTABLE "${ARTOS_ROOT}/.venv/bin/python")
+endif()
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+function(add_artos_python_test name)
+    add_test(NAME python.${name}
+        COMMAND "${Python3_EXECUTABLE}" "${ARTOS_ROOT}/tests/test_${name}.py")
+    set_tests_properties(python.${name} PROPERTIES
+        LABELS python
+        TIMEOUT 180
+        WORKING_DIRECTORY "${ARTOS_ROOT}"
+    )
+endfunction()
+
+add_artos_python_test(artos_cli)
+add_artos_python_test(dtb_to_board)
+add_artos_python_test(kconfig)
+add_artos_python_test(pre_commit_clang_format)
+add_artos_python_test(pre_commit_clang_tidy)
+add_artos_python_test(serial_console)
+add_artos_python_test(svd_to_regmap)
+
+set_tests_properties(
+    python.pre_commit_clang_format
+    python.pre_commit_clang_tidy
+    PROPERTIES LABELS "python;hooks"
+)

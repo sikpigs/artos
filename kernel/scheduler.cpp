@@ -1,7 +1,9 @@
 #include "internal/scheduler.h"
+#include "internal/thread.h"
 #include "internal/time.h"
 
 #include <artos_port.h>
+#include <wait.h>
 
 namespace artos::thread::internal {
     std::array<ready_queue_t, build_config::artos::priority_levels> ready_queue;
@@ -40,7 +42,6 @@ namespace artos::thread::internal {
 
         return current_thread->sp;
     }
-
 }
 
 namespace artos::kernel::internal {
@@ -62,7 +63,7 @@ namespace artos::kernel::internal {
         }
 
         tcb_t*     selected = nullptr;
-        const auto now = kernel::ticks();
+        const auto now = kernel::tick_time();
 
         for (std::size_t offset = 1; offset <= threads.size(); ++offset)
         {
@@ -74,8 +75,15 @@ namespace artos::kernel::internal {
                 continue;
             }
 
-            if (candidate->state == thread_state_t::sleeping && deadline_reached(now, candidate->wake_tick))
+            if ((candidate->state == thread_state_t::sleeping || candidate->state == thread_state_t::blocked)
+                && deadline_reached(now, candidate->deadline))
             {
+                if (candidate->state == thread_state_t::blocked)
+                {
+                    candidate->waiter.queue->remove(candidate->waiter);
+                    candidate->waiter.wake = wake_reason_t::timeout;
+                }
+
                 candidate->state = thread_state_t::ready;
             }
 
