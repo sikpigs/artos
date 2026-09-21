@@ -154,12 +154,19 @@ namespace artos {
         [[nodiscard]] tick_time_t tick_time() noexcept;
 
         namespace locked {
-            wake_reason_t block_current(wait_queue_t&      queue,
-                                        const tick_time_t& deadline,
-                                        critical_section_t cs) noexcept;
-            wake_reason_t block_current(wait_queue_t& queue, wait_forever_t, critical_section_t cs) noexcept;
+            [[nodiscard]] wake_reason_t block_current(wait_queue_t&      queue,
+                                                      const tick_time_t& deadline,
+                                                      critical_section_t cs) noexcept;
+            [[nodiscard]] wake_reason_t block_current(wait_queue_t& queue,
+                                                      wait_forever_t,
+                                                      critical_section_t cs) noexcept;
+
+            void block_current(wait_queue_t& queue, const tick_time_t& deadline) noexcept;
+            void block_current(wait_queue_t& queue, wait_forever_t) noexcept;
+
             [[nodiscard]] tick_time_t tick_time() noexcept;
 
+            bool wake_all(wait_queue_t& queue) noexcept;
             bool wake_one(wait_queue_t& queue) noexcept;
         }
     }
@@ -170,13 +177,15 @@ namespace artos {
         using start_result_t = artos::expected<id_t, err_t>;
         using stack_word_t = port::stack_word_t;
 
+        inline constexpr id_t invalid_id = std::numeric_limits<id_t>::max();
+
         // Total allocated bytes, including saved context. This is a baseline
         // for kernel calls in Debug, not a guarantee for arbitrary task code.
         inline constexpr std::uint32_t minimum_stack_bytes = 1024;
         static_assert(minimum_stack_bytes >= port::initial_frame_bytes);
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
-        inline constexpr auto tcb_size = static_cast<std::size_t>(56);
+        inline constexpr auto tcb_size = static_cast<std::size_t>(72);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         enum class priority_t : std::uint8_t
@@ -209,7 +218,8 @@ namespace artos {
                                   void*               parameters,
                                   priority_t          priority,
                                   std::byte* const    tcb,
-                                  stack_word_t* const stack) noexcept;
+                                  stack_word_t* const stack,
+                                  bool                start) noexcept;
         }
 
         template<std::uint32_t StackSize>
@@ -219,12 +229,14 @@ namespace artos {
                               std::string_view           name,
                               void*                      parameters,
                               priority_t                 priority,
-                              thread_storage<StackSize>& storage) noexcept
+                              thread_storage<StackSize>& storage,
+                              bool                       start = true) noexcept
         {
             return internal::create(
-                func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data());
+                func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data(), start);
         }
 
+        id_t current_thread() noexcept;
         void sleep_for(tick_t ticks) noexcept;
         void sleep_until(const tick_time_t& ticks) noexcept;
     }

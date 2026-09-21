@@ -14,6 +14,10 @@ add_artos_native_test(intrusive_list "${ARTOS_ROOT}/tests/intrusive_list.cpp")
 add_artos_native_test(expected "${ARTOS_ROOT}/tests/expected.cpp")
 add_artos_native_test(thread_id "${ARTOS_ROOT}/tests/thread_id.cpp")
 target_include_directories(thread_id_tests PRIVATE "${ARTOS_ROOT}/kernel")
+add_artos_native_test(wait
+    "${ARTOS_ROOT}/tests/wait.cpp"
+    "${ARTOS_ROOT}/kernel/wait.cpp"
+)
 add_artos_native_test(queue
     "${ARTOS_ROOT}/tests/queue.cpp"
     "${ARTOS_ROOT}/kernel/queue.cpp"
@@ -23,6 +27,34 @@ target_include_directories(queue_tests PRIVATE
     "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
     "${ARTOS_ROOT}/kernel"
 )
+
+add_artos_native_test(cxa_guard
+    "${ARTOS_ROOT}/tests/cxa_guard.cpp"
+    "${ARTOS_ROOT}/runtime/cxa_guard.cpp"
+)
+target_include_directories(cxa_guard_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
+target_compile_definitions(cxa_guard_tests PRIVATE
+    __cxa_guard_acquire=artos_test_guard_acquire
+    __cxa_guard_release=artos_test_guard_release
+    __cxa_guard_abort=artos_test_guard_abort
+)
+
+add_artos_native_test(scheduler
+    "${ARTOS_ROOT}/tests/scheduler.cpp"
+    "${ARTOS_ROOT}/kernel/scheduler.cpp"
+    "${ARTOS_ROOT}/kernel/wait.cpp"
+)
+target_include_directories(scheduler_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
+target_compile_definitions(scheduler_tests PRIVATE ARTOS_HOST_TEST=1)
+set_tests_properties(scheduler PROPERTIES TIMEOUT 30)
 
 # Exercise the same automatic selection used by firmware consumers.
 add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")

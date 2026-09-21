@@ -49,6 +49,9 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("tick_hz = 1000", header.read_text())
         self.assertIn("max_threads = 8", header.read_text())
         self.assertIn("max_deferred_work_items = 8", header.read_text())
+        self.assertIn("max_active_guards = 8", header.read_text())
+        self.assertIn("scheduler = fixed_priority_round_robin_config {}", header.read_text())
+        self.assertNotIn("scheduler = priority_aging_config", header.read_text())
         before = header.stat().st_mtime_ns
         self.generate("")
         self.assertEqual(before, header.stat().st_mtime_ns)
@@ -71,6 +74,9 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("enabled = false", header)
         self.assertIn("max_threads = 8", header)
         self.assertIn("max_deferred_work_items = 8", header)
+        self.assertIn("max_active_guards = 8", header)
+        self.assertIn("scheduler = fixed_priority_round_robin_config {}", header)
+        self.assertNotIn("scheduler = priority_aging_config", header)
         self.assertIn("rx_buffer_size = 0", header)
 
     def test_monitor_disabled_keeps_console_buffer(self):
@@ -131,6 +137,57 @@ class ConfigurationTests(unittest.TestCase):
         for limit in (0, 65):
             with self.subTest(limit=limit):
                 self.generate(f"CONFIG_ARTOS_MAX_DEFERRED_WORK_ITEMS={limit}\n", success=False)
+                self.assertFalse((self.build / "generated/build_config.h").exists())
+
+    def test_active_guard_limits_and_saved_value(self):
+        for limit in (1, 12, 64):
+            with self.subTest(limit=limit):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate(f"CONFIG_ARTOS_MAX_ACTIVE_GUARDS={limit}\n")
+                self.generate("CONFIG_ARTOS_MAX_ACTIVE_GUARDS=8\n")
+                self.assertIn(f"max_active_guards = {limit}",
+                              (self.build / "generated/build_config.h").read_text())
+                self.assertIn(f"#define CONFIG_ARTOS_MAX_ACTIVE_GUARDS {limit}",
+                              (self.build / "generated/autoconf.h").read_text())
+
+    def test_invalid_active_guard_limits_rejected(self):
+        for limit in (0, 65):
+            with self.subTest(limit=limit):
+                self.generate(f"CONFIG_ARTOS_MAX_ACTIVE_GUARDS={limit}\n", success=False)
+                self.assertFalse((self.build / "generated/build_config.h").exists())
+
+    def test_scheduler_algorithms(self):
+        selections = {
+            "CONFIG_ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN=y\n": "fixed_priority_round_robin_config {}",
+            "CONFIG_ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY=y\n": "strict_fixed_priority_config {}",
+            "CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\n": "priority_aging_config { .ticks = 1000 }",
+        }
+        for seed, config in selections.items():
+            with self.subTest(config=config):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate(seed)
+                header = (self.build / "generated/build_config.h").read_text()
+                self.assertIn(f"scheduler = {config}", header)
+
+    def test_priority_aging_interval_and_saved_value(self):
+        self.generate("CONFIG_ARTOS_TICK_HZ=2000\nCONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\n")
+        header = (self.build / "generated/build_config.h").read_text()
+        self.assertIn("scheduler = priority_aging_config { .ticks = 2000 }", header)
+
+        (self.build / ".config").unlink()
+        self.generate("CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\nCONFIG_ARTOS_PRIORITY_AGING_TICKS=250\n")
+        self.generate("CONFIG_ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN=y\n")
+        header = (self.build / "generated/build_config.h").read_text()
+        self.assertIn("scheduler = priority_aging_config { .ticks = 250 }", header)
+        self.assertIn("#define CONFIG_ARTOS_PRIORITY_AGING_TICKS 250",
+                      (self.build / "generated/autoconf.h").read_text())
+
+    def test_invalid_priority_aging_intervals_rejected(self):
+        for ticks in (0, 2147483648):
+            with self.subTest(ticks=ticks):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate("CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\n"
+                              f"CONFIG_ARTOS_PRIORITY_AGING_TICKS={ticks}\n", success=False)
                 self.assertFalse((self.build / "generated/build_config.h").exists())
 
     def test_invalid_thread_limits_rejected(self):

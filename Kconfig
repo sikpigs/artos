@@ -64,11 +64,59 @@ config ARTOS_MAX_DEFERRED_WORK_ITEMS
       event occurrence. Multiple pending requests can coalesce in a slot.
       This limit is independent of the maximum number of threads.
 
+config ARTOS_MAX_ACTIVE_GUARDS
+    int "Maximum number of active static initialization guards"
+    range 1 64
+    default 8
+    depends on ARTOS
+    help
+      Capacity of the static runtime table used to coordinate concurrent
+      initialization of function-local static objects. Each initialization
+      in progress consumes one slot, including nested initializations in the
+      same thread. This limit is independent of the maximum number of threads.
+
 config ARTOS_PRIORITY_LEVELS
     int "Scheduler priority levels"
     range 1 256
     default 16
     depends on ARTOS
+
+choice ARTOS_SCHEDULER
+    prompt "Scheduling algorithm"
+    default ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN
+    depends on ARTOS
+    help
+      Select the policy used to choose the next runnable thread.
+
+config ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN
+    bool "Fixed priority with round-robin peers"
+    help
+      Always prefer a runnable thread at the highest priority. Threads at
+      the same priority take turns in thread-table order.
+
+config ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY
+    bool "Strict fixed priority"
+    help
+      Always select the first runnable thread at the highest priority.
+      Equal-priority threads do not take turns automatically.
+
+config ARTOS_SCHEDULER_PRIORITY_AGING
+    bool "Priority aging"
+    help
+      Increase the effective priority of runnable threads as they wait,
+      preventing lower-priority threads from starving indefinitely.
+
+endchoice
+
+config ARTOS_PRIORITY_AGING_TICKS
+    int "Ticks between effective priority increases"
+    range 1 2147483647
+    default ARTOS_TICK_HZ
+    depends on ARTOS_SCHEDULER_PRIORITY_AGING
+    help
+      Number of kernel ticks a runnable thread must wait before its effective
+      priority is increased by one level. Its configured base priority is not
+      changed. The default interval is one second at the configured tick rate.
 
 endmenu
 

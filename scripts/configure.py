@@ -61,6 +61,14 @@ def main():
     priorities = int(kconf.syms["ARTOS_PRIORITY_LEVELS"].str_value) if enabled else 16
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
     max_deferred_work_items = int(kconf.syms["ARTOS_MAX_DEFERRED_WORK_ITEMS"].str_value) if enabled else 8
+    max_active_guards = int(kconf.syms["ARTOS_MAX_ACTIVE_GUARDS"].str_value) if enabled else 8
+    if enabled and kconf.syms["ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY"].tri_value:
+        scheduler_config = "strict_fixed_priority_config {}"
+    elif enabled and kconf.syms["ARTOS_SCHEDULER_PRIORITY_AGING"].tri_value:
+        priority_aging_ticks = int(kconf.syms["ARTOS_PRIORITY_AGING_TICKS"].str_value)
+        scheduler_config = f"priority_aging_config {{ .ticks = {priority_aging_ticks} }}"
+    else:
+        scheduler_config = "fixed_priority_round_robin_config {}"
     monitor_enabled = bool(kconf.syms["MONITOR"].tri_value)
     console_enabled = bool(kconf.syms["CONSOLE"].tri_value)
     rx_size = int(kconf.syms["CONSOLE_RX_BUFFER_SIZE"].str_value) if console_enabled else 0
@@ -75,15 +83,24 @@ def main():
 
 namespace build_config {{
     namespace artos {{
+        struct fixed_priority_round_robin_config {{}};
+        struct strict_fixed_priority_config {{}};
+        struct priority_aging_config {{
+            std::uint32_t ticks;
+        }};
+
         inline constexpr bool enabled = {str(enabled).lower()};
         inline constexpr std::uint32_t tick_hz = {tick};
         inline constexpr std::uint32_t priority_levels = {priorities};
         inline constexpr std::size_t max_threads = {max_threads};
         inline constexpr std::size_t max_deferred_work_items = {max_deferred_work_items};
+        inline constexpr std::size_t max_active_guards = {max_active_guards};
+        inline constexpr auto scheduler = {scheduler_config};
         static_assert(tick_hz > 0);
         static_assert(priority_levels > 0 && priority_levels <= 256);
         static_assert(max_threads >= 2 && max_threads <= 64);
         static_assert(max_deferred_work_items >= 1 && max_deferred_work_items <= 64);
+        static_assert(max_active_guards >= 1 && max_active_guards <= 64);
     }}
     namespace monitor {{
         inline constexpr bool enabled = {str(monitor_enabled).lower()};

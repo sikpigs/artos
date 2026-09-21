@@ -1,7 +1,13 @@
 #pragma once
 
-#include <artos.h>
+#include <build_config.h>
+
+#include <internal/scheduler.h>
 #include <internal/thread_id.h>
+
+#include <optional>
+
+#include <artos.h>
 #include <intrusive_list.h>
 #include <wait.h>
 
@@ -18,17 +24,18 @@ namespace artos::thread::internal {
         finished
     };
 
-    struct tcb_t
+    struct tcb_base_t
     {
-        tcb_t() noexcept
+        tcb_base_t() noexcept
         {
+            ready.thread = this;
             waiter.thread = this;
         }
 
-        tcb_t(const tcb_t&) = delete;
-        tcb_t& operator=(const tcb_t&) = delete;
+        tcb_base_t(const tcb_base_t&) = delete;
+        tcb_base_t& operator=(const tcb_base_t&) = delete;
 
-        ~tcb_t() = default;
+        ~tcb_base_t() = default;
 
         stack_word_t* sp;
         stack_word_t* stack_begin;
@@ -40,7 +47,8 @@ namespace artos::thread::internal {
 
         tick_time_t deadline {};
 
-        wait_node_t waiter;
+        ready_node_t ready;
+        wait_node_t  waiter;
 
         using id_layout = thread_id_layout_t<id_t, build_config::artos::max_threads>;
 
@@ -53,7 +61,20 @@ namespace artos::thread::internal {
         }
     };
 
-    static_assert(sizeof(tcb_t) == tcb_size);
-    static_assert(alignof(tcb_t) <= tcb_alignment);
+    template<typename Scheduler>
+    struct tcb_t;
 
+    template<>
+    struct tcb_t<const build_config::artos::fixed_priority_round_robin_config> : tcb_base_t
+    {
+    };
+
+    void                      set_priority_ready(priority_t priority) noexcept;
+    void                      clear_priority_ready(priority_t priority) noexcept;
+    std::optional<priority_t> get_highest_set_priority() noexcept;
+
+#ifndef ARTOS_HOST_TEST
+    static_assert(sizeof(tcb_t<decltype(build_config::artos::scheduler)>) == tcb_size);
+    static_assert(alignof(tcb_t<decltype(build_config::artos::scheduler)>) <= tcb_alignment);
+#endif
 }

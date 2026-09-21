@@ -122,7 +122,7 @@ namespace artos::kernel {
 
         // Idle is the fallback, even when an application uses priority_t::low.
         // Future selection must consider ready application threads first.
-        const auto idle = thread::create(idle_entry, "idle", nullptr, thread::priority_t::low, idle_storage);
+        const auto idle = thread::create(idle_entry, "idle", nullptr, thread::priority_t::low, idle_storage, false);
         if (!idle || *idle != 0)
         {
             cpu::port::fatal_trap();

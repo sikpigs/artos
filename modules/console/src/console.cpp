@@ -153,6 +153,6 @@ namespace artos::console {
             return;
         }
 
-        kernel::locked::block_current(rx_wait_queue, artos::wait_forever, std::move(cs));
+        (void)kernel::locked::block_current(rx_wait_queue, artos::wait_forever, std::move(cs));
     }
 }

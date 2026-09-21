@@ -16,6 +16,14 @@ namespace artos {
         node.queue = this;
     }
 
+    void wait_queue_t::push_front(wait_node_t& node) noexcept
+    {
+        assert(node.queue == nullptr);
+
+        waiters.push_front(node.hook);
+        node.queue = this;
+    }
+
     void wait_queue_t::remove(wait_node_t& node) noexcept
     {
         assert(node.queue == this);
@@ -32,5 +40,23 @@ namespace artos {
     wait_queue_iterator_t wait_queue_t::end() noexcept
     {
         return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(waiters.end()) };
+    }
+
+    wait_queue_iterator_t wait_queue_t::after(const wait_node_t& node) noexcept
+    {
+        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(node.hook.next) };
+    }
+
+    void wait_queue_t::clear() noexcept
+    {
+        auto* p = waiters.front();
+        while (p != waiters.end())
+        {
+            auto* next = p->next;
+            waiters.erase(*p);
+            auto node = reinterpret_cast<wait_node_t*>(p);
+            node->queue = nullptr;
+            p = next;
+        }
     }
 }
