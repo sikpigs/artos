@@ -1,4 +1,4 @@
-#include <wait.h>
+#include <wait_queue.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -15,9 +15,9 @@ namespace {
 
     void test_clear_releases_nodes()
     {
-        artos::wait_queue_t queue;
-        artos::wait_node_t  first;
-        artos::wait_node_t  second;
+        artos::wait_queue_t      queue;
+        artos::wait_queue_node_t first;
+        artos::wait_queue_node_t second;
 
         queue.push_back(first);
         queue.push_back(second);

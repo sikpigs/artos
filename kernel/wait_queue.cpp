@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos {
     bool wait_queue_t::empty() const noexcept
@@ -8,7 +8,7 @@ namespace artos {
         return waiters.empty();
     }
 
-    void wait_queue_t::push_back(wait_node_t& node) noexcept
+    void wait_queue_t::push_back(wait_queue_node_t& node) noexcept
     {
         assert(node.queue == nullptr);
 
@@ -16,7 +16,7 @@ namespace artos {
         node.queue = this;
     }
 
-    void wait_queue_t::push_front(wait_node_t& node) noexcept
+    void wait_queue_t::push_front(wait_queue_node_t& node) noexcept
     {
         assert(node.queue == nullptr);
 
@@ -24,7 +24,7 @@ namespace artos {
         node.queue = this;
     }
 
-    void wait_queue_t::remove(wait_node_t& node) noexcept
+    void wait_queue_t::remove(wait_queue_node_t& node) noexcept
     {
         assert(node.queue == this);
 
@@ -34,17 +34,17 @@ namespace artos {
 
     wait_queue_iterator_t wait_queue_t::begin() noexcept
     {
-        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(waiters.front()) };
+        return wait_queue_iterator_t { reinterpret_cast<wait_queue_node_t*>(waiters.front()) };
     }
 
     wait_queue_iterator_t wait_queue_t::end() noexcept
     {
-        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(waiters.end()) };
+        return wait_queue_iterator_t { reinterpret_cast<wait_queue_node_t*>(waiters.end()) };
     }
 
-    wait_queue_iterator_t wait_queue_t::after(const wait_node_t& node) noexcept
+    wait_queue_iterator_t wait_queue_t::after(const wait_queue_node_t& node) noexcept
     {
-        return wait_queue_iterator_t { reinterpret_cast<wait_node_t*>(node.hook.next) };
+        return wait_queue_iterator_t { reinterpret_cast<wait_queue_node_t*>(node.hook.next) };
     }
 
     void wait_queue_t::clear() noexcept
@@ -54,7 +54,7 @@ namespace artos {
         {
             auto* next = p->next;
             waiters.erase(*p);
-            auto node = reinterpret_cast<wait_node_t*>(p);
+            auto node = reinterpret_cast<wait_queue_node_t*>(p);
             node->queue = nullptr;
             p = next;
         }

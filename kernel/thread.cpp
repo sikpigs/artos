@@ -2,6 +2,7 @@
 
 #include <internal/scheduler.h>
 #include <internal/thread.h>
+#include <internal/thread_state.h>
 #include <internal/time.h>
 
 #include <algorithm>
@@ -10,12 +11,10 @@
 
 #include <artos.h>
 #include <artos_port.h>
-#include <utility>
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos::thread {
     namespace internal {
-
         start_result_t create(func_t              func,
                               std::string_view    name,
                               std::uint32_t       stack_size_bytes,
@@ -53,7 +52,6 @@ namespace artos::thread {
 
             thread->name = name;
             thread->priority = priority;
-            thread->state = start ? thread_state_t::ready : thread_state_t::suspended;
             thread->deadline = {};
 
             ++thread_count;
@@ -61,8 +59,11 @@ namespace artos::thread {
 
             if (start)
             {
-                ready_queue[std::to_underlying(priority)].push_back(thread->ready);
-                set_priority_ready(thread->priority);
+                make_thread_ready(thread);
+            }
+            else
+            {
+                thread->state = thread_state_t::suspended;
             }
 
             const auto index = std::distance(threads.begin(), tcb_it);
@@ -71,7 +72,7 @@ namespace artos::thread {
 
         void sleep_until(const tick_time_t& tick_time)
         {
-            if (internal::current_thread == nullptr)
+            if (current_thread == nullptr)
             {
                 return;
             }
@@ -83,17 +84,10 @@ namespace artos::thread {
                 return;
             }
 
-            internal::current_thread->deadline = tick_time;
-            internal::current_thread->state = internal::thread_state_t::sleeping;
-            if (internal::current_thread->ready.queue)
-            {
-                auto* queue = internal::current_thread->ready.queue;
-                queue->remove(internal::current_thread->ready);
-                if (queue->empty())
-                {
-                    clear_priority_ready(internal::current_thread->priority);
-                }
-            }
+            current_thread->deadline = tick_time;
+            current_thread->state = thread_state_t::sleeping;
+
+            block_sleep_thread(current_thread);
 
             // Select and publish a runnable destination before requesting PendSV.
             // The switch executes after this critical section restores interrupts.
@@ -101,7 +95,7 @@ namespace artos::thread {
         }
     }
 
-    id_t current_thread() noexcept
+    id_t get_current_thread() noexcept
     {
         return internal::current_thread ? internal::current_thread->id : invalid_id;
     }

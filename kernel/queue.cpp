@@ -5,7 +5,7 @@
 
 #include <artos.h>
 #include <queue.h>
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos::internal {
     bool update_deadline(tick_time_t& deadline) noexcept

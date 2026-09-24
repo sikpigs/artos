@@ -67,6 +67,16 @@ namespace artos {
             return std::addressof(root);
         }
 
+        void rotate_after(list_hook_t& node) noexcept
+        {
+            node.prev->next = node.next;
+            node.next->prev = node.prev;
+            node.prev = root.prev;
+            root.prev->next = std::addressof(node);
+            root.prev = std::addressof(node);
+            node.next = std::addressof(root);
+        }
+
     private:
         list_hook_t root {};
 

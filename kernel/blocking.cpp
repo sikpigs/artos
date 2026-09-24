@@ -1,14 +1,16 @@
-#include "internal/scheduler.h"
-#include "internal/thread.h"
+#include <internal/scheduler.h>
+#include <internal/thread.h>
+#include <internal/thread_state.h>
 
 #include <cassert>
 #include <optional>
+#include <utility>
 
 #include <artos.h>
-#include <utility>
-#include <wait.h>
 
 namespace artos::kernel {
+    using namespace thread::internal;
+
     namespace locked {
         void block_current(wait_queue_t& queue, std::optional<tick_time_t> deadline) noexcept
         {
@@ -22,23 +24,15 @@ namespace artos::kernel {
             thread->waiter.wake = wake_reason_t::none;
             thread->deadline = deadline.value_or(tick_time_t {});
             queue.push_back(thread->waiter);
+
             if (deadline)
             {
                 thread->state = thread::internal::thread_state_t::blocked;
+                block_sleep_thread(thread);
             }
             else
             {
                 thread->state = thread::internal::thread_state_t::blocked_forever;
-            }
-
-            if (thread->ready.queue)
-            {
-                auto ready_queue = thread->ready.queue;
-                ready_queue->remove(thread->ready);
-                if (ready_queue->empty())
-                {
-                    thread::internal::clear_priority_ready(thread->priority);
-                }
             }
 
             internal::sched();
@@ -95,7 +89,7 @@ namespace artos::kernel {
 
             auto it = queue.begin();
 
-            wait_node_t* selected = &*it;
+            wait_queue_node_t* selected = &*it;
 
             while (it != queue.end())
             {
@@ -115,9 +109,13 @@ namespace artos::kernel {
 
             queue.remove(*selected);
             selected->wake = wake_reason_t::signaled;
-            thread->state = thread::internal::thread_state_t::ready;
-            thread::internal::ready_queue[std::to_underlying(thread->priority)].push_back(thread->ready);
-            thread::internal::set_priority_ready(thread->priority);
+
+            thread::internal::make_thread_ready(thread);
+
+            if (thread->block_sleep.queue)
+            {
+                thread->block_sleep.queue->remove(thread->block_sleep);
+            }
 
             return thread->priority < thread::internal::current_thread->priority;
         }
@@ -141,9 +139,13 @@ namespace artos::kernel {
                 assert(it->wake == wake_reason_t::none);
 
                 it->wake = wake_reason_t::signaled;
-                thread->state = thread::internal::thread_state_t::ready;
-                thread::internal::ready_queue[std::to_underlying(thread->priority)].push_back(thread->ready);
-                thread::internal::set_priority_ready(thread->priority);
+
+                thread::internal::make_thread_ready(thread);
+
+                if (thread->block_sleep.queue)
+                {
+                    thread->block_sleep.queue->remove(thread->block_sleep);
+                }
 
                 higher_priority_thread_woken |= thread->priority < thread::internal::current_thread->priority;
 

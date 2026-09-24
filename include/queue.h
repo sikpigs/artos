@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include <artos.h>
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos {
     template<typename Type, std::size_t Count>

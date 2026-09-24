@@ -1,9 +1,11 @@
+
+#include <internal/deferred.h>
+#include <internal/scheduler.h>
+#include <internal/thread_state.h>
+
 #include <artos.h>
 #include <artos_port.h>
 #include <atomic>
-
-#include "internal/deferred.h"
-#include "internal/scheduler.h"
 
 namespace artos::kernel {
     namespace {

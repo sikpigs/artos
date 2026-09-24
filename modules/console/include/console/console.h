@@ -8,7 +8,7 @@
 #include <deferred.h>
 #include <span>
 
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos::console {
     // One ISR producer and one thread consumer. Initialize before use.

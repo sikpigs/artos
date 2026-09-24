@@ -1,7 +1,8 @@
 #pragma once
 
-#include <array>
+#include <build_config.h>
 
+#include <array>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -10,10 +11,10 @@
 #include <utility>
 
 #include <artos_port.h>
-#include <build_config.h>
 #include <cpu_port.h>
+#include <defs.h>
 #include <expected_compat.h>
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace artos {
     using tick_t = std::uint32_t; // TODO this should be based on CPU, like word_t or something, then tick generation
@@ -131,6 +132,7 @@ namespace artos {
     };
 
     namespace kernel {
+
         namespace internal {
             // Called by the selected timer ISR.
             void on_tick() noexcept;
@@ -185,7 +187,7 @@ namespace artos {
         static_assert(minimum_stack_bytes >= port::initial_frame_bytes);
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
-        inline constexpr auto tcb_size = static_cast<std::size_t>(72);
+        inline constexpr auto tcb_size = static_cast<std::size_t>(88);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         enum class priority_t : std::uint8_t
@@ -236,7 +238,7 @@ namespace artos {
                 func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data(), start);
         }
 
-        id_t current_thread() noexcept;
+        id_t get_current_thread() noexcept;
         void sleep_for(tick_t ticks) noexcept;
         void sleep_until(const tick_time_t& ticks) noexcept;
     }

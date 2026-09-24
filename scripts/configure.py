@@ -62,13 +62,11 @@ def main():
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
     max_deferred_work_items = int(kconf.syms["ARTOS_MAX_DEFERRED_WORK_ITEMS"].str_value) if enabled else 8
     max_active_guards = int(kconf.syms["ARTOS_MAX_ACTIVE_GUARDS"].str_value) if enabled else 8
-    if enabled and kconf.syms["ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY"].tri_value:
-        scheduler_config = "strict_fixed_priority_config {}"
-    elif enabled and kconf.syms["ARTOS_SCHEDULER_PRIORITY_AGING"].tri_value:
-        priority_aging_ticks = int(kconf.syms["ARTOS_PRIORITY_AGING_TICKS"].str_value)
-        scheduler_config = f"priority_aging_config {{ .ticks = {priority_aging_ticks} }}"
-    else:
-        scheduler_config = "fixed_priority_round_robin_config {}"
+    priority_aging = enabled and bool(kconf.syms["ARTOS_SCHEDULER_PRIORITY_AGING"].tri_value)
+    priority_aging_ticks = (str(int(kconf.syms["ARTOS_PRIORITY_AGING_TICKS"].str_value))
+                            if priority_aging else "std::nullopt")
+    scheduler_config = ("fixed_priority_round_robin_config { "
+                        f".priority_aging_ticks = {priority_aging_ticks} }}")
     monitor_enabled = bool(kconf.syms["MONITOR"].tri_value)
     console_enabled = bool(kconf.syms["CONSOLE"].tri_value)
     rx_size = int(kconf.syms["CONSOLE_RX_BUFFER_SIZE"].str_value) if console_enabled else 0
@@ -79,14 +77,13 @@ def main():
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <autoconf.h>
 
 namespace build_config {{
     namespace artos {{
-        struct fixed_priority_round_robin_config {{}};
-        struct strict_fixed_priority_config {{}};
-        struct priority_aging_config {{
-            std::uint32_t ticks;
+        struct fixed_priority_round_robin_config {{
+            std::optional<std::uint32_t> priority_aging_ticks;
         }};
 
         inline constexpr bool enabled = {str(enabled).lower()};

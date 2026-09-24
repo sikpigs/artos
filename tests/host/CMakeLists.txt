@@ -3,6 +3,7 @@ set(ARTOS_ROOT "${CMAKE_SOURCE_DIR}")
 function(add_artos_native_test name source)
     add_executable(${name}_tests "${source}" ${ARGN})
     target_include_directories(${name}_tests PRIVATE "${ARTOS_ROOT}/include")
+    target_compile_definitions(${name}_tests PRIVATE ARTOS_HOST_TEST=1)
     target_compile_features(${name}_tests PRIVATE cxx_std_23)
     target_compile_options(${name}_tests PRIVATE
         -Wall -Wextra -Wpedantic -Werror -g -O0)
@@ -16,7 +17,7 @@ add_artos_native_test(thread_id "${ARTOS_ROOT}/tests/thread_id.cpp")
 target_include_directories(thread_id_tests PRIVATE "${ARTOS_ROOT}/kernel")
 add_artos_native_test(wait
     "${ARTOS_ROOT}/tests/wait.cpp"
-    "${ARTOS_ROOT}/kernel/wait.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
 )
 add_artos_native_test(queue
     "${ARTOS_ROOT}/tests/queue.cpp"
@@ -46,14 +47,17 @@ target_compile_definitions(cxa_guard_tests PRIVATE
 add_artos_native_test(scheduler
     "${ARTOS_ROOT}/tests/scheduler.cpp"
     "${ARTOS_ROOT}/kernel/scheduler.cpp"
-    "${ARTOS_ROOT}/kernel/wait.cpp"
+    "${ARTOS_ROOT}/kernel/thread_state.cpp"
+    "${ARTOS_ROOT}/kernel/thread_util.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+    "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+    "${ARTOS_ROOT}/kernel/context.cpp"
 )
 target_include_directories(scheduler_tests PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/support"
     "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
     "${ARTOS_ROOT}/kernel"
 )
-target_compile_definitions(scheduler_tests PRIVATE ARTOS_HOST_TEST=1)
 set_tests_properties(scheduler PROPERTIES TIMEOUT 30)
 
 # Exercise the same automatic selection used by firmware consumers.

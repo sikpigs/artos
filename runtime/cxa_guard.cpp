@@ -1,6 +1,7 @@
 #include <build_config.h>
 
 #include <internal/scheduler.h>
+#include <internal/thread_state.h>
 
 #include <array>
 #include <cstdint>
@@ -8,7 +9,7 @@
 #include <artos.h>
 #include <bits.h>
 #include <cpu_port.h>
-#include <wait.h>
+#include <wait_queue.h>
 
 namespace {
 
@@ -69,13 +70,13 @@ namespace {
             if (!(state & in_progress))
             {
                 *guard = state | in_progress;
-                runtime.owner = artos::thread::current_thread();
+                runtime.owner = artos::thread::get_current_thread();
                 cpu::port::data_memory_barrier();
                 cpu::port::irq_restore(irq_state);
                 return 1;
             }
 
-            if (runtime.owner == artos::thread::current_thread() || cpu::port::is_in_irq())
+            if (runtime.owner == artos::thread::get_current_thread() || cpu::port::is_in_irq())
             {
                 // recursive initializations
                 cpu::port::irq_restore(irq_state);

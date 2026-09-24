@@ -225,7 +225,7 @@ namespace cpu::port {
 }
 
 namespace artos::thread {
-    id_t current_thread() noexcept
+    id_t get_current_thread() noexcept
     {
         return current_thread_id;
     }

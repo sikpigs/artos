@@ -1,10 +1,13 @@
 #include <build_config.h>
+
 #include <internal/scheduler.h>
 #include <internal/thread.h>
+#include <internal/thread_queue.h>
+#include <internal/thread_state.h>
 
 #include <artos.h>
 #include <artos_port.h>
-#include <wait.h>
+#include <wait_queue.h>
 
 #include <array>
 #include <cstdint>
@@ -13,7 +16,6 @@
 #include <limits>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <utility>
 
 namespace {
     using artos::thread::internal::tcb_base_t;
@@ -122,6 +124,7 @@ namespace {
         {
             queue.clear();
         }
+        block_sleep_queue.clear();
         ready_bitmap.fill(0);
 
         for (auto& thread : tcbs)
@@ -208,6 +211,8 @@ namespace {
         due.deadline = { .ticks = 100, .generation = 3 };
         auto& future = install(3, 0, thread_state_t::sleeping);
         future.deadline = { .ticks = 101, .generation = 3 };
+        artos::thread::internal::block_sleep_thread(&future);
+        artos::thread::internal::block_sleep_thread(&due);
         set_current(current);
 
         artos::kernel::internal::sched();
@@ -215,8 +220,10 @@ namespace {
         check(artos::thread::internal::next_thread == &due, "scheduler did not select the due sleeper");
         check(due.state == thread_state_t::ready, "due sleeper was not transitioned to ready");
         check(due.ready.queue != nullptr, "due sleeper was not inserted into a ready queue");
+        check(due.block_sleep.queue == nullptr, "due sleeper remained in the deadline queue");
         check(future.state == thread_state_t::sleeping, "future sleeper was readied early");
         check(future.ready.queue == nullptr, "future sleeper was inserted into a ready queue");
+        check(future.block_sleep.queue != nullptr, "future sleeper was removed from the deadline queue");
     }
 
     void test_block_timeout_removes_waiter()
@@ -228,6 +235,7 @@ namespace {
         timed.deadline = now;
         artos::wait_queue_t queue;
         queue.push_back(timed.waiter);
+        artos::thread::internal::block_sleep_thread(&timed);
         set_current(current);
 
         artos::kernel::internal::sched();
@@ -235,6 +243,7 @@ namespace {
         check(artos::thread::internal::next_thread == &timed, "scheduler did not select the timed-out thread");
         check(timed.state == thread_state_t::ready, "timed-out thread was not made ready");
         check(timed.ready.queue != nullptr, "timed-out thread was not inserted into a ready queue");
+        check(timed.block_sleep.queue == nullptr, "timed-out thread remained in the deadline queue");
         check(timed.waiter.wake == artos::wake_reason_t::timeout, "timed-out waiter recorded the wrong wake reason");
         check(timed.waiter.queue == nullptr && queue.empty(), "timed-out waiter remained in its wait queue");
     }
@@ -248,6 +257,8 @@ namespace {
         wrapped.deadline = { .ticks = std::numeric_limits<artos::tick_t>::max(), .generation = 3 };
         auto& next_generation = install(3, 0, thread_state_t::sleeping);
         next_generation.deadline = { .ticks = 1, .generation = 5 };
+        artos::thread::internal::block_sleep_thread(&next_generation);
+        artos::thread::internal::block_sleep_thread(&wrapped);
         set_current(current);
 
         artos::kernel::internal::sched();

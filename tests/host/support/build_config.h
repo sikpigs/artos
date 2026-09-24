@@ -2,22 +2,19 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace build_config::artos {
     struct fixed_priority_round_robin_config
     {
-    };
-    struct strict_fixed_priority_config
-    {
-    };
-    struct priority_aging_config
-    {
-        std::uint32_t ticks;
+        std::optional<std::uint32_t> priority_aging_ticks;
     };
 
     inline constexpr std::uint32_t tick_hz = 1000;
     inline constexpr std::uint32_t priority_levels = 16;
     inline constexpr std::size_t   max_threads = 8;
     inline constexpr std::size_t   max_active_guards = 2;
-    inline constexpr auto          scheduler = fixed_priority_round_robin_config {};
+    inline constexpr auto          scheduler = fixed_priority_round_robin_config {
+                 .priority_aging_ticks = std::nullopt,
+    };
 }

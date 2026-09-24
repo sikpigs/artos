@@ -3,10 +3,14 @@ if(CONFIG_ARTOS)
     target_sources(firmware PRIVATE
         kernel.cpp
         thread.cpp
+        thread_state.cpp
         scheduler.cpp
         blocking.cpp
-        wait.cpp
+        wait_queue.cpp
         deferred.cpp
         queue.cpp
+        thread_queue.cpp
+        context.cpp
+        thread_util.cpp
     )
 endif()

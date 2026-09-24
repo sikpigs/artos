@@ -1,10 +1,14 @@
 """Host-side tests for generation, validation, and saved configuration behavior."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
+
+import kconfiglib
 
 SOURCE = Path(__file__).resolve().parents[1]
 
@@ -50,8 +54,9 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("max_threads = 8", header.read_text())
         self.assertIn("max_deferred_work_items = 8", header.read_text())
         self.assertIn("max_active_guards = 8", header.read_text())
-        self.assertIn("scheduler = fixed_priority_round_robin_config {}", header.read_text())
-        self.assertNotIn("scheduler = priority_aging_config", header.read_text())
+        self.assertIn("scheduler = fixed_priority_round_robin_config { "
+                      ".priority_aging_ticks = std::nullopt }", header.read_text())
+        self.assertNotIn("strict_fixed_priority_config", header.read_text())
         before = header.stat().st_mtime_ns
         self.generate("")
         self.assertEqual(before, header.stat().st_mtime_ns)
@@ -75,8 +80,9 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("max_threads = 8", header)
         self.assertIn("max_deferred_work_items = 8", header)
         self.assertIn("max_active_guards = 8", header)
-        self.assertIn("scheduler = fixed_priority_round_robin_config {}", header)
-        self.assertNotIn("scheduler = priority_aging_config", header)
+        self.assertIn("scheduler = fixed_priority_round_robin_config { "
+                      ".priority_aging_ticks = std::nullopt }", header)
+        self.assertNotIn("strict_fixed_priority_config", header)
         self.assertIn("rx_buffer_size = 0", header)
 
     def test_monitor_disabled_keeps_console_buffer(self):
@@ -156,29 +162,26 @@ class ConfigurationTests(unittest.TestCase):
                 self.generate(f"CONFIG_ARTOS_MAX_ACTIVE_GUARDS={limit}\n", success=False)
                 self.assertFalse((self.build / "generated/build_config.h").exists())
 
-    def test_scheduler_algorithms(self):
-        selections = {
-            "CONFIG_ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN=y\n": "fixed_priority_round_robin_config {}",
-            "CONFIG_ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY=y\n": "strict_fixed_priority_config {}",
-            "CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\n": "priority_aging_config { .ticks = 1000 }",
-        }
-        for seed, config in selections.items():
-            with self.subTest(config=config):
-                (self.build / ".config").unlink(missing_ok=True)
-                self.generate(seed)
-                header = (self.build / "generated/build_config.h").read_text()
-                self.assertIn(f"scheduler = {config}", header)
+    def test_fixed_priority_round_robin_is_not_selectable(self):
+        with mock.patch.dict(os.environ, {"srctree": str(SOURCE)}):
+            kconf = kconfiglib.Kconfig(str(SOURCE / "Kconfig"), warn_to_stderr=False)
+        symbol = kconf.syms["ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN"]
+        self.assertTrue(symbol.nodes)
+        self.assertTrue(all(node.prompt is None for node in symbol.nodes))
+        self.assertNotIn("ARTOS_SCHEDULER_STRICT_FIXED_PRIORITY", kconf.syms)
 
     def test_priority_aging_interval_and_saved_value(self):
         self.generate("CONFIG_ARTOS_TICK_HZ=2000\nCONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\n")
         header = (self.build / "generated/build_config.h").read_text()
-        self.assertIn("scheduler = priority_aging_config { .ticks = 2000 }", header)
+        self.assertIn("scheduler = fixed_priority_round_robin_config { "
+                      ".priority_aging_ticks = 2000 }", header)
 
         (self.build / ".config").unlink()
         self.generate("CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING=y\nCONFIG_ARTOS_PRIORITY_AGING_TICKS=250\n")
-        self.generate("CONFIG_ARTOS_SCHEDULER_FIXED_PRIORITY_ROUND_ROBIN=y\n")
+        self.generate("")
         header = (self.build / "generated/build_config.h").read_text()
-        self.assertIn("scheduler = priority_aging_config { .ticks = 250 }", header)
+        self.assertIn("scheduler = fixed_priority_round_robin_config { "
+                      ".priority_aging_ticks = 250 }", header)
         self.assertIn("#define CONFIG_ARTOS_PRIORITY_AGING_TICKS 250",
                       (self.build / "generated/autoconf.h").read_text())
 
