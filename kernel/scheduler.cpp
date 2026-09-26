@@ -127,6 +127,32 @@ namespace artos::kernel::internal {
             return;
         }
 
+        if constexpr (scheduler_min_cycles_remaining != 0)
+        {
+            if (artos::port::get_cycles_remaining() < scheduler_min_cycles_remaining)
+            {
+                // The current thread may already be blocked. Remove it from the
+                // ready queue before idling until the next tick.
+                if (current_thread->state != thread_state_t::running && current_thread->state != thread_state_t::ready
+                    && current_thread->ready.queue != nullptr)
+                {
+                    auto* queue = current_thread->ready.queue;
+                    queue->remove(current_thread->ready);
+                    if (queue->empty())
+                    {
+                        clear_priority_ready(current_thread->priority);
+                    }
+                }
+
+                next_thread = threads[0];
+                if (next_thread != current_thread)
+                {
+                    artos::port::pendsvset();
+                }
+                return;
+            }
+        }
+
         check_deadlines();
 
         auto* selected = select_next(scheduler);

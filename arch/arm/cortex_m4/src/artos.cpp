@@ -15,6 +15,8 @@ namespace artos::port {
         static_assert(clock_hz % tick_hz == 0, "tick frequency must divide the timer clock");
         constexpr auto reload = clock_hz / tick_hz - 1;
         static_assert(reload > 0 && reload <= 0x00FFFFFF, "SysTick reload must fit 24 bits");
+        static_assert(build_config::artos::scheduler_min_cycles_remaining < reload,
+                      "scheduler cutoff must be shorter than a SysTick period");
         namespace systick_regmap {
             namespace tags {
                 struct ctrl;
@@ -77,6 +79,11 @@ namespace artos::port {
         systick_regmap::SYSTICK->VAL.write(0);
         systick_regmap::SYSTICK->CTRL.set(
             systick_regmap::ctrl::enable, systick_regmap::ctrl::tickint, systick_regmap::ctrl::clocksource);
+    }
+
+    std::uint32_t get_cycles_remaining() noexcept
+    {
+        return systick_regmap::SYSTICK->VAL.read();
     }
 
     void pendsvset() noexcept

@@ -27,8 +27,12 @@ clock divisibility and SysTick reload range. At 1 kHz the reload is 15,999.
 ./artos.py save-defconfig
 ```
 
-The `debug`, `release`, and `min-size` presets select only optimization/debugging
-behavior. Each build directory's `.config` selects its board and is authoritative
+The `debug`, `release`, and `min-size` presets select optimization/debugging
+behavior and seed different SysTick scheduling cutoffs (2500, 500, and 800
+cycles, respectively). Set `CONFIG_ARTOS_SCHEDULER_MIN_CYCLES_REMAINING` to
+override a cutoff; zero disables it. A scheduling request below the cutoff
+switches to idle and defers selection of a runnable thread until the next tick.
+Each build directory's `.config` selects its board and is authoritative
 once created. `KCONFIG_DEFCONFIG` can seed a new configuration explicitly;
 `savedefconfig` writes a minimal seed to that build's `defconfig` for retention
 under `configs/`.

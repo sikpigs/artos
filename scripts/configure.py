@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--defconfig", type=Path, required=True)
+    parser.add_argument("--build-type", default="Release")
     parser.add_argument("--menuconfig", action="store_true")
     parser.add_argument("--savedefconfig", action="store_true")
     args = parser.parse_args()
@@ -30,6 +31,7 @@ def main():
     config = build / ".config"
     os.environ["srctree"] = str(source)
     os.environ["KCONFIG_CONFIG"] = str(config)
+    os.environ["ARTOS_BUILD_TYPE"] = args.build_type
     kconf = kconfiglib.Kconfig(str(source / "Kconfig"), warn_to_stderr=False)
     kconf.warn_assign_undef = True
     kconf.load_config(str(config if config.exists() else args.defconfig.resolve()))
@@ -58,6 +60,8 @@ def main():
     # Disabled subsystem settings have no Kconfig value. Provide safe inert
     # defaults so public type declarations remain usable by compile-only checks.
     tick = int(kconf.syms["ARTOS_TICK_HZ"].str_value) if enabled else 1000
+    scheduler_min_cycles_remaining = (int(kconf.syms["ARTOS_SCHEDULER_MIN_CYCLES_REMAINING"].str_value)
+                                      if enabled else 0)
     priorities = int(kconf.syms["ARTOS_PRIORITY_LEVELS"].str_value) if enabled else 16
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
     max_deferred_work_items = int(kconf.syms["ARTOS_MAX_DEFERRED_WORK_ITEMS"].str_value) if enabled else 8
@@ -88,6 +92,7 @@ namespace build_config {{
 
         inline constexpr bool enabled = {str(enabled).lower()};
         inline constexpr std::uint32_t tick_hz = {tick};
+        inline constexpr std::uint32_t scheduler_min_cycles_remaining = {scheduler_min_cycles_remaining};
         inline constexpr std::uint32_t priority_levels = {priorities};
         inline constexpr std::size_t max_threads = {max_threads};
         inline constexpr std::size_t max_deferred_work_items = {max_deferred_work_items};

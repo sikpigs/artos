@@ -21,12 +21,13 @@ class ConfigurationTests(unittest.TestCase):
         self.seed = self.root / "seed"
         self.build = self.root / "build"
 
-    def generate(self, seed, success=True):
+    def generate(self, seed, success=True, build_type="Release"):
         self.seed.write_text(seed)
         result = subprocess.run(
             [sys.executable, str(SOURCE / "scripts/configure.py"),
              "--source", str(SOURCE), "--build", str(self.build),
-             "--defconfig", str(self.seed)], capture_output=True, text=True)
+             "--defconfig", str(self.seed), "--build-type", build_type],
+            capture_output=True, text=True)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
 
@@ -60,6 +61,19 @@ class ConfigurationTests(unittest.TestCase):
         before = header.stat().st_mtime_ns
         self.generate("")
         self.assertEqual(before, header.stat().st_mtime_ns)
+
+    def test_scheduler_cutoff_defaults_and_override(self):
+        for build_type, expected in (("Debug", 2500), ("Release", 500), ("MinSizeRel", 800)):
+            with self.subTest(build_type=build_type):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate("", build_type=build_type)
+                self.assertIn(f"scheduler_min_cycles_remaining = {expected}",
+                              (self.build / "generated/build_config.h").read_text())
+
+        (self.build / ".config").unlink()
+        self.generate("CONFIG_ARTOS_SCHEDULER_MIN_CYCLES_REMAINING=0\n", build_type="Debug")
+        self.assertIn("scheduler_min_cycles_remaining = 0",
+                      (self.build / "generated/build_config.h").read_text())
 
     def test_saved_config_overrides_seed(self):
         self.generate("CONFIG_ARTOS_TICK_HZ=2000\nCONFIG_ARTOS_PRIORITY_LEVELS=256\nCONFIG_ARTOS_MAX_THREADS=12\n")

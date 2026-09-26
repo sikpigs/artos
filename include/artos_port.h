@@ -18,5 +18,7 @@ namespace artos::port {
 
     stack_word_t* initialize_stack(stack_word_t* stack_top, void (*entry)(void*), void* argument) noexcept;
 
+    std::uint32_t get_cycles_remaining() noexcept;
+
     void pendsvset() noexcept;
 }

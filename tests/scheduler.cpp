@@ -24,6 +24,7 @@ namespace {
 
     artos::tick_time_t                                                        now {};
     unsigned                                                                  pendsv_count = 0;
+    std::uint32_t                                                             cycles_remaining = 16000;
     std::array<std::optional<tcb_t>, build_config::artos::max_threads>        tcbs {};
     std::array<artos::thread::stack_word_t, build_config::artos::max_threads> stacks {};
 
@@ -139,6 +140,7 @@ namespace {
         next_thread = nullptr;
         now = {};
         pendsv_count = 0;
+        cycles_remaining = 16000;
         (void)install(0, 15, thread_state_t::suspended);
     }
 
@@ -198,6 +200,32 @@ namespace {
         auto& application = install(2, 15, thread_state_t::ready);
         check(artos::kernel::internal::select_next() == &application,
               "idle competed with a runnable lowest-priority application thread");
+    }
+
+    void test_near_tick_blocked_thread_idles_until_next_tick()
+    {
+        using namespace artos::thread::internal;
+
+        reset_scheduler();
+        auto& blocked = install(1, 8, thread_state_t::running);
+        auto& ready = install(2, 2, thread_state_t::ready);
+        set_current(blocked);
+        blocked.state = thread_state_t::blocked_forever;
+        cycles_remaining = 100;
+
+        artos::kernel::internal::sched();
+
+        check(next_thread == threads[0], "near-tick blocked thread did not select idle");
+        check(blocked.ready.queue == nullptr, "blocked thread remained ready-queued");
+        check(pendsv_count == 1, "near-tick blocked thread did not request a handoff");
+        check(ready.ready.queue != nullptr, "ready thread was removed while idling");
+
+        current_thread = threads[0];
+        current_thread->state = thread_state_t::running;
+        next_thread = nullptr;
+        cycles_remaining = 16000;
+        artos::kernel::internal::sched();
+        check(next_thread == &ready, "next tick did not select the ready thread");
     }
 
     void test_sleep_deadlines_control_eligibility()
@@ -385,6 +413,7 @@ namespace {
         test_case_t { "equal-priority rotation", test_equal_priority_threads_rotate },
         test_case_t { "ready-queue membership", test_non_runnable_threads_are_not_ready_queued },
         test_case_t { "idle fallback", test_idle_is_only_the_fallback },
+        test_case_t { "near-tick blocked handoff", test_near_tick_blocked_thread_idles_until_next_tick },
         test_case_t { "sleep deadlines", test_sleep_deadlines_control_eligibility },
         test_case_t { "blocked timeout", test_block_timeout_removes_waiter },
         test_case_t { "deadline generation wrap", test_deadline_generation_wrap },
@@ -407,6 +436,11 @@ namespace artos::kernel {
 }
 
 namespace artos::port {
+    std::uint32_t get_cycles_remaining() noexcept
+    {
+        return cycles_remaining;
+    }
+
     void pendsvset() noexcept
     {
         ++pendsv_count;

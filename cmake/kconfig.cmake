@@ -8,7 +8,7 @@ set(KCONFIG_DEFCONFIG "${CMAKE_SOURCE_DIR}/configs/default_defconfig"
 get_filename_component(KCONFIG_DEFCONFIG "${KCONFIG_DEFCONFIG}" ABSOLUTE BASE_DIR "${CMAKE_SOURCE_DIR}")
 set(kconfig_command "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/scripts/configure.py"
     --source "${CMAKE_SOURCE_DIR}" --build "${CMAKE_BINARY_DIR}"
-    --defconfig "${KCONFIG_DEFCONFIG}")
+    --defconfig "${KCONFIG_DEFCONFIG}" --build-type "${CMAKE_BUILD_TYPE}")
 execute_process(COMMAND ${kconfig_command} RESULT_VARIABLE kconfig_result)
 if(NOT kconfig_result EQUAL 0)
     message(FATAL_ERROR "Kconfig generation failed; see diagnostics above")

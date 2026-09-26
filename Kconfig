@@ -28,6 +28,10 @@ config MCU_VARIANT
 
 menu "ARTOS"
 
+config ARTOS_BUILD_TYPE
+    string
+    option env="ARTOS_BUILD_TYPE"
+
 config ARTOS
     bool "Enable ARTOS"
     default y
@@ -43,6 +47,21 @@ config ARTOS_TICK_HZ
     help
       The CPU port checks that the board timer clock divides exactly by
       this frequency and that the reload fits the hardware timer.
+
+config ARTOS_SCHEDULER_MIN_CYCLES_REMAINING
+    int "Minimum SysTick cycles remaining to schedule on a tick"
+    range 0 16777215
+    default 2500 if ARTOS_BUILD_TYPE = "Debug"
+    default 800 if ARTOS_BUILD_TYPE = "MinSizeRel"
+    default 500
+    depends on ARTOS
+    help
+      If fewer SysTick clock cycles remain when scheduling is requested,
+      switch to the idle thread and defer selection of a runnable thread
+      until the next tick. A blocked thread is removed from the ready queue
+      before the handoff. Zero disables the cutoff. Defaults are estimates
+      for the 16 MHz boards; tune this value for the application and build
+      configuration.
 
 config ARTOS_MAX_THREADS
     int "Maximum number of threads (including idle)"
