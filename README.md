@@ -60,10 +60,8 @@ test tasks.
 
 ## Continuous integration
 
-GitHub Actions builds the firmware for both NUCLEO-F411RE and NUCLEO-F439ZI on
-pushes and pull requests. The F411RE job also runs the host CTest suite. The
-workflow uses the same `./artos.py` commands as local development; see
-[the workflow](.github/workflows/ci.yml).
+GitHub Actions runs firmware builds and host tests on pushes and pull requests.
+See [the workflow](.github/workflows/ci.yml) for its current build matrix.
 
 ## Build and flash
 
@@ -77,27 +75,14 @@ Kconfig as their sources of truth. Run it from the project root:
 
 It uses the `debug` preset by default. Select another build mode with
 `--preset release` or `--preset min-size` (the shorter `-p` also works), or set
-`ARTOS_PRESET` for a shell-wide default. Useful commands are:
-
-| Command | Purpose |
-| --- | --- |
-| `configure` | Configure the selected CMake preset; accepts `--fresh` and repeatable `-D NAME=VALUE` |
-| `menuconfig` | Edit the selected preset's board and firmware features |
-| `save-defconfig` | Write the minimal configuration to `build/<preset>/defconfig` |
-| `build [TARGET ...]` | Configure and build all firmware, or named CMake targets |
-| `clean` | Clean products for the selected preset while retaining its configuration |
-| `flash` | Build, program, verify, and reset through OpenOCD |
-| `debug-server` | Start OpenOCD for a GDB connection on port 3333 |
-| `monitor [--port DEVICE]` | Open the 115200-baud ST-LINK serial console |
-| `flash-monitor` | Flash and then open the serial console |
-| `check` | Run firmware compile, configuration, devicetree, and register-map checks |
-| `test` | Configure, build, and run all CTest-registered native and Python tests |
+`ARTOS_PRESET` for a shell-wide default. Run `./artos.py --help` for the
+current command list and `./artos.py COMMAND --help` for options. Use `./artos.py clean` to force a
+rebuild while retaining the selected preset configuration.
 
 Firmware operations configure first, so a fresh checkout needs no separate setup
 step after the Python dependencies are installed. Use `-j N` with build-oriented
 commands to limit parallelism, `--verbose` to show compiler commands, or global
-`--dry-run` to inspect the delegated commands. Run `./artos.py COMMAND --help`
-for command-specific options.
+`--dry-run` to inspect the delegated commands.
 
 Artifacts are `artos.elf`, `artos.hex`, `artos.bin`, and `artos.map` in
 `build/debug/`. Override their base name when configuring, for example

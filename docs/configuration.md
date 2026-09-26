@@ -37,22 +37,17 @@ Kconfiglib rejects unknown settings and out-of-range values. CMake tracks the
 schemas, generator, seed and saved configuration; outputs are rewritten only when
 content changes. No Kconfig processing occurs on the MCU.
 
-| Setting | Default / range | Meaning |
-| --- | --- | --- |
-| `CONFIG_ARTOS_TICK_HZ` | 1000 / 1–1000000 | Tick frequency; hardware divisibility/reload checks also apply |
-| `CONFIG_ARTOS_MAX_THREADS` | 8 / 2–64 | Registry slots including idle; TCBs and stacks are separately supplied |
-| `CONFIG_ARTOS_PRIORITY_LEVELS` | 16 / 1–256 | Smaller numeric values have higher scheduling priority |
-| `CONFIG_ARTOS_MAX_DEFERRED_WORK_ITEMS` | 8 / 1–64 | Registered callbacks, independent of thread count |
-| `CONFIG_CONSOLE_RX_BUFFER_SIZE` | 256 / 2–65536 | RX array bytes; usable capacity is N−1 |
+The active [Kconfig](../Kconfig) files define option names, defaults, ranges,
+dependencies, and help text. They are the reference for current resource limits
+and scheduler options. Smaller numeric priority values mean higher scheduling
+priority; the console RX buffer reserves one slot to distinguish full from empty.
 
 Typed values appear in `build_config::artos` and `build_config::console`.
-`CONFIG_MONITOR` depends on `CONFIG_CONSOLE`. Disabling the monitor leaves the
-console and its buffer available. Disabling the console also disables the monitor.
-
 `CONFIG_CONSOLE` depends on `CONFIG_ARTOS`, and `CONFIG_MONITOR` depends on
-`CONFIG_CONSOLE`. Disabling ARTOS therefore disables both console and monitor,
-even if an input configuration requests them. Disabled-kernel typed defaults
-support compile-only declarations; they do not supply kernel implementations.
+`CONFIG_CONSOLE`. Disabling ARTOS therefore disables both console and monitor.
+Disabling the monitor alone leaves the console available. Disabled-kernel typed
+defaults support compile-only declarations; they do not supply kernel
+implementations.
 
 ## Startup and source layout
 
@@ -63,19 +58,10 @@ resets the thread registry and tick count, creates idle, initializes the port,
 and starts the tick. Main then creates monitor/blinky threads when configured
 and starts the first thread through PendSV.
 
-| Location | Responsibility |
-| --- | --- |
-| `runtime/` | C/C++ initialization, guards, abort and newlib hooks |
-| `arch/arm/cortex_m4/` | Reset, IRQ dispatch, faults, interrupt masking, SysTick and context switching |
-| `kernel/kernel.cpp` | Kernel initialization, startup and tick orchestration |
-| `kernel/thread.cpp` | Thread creation and sleep |
-| `kernel/scheduler.cpp` | Registry, current/next thread, selection and switch bookkeeping |
-| `kernel/blocking.cpp` | Wait registration and blocked-to-ready transitions |
-| `kernel/wait.cpp` | Queue membership only |
-| `kernel/deferred.cpp` | Fixed callback registrations, pending flags and dispatch |
-| `kernel/internal/` | Private TCB and cross-file declarations |
-| `modules/console/` | DTS-bound buffered transport and blocking byte reads |
-| `modules/monitor/` | Line editing and memory commands |
+The main boundaries are `runtime/` for language and library startup,
+`arch/arm/cortex_m4/` for processor support, `kernel/` for scheduling and
+thread services, and `modules/` for the console and monitor. The source lists in
+their CMake files are the current inventory of translation units.
 
 The port's initial context is 68 bytes, including EXC_RETURN; that is not a usable
 thread stack budget. `thread::minimum_stack_bytes` is 1024 bytes including saved
@@ -84,11 +70,10 @@ an independent 4096-byte stack reservation. PendSV preserves integer state and
 conditionally saves/restores the high floating-point registers. Fault capture
 uses a separate emergency stack. See [runtime constraints](../runtime/README.md).
 
-The scheduler scans a fixed thread registry, chooses the highest-priority runnable
-application thread, and rotates equal-priority ties relative to the current slot.
-Slot zero is idle fallback. Declared ready-list storage is not yet used for
-selection. Thread IDs pack a slot index and generation; deletion/reuse lifecycle
-support is not implemented. See [wait and deferred contracts](../kernel/README.md).
+The scheduler chooses the highest-priority ready application thread and rotates
+equal-priority ties. Slot zero is the idle fallback. Thread IDs pack a slot index
+and generation; deletion/reuse lifecycle support is not implemented. See
+[wait and deferred contracts](../kernel/README.md).
 
 ## Verification
 
