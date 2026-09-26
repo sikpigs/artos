@@ -27,8 +27,9 @@ namespace artos::thread::internal {
 
     struct tcb_base_t;
 
-    void                      set_priority_ready(priority_t priority) noexcept;
-    void                      clear_priority_ready(priority_t priority) noexcept;
+    void set_priority_ready(priority_t priority) noexcept;
+    void clear_priority_ready(priority_t priority) noexcept;
+
     std::optional<priority_t> get_highest_set_priority() noexcept;
 
     void make_thread_ready(tcb_base_t* thread) noexcept;
@@ -82,6 +83,9 @@ namespace artos::thread::internal {
             id = id_layout::next(id, index);
             return id;
         }
+
+        func_t on_exit;
+        void*  on_exit_ctx;
     };
 
     template<bool enabled>

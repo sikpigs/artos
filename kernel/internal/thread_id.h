@@ -27,5 +27,10 @@ namespace artos::thread::internal {
             const auto generation = Id { (current & generation_mask) + generation_increment };
             return Id { (generation & generation_mask) | (static_cast<Id>(index) & index_mask) };
         }
+
+        [[nodiscard]] static Id extract_id(Id current) noexcept
+        {
+            return current & index_mask;
+        }
     };
 }

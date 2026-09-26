@@ -14,6 +14,12 @@
 .word _ebss
 
 .section .text.Reset_Handler
+.weak kmain
+.type kmain, %function
+kmain:
+  bx lr
+.size kmain, .-kmain
+
 .weak Reset_Handler
 .type Reset_Handler, %function
 Reset_Handler:
@@ -49,11 +55,10 @@ Reset_Handler:
   b 4b
 6:
   bl __libc_init_array
-  bl main
+  bl kmain
 7:
   wfi
   b 7b
 .size Reset_Handler, .-Reset_Handler
-
 
 .section .note.GNU-stack,"",%progbits

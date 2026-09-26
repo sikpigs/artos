@@ -64,6 +64,10 @@ def main():
                                       if enabled else 0)
     priorities = int(kconf.syms["ARTOS_PRIORITY_LEVELS"].str_value) if enabled else 16
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
+    main_thread_stack_size = (int(kconf.syms["ARTOS_MAIN_THREAD_STACK_SIZE"].str_value)
+                              if enabled else 4096)
+    main_thread_priority = (int(kconf.syms["ARTOS_MAIN_THREAD_PRIORITY"].str_value)
+                            if enabled else 0)
     max_deferred_work_items = int(kconf.syms["ARTOS_MAX_DEFERRED_WORK_ITEMS"].str_value) if enabled else 8
     max_active_guards = int(kconf.syms["ARTOS_MAX_ACTIVE_GUARDS"].str_value) if enabled else 8
     priority_aging = enabled and bool(kconf.syms["ARTOS_SCHEDULER_PRIORITY_AGING"].tri_value)
@@ -95,12 +99,17 @@ namespace build_config {{
         inline constexpr std::uint32_t scheduler_min_cycles_remaining = {scheduler_min_cycles_remaining};
         inline constexpr std::uint32_t priority_levels = {priorities};
         inline constexpr std::size_t max_threads = {max_threads};
+        inline constexpr std::size_t main_thread_stack_size = {main_thread_stack_size};
+        inline constexpr std::uint8_t main_thread_priority = {main_thread_priority};
         inline constexpr std::size_t max_deferred_work_items = {max_deferred_work_items};
         inline constexpr std::size_t max_active_guards = {max_active_guards};
         inline constexpr auto scheduler = {scheduler_config};
         static_assert(tick_hz > 0);
         static_assert(priority_levels > 0 && priority_levels <= 256);
         static_assert(max_threads >= 2 && max_threads <= 64);
+        static_assert(main_thread_stack_size >= 1024 && main_thread_stack_size <= 65536);
+        static_assert(main_thread_stack_size % 8 == 0);
+        static_assert(main_thread_priority < priority_levels);
         static_assert(max_deferred_work_items >= 1 && max_deferred_work_items <= 64);
         static_assert(max_active_guards >= 1 && max_active_guards <= 64);
     }}

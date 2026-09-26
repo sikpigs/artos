@@ -338,6 +338,7 @@ namespace {
 
     extern "C" bool                         artos_context_started() noexcept;
     extern "C" artos::thread::stack_word_t* artos_context_start() noexcept;
+    extern "C" artos::thread::stack_word_t* artos_context_switch(artos::thread::stack_word_t* outgoing_sp) noexcept;
 
     void test_context_start_and_switch_state()
     {
@@ -357,8 +358,7 @@ namespace {
         check(first.state == thread_state_t::running, "first context was not marked running");
 
         artos::thread::internal::next_thread = &second;
-        check(artos::thread::internal::artos_context_switch(&saved_stack) == &second_stack,
-              "context switch returned the wrong incoming stack");
+        check(artos_context_switch(&saved_stack) == &second_stack, "context switch returned the wrong incoming stack");
         check(first.sp == &saved_stack && first.state == thread_state_t::ready,
               "outgoing context was not saved and made ready");
         check(second.state == thread_state_t::running, "incoming context was not marked running");

@@ -6,11 +6,13 @@
 #include <internal/time.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cerrno>
 #include <new>
 
 #include <artos.h>
 #include <artos_port.h>
+#include <cpu_port.h>
 #include <wait_queue.h>
 
 using namespace build_config::artos;
@@ -88,6 +90,20 @@ namespace artos::thread {
             // The switch executes after this critical section restores interrupts.
             kernel::internal::sched();
         }
+
+        void on_exit(id_t thread_id, func_t on_exit, void* ctx) noexcept
+        {
+            const auto index = tcb_t::id_layout::extract_id(thread_id);
+
+            assert(index < threads.size());
+
+            auto* thread = threads[index];
+
+            assert(thread->id == thread_id);
+
+            thread->on_exit = on_exit;
+            thread->on_exit_ctx = ctx;
+        }
     }
 
     id_t get_current_thread() noexcept
@@ -109,5 +125,24 @@ namespace artos::thread {
     void sleep_until(const tick_time_t& tick_time) noexcept
     {
         internal::sleep_until(tick_time);
+    }
+
+    extern "C" [[noreturn]] void thread_exit() noexcept
+    {
+        assert(internal::current_thread);
+
+        auto* thread = internal::current_thread;
+        thread->state = internal::thread_state_t::finished;
+        kernel::internal::sched();
+
+        for (;;)
+        {
+            cpu::port::wait_for_interrupt();
+        }
+    }
+
+    [[noreturn]] void exit() noexcept
+    {
+        thread_exit();
     }
 }

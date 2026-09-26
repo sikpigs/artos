@@ -1,22 +1,57 @@
+#include <build_config.h>
 
+#include <cpu_port.h>
 #include <internal/deferred.h>
 #include <internal/scheduler.h>
+#include <internal/thread.h>
 #include <internal/thread_state.h>
+
+#include <atomic>
+#include <memory>
+
+#ifdef CONFIG_CONSOLE
+#include <console/console.h>
+#endif
+
+#include <board.h>
 
 #include <artos.h>
 #include <artos_port.h>
-#include <atomic>
 
 namespace artos::kernel {
+    using namespace build_config::artos;
+
     namespace {
         // Slot zero is reserved by init(). This stack is for the idle loop;
         // exception handlers execute on MSP. Revisit its budget as the port grows.
-        thread::thread_storage<thread::minimum_stack_bytes> idle_storage {};
+        thread::thread_storage_t<thread::minimum_stack_bytes> idle_storage {};
 
         [[noreturn]] void idle_entry(void*) noexcept
         {
+            using namespace thread::internal;
+
             for (;;)
             {
+                {
+                    const critical_section_t cs {};
+                    for (std::size_t ix = 0; ix < threads.size(); ++ix)
+                    {
+                        if (threads[ix] == nullptr || threads[ix]->state != thread_state_t::finished)
+                        {
+                            continue;
+                        }
+
+                        if (threads[ix]->on_exit)
+                        {
+                            threads[ix]->on_exit(threads[ix]->on_exit_ctx);
+                        }
+
+                        threads[ix] = nullptr;
+
+                        --thread_count;
+                    }
+                }
+
                 cpu::port::wait_for_interrupt();
             }
         }
@@ -124,7 +159,7 @@ namespace artos::kernel {
 
         // Idle is the fallback, even when an application uses priority_t::low.
         // Future selection must consider ready application threads first.
-        const auto idle = thread::create(idle_entry, "idle", nullptr, thread::priority_t::low, idle_storage, false);
+        const auto idle = thread::create(idle_entry, "IDLE", nullptr, thread::priority_t::low, idle_storage, false);
         if (!idle || *idle != 0)
         {
             cpu::port::fatal_trap();
@@ -154,5 +189,26 @@ namespace artos::kernel {
     {
         const critical_section_t cs {};
         return static_cast<tick_time_t>(internal::ticks);
+    }
+
+    extern "C" void app_main() noexcept;
+
+    void main(void*) noexcept
+    {
+        app_main();
+    }
+
+    extern "C" void kmain() noexcept
+    {
+        board::init();
+#ifdef CONFIG_CONSOLE
+        artos::console::system_console().init();
+#endif
+        init();
+
+        [[maybe_unused]] const auto main_thread = thread::create<main_thread_stack_size>(
+            main, "MAIN", nullptr, thread::make_priority<main_thread_priority>(), true);
+
+        start();
     }
 }

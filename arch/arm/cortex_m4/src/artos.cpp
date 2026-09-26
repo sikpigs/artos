@@ -32,15 +32,15 @@ namespace artos::port {
                 inline constexpr artos::mmio::field_t<tags::ctrl, 0>  enable {};
                 inline constexpr artos::mmio::field_t<tags::ctrl, 1>  tickint {};
                 inline constexpr artos::mmio::field_t<tags::ctrl, 2>  clocksource {};
-                inline constexpr artos::mmio::field_t<tags::ctrl, 16> countflag {};
+                inline constexpr artos::mmio::field_t<tags::ctrl, 16> countflag {}; // NOLINT
             }
 
             namespace load {
-                inline constexpr artos::mmio::field_t<tags::load, 0, 24> load {};
+                inline constexpr artos::mmio::field_t<tags::load, 0, 24> load {}; // NOLINT
             }
 
             namespace val {
-                inline constexpr artos::mmio::field_t<tags::val, 0, 24> val {};
+                inline constexpr artos::mmio::field_t<tags::val, 0, 24> val {}; // NOLINT
             }
 
             // Preserve the hardware register names used by the Cortex-M documentation.
@@ -92,26 +92,28 @@ namespace artos::port {
         SCB->ICSR.set(scb::icsr::pendsvset);
     }
 
+    extern "C" void thread_exit() noexcept;
+
     stack_word_t* initialize_stack(stack_word_t* stack_top, void (*entry)(void*), void* argument) noexcept
     {
         auto* sp = stack_top;
         *(--sp) = bit<stack_word_t, 24>;
         *(--sp) = reinterpret_cast<stack_word_t>(entry);
-        *(--sp) = 0xFFFFFFFFU;                              // LR: trap if the thread returns.
-        *(--sp) = 0;                                        // R12
-        *(--sp) = 0;                                        // R3
-        *(--sp) = 0;                                        // R2
-        *(--sp) = 0;                                        // R1
-        *(--sp) = reinterpret_cast<stack_word_t>(argument); // R0
-        *(--sp) = artos::port::initial_exc_return;          // EXC_RETURN
-        *(--sp) = 0;                                        // R11
-        *(--sp) = 0;                                        // R10
-        *(--sp) = 0;                                        // R9
-        *(--sp) = 0;                                        // R8
-        *(--sp) = 0;                                        // R7
-        *(--sp) = 0;                                        // R6
-        *(--sp) = 0;                                        // R5
-        *(--sp) = 0;                                        // R4
+        *(--sp) = reinterpret_cast<stack_word_t>(&thread_exit); // LR
+        *(--sp) = 0;                                            // R12
+        *(--sp) = 0;                                            // R3
+        *(--sp) = 0;                                            // R2
+        *(--sp) = 0;                                            // R1
+        *(--sp) = reinterpret_cast<stack_word_t>(argument);     // R0
+        *(--sp) = artos::port::initial_exc_return;              // EXC_RETURN
+        *(--sp) = 0;                                            // R11
+        *(--sp) = 0;                                            // R10
+        *(--sp) = 0;                                            // R9
+        *(--sp) = 0;                                            // R8
+        *(--sp) = 0;                                            // R7
+        *(--sp) = 0;                                            // R6
+        *(--sp) = 0;                                            // R5
+        *(--sp) = 0;                                            // R4
 
         return sp;
     }

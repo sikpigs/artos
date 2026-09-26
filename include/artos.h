@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <string_view>
 #include <utility>
 
@@ -188,7 +189,7 @@ namespace artos {
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
         inline constexpr auto tcb_size
-            = static_cast<std::size_t>(88) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0);
+            = static_cast<std::size_t>(96) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         enum class priority_t : std::uint8_t
@@ -206,14 +207,14 @@ namespace artos {
 
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
-        struct thread_storage
+        struct thread_storage_t
         {
             alignas(tcb_alignment) std::array<std::byte, tcb_size> tcb {};
             alignas(port::stack_alignment) std::array<stack_word_t, StackSize / sizeof(stack_word_t)> stack {};
         };
 
         namespace internal {
-            extern "C" stack_word_t* artos_context_switch(stack_word_t* outgoing_sp) noexcept;
+            void on_exit(id_t thread_id, func_t at_exit = nullptr, void* ctx = nullptr) noexcept;
 
             start_result_t create(func_t              func,
                                   std::string_view    name,
@@ -228,18 +229,44 @@ namespace artos {
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
         [[nodiscard]]
-        start_result_t create(func_t                     func,
-                              std::string_view           name,
-                              void*                      parameters,
-                              priority_t                 priority,
-                              thread_storage<StackSize>& storage,
-                              bool                       start = true) noexcept
+        start_result_t create(
+            func_t func, std::string_view name, void* parameters, priority_t priority, bool start) noexcept
+        {
+            using storage_t = thread::thread_storage_t<StackSize>;
+            auto storage = std::make_unique_for_overwrite<storage_t>();
+
+            auto result = internal::create(
+                func, name, StackSize, parameters, priority, storage->tcb.data(), storage->stack.data(), start);
+
+            if (result)
+            {
+                internal::on_exit(
+                    *result, +[](void* ctx) { delete reinterpret_cast<storage_t*>(ctx); }, storage.release());
+                return *result;
+            }
+            else
+            {
+                return result.error();
+            }
+        }
+
+        template<std::uint32_t StackSize>
+        requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
+        [[nodiscard]]
+        start_result_t create(func_t                       func,
+                              std::string_view             name,
+                              void*                        parameters,
+                              priority_t                   priority,
+                              thread_storage_t<StackSize>& storage,
+                              bool                         start = true) noexcept
         {
             return internal::create(
                 func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data(), start);
         }
 
-        id_t get_current_thread() noexcept;
+        [[nodiscard]] id_t get_current_thread() noexcept;
+        [[noreturn]] void  exit() noexcept;
+
         void sleep_for(tick_t ticks) noexcept;
         void sleep_until(const tick_time_t& ticks) noexcept;
     }

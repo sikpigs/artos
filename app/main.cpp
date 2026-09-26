@@ -15,10 +15,10 @@
 #if defined(CONFIG_ARTOS) && defined(CONFIG_MONITOR)
 namespace {
     // Startup resets MSP: task storage must outlive main's boot stack.
-    artos::thread::thread_storage<4096> monitor_storage {};
+    artos::thread::thread_storage_t<4096> monitor_storage {};
     // Includes nested sleep/scheduler calls and the saved exception context.
     // A 256-byte stack overflows into the TCB in the unoptimized Debug build.
-    artos::thread::thread_storage<artos::thread::minimum_stack_bytes> blinky_storage {};
+    artos::thread::thread_storage_t<artos::thread::minimum_stack_bytes> blinky_storage {};
 
     void monitor_entry(void*)
     {
@@ -38,33 +38,21 @@ namespace {
 
 #endif
 
-int main()
+extern "C" void app_main() noexcept
 {
-    board::init();
-#ifdef CONFIG_CONSOLE
-    artos::console::system_console().init();
-#endif
-#ifdef CONFIG_ARTOS
-    artos::kernel::init();
-#ifdef CONFIG_MONITOR
-    const auto monitor_task
-        = artos::thread::create(monitor_entry, "monitor", nullptr, artos::thread::priority_t::low, monitor_storage);
-    if (!monitor_task)
-    {
-        cpu::port::fatal_trap();
-    }
-
+#if defined(CONFIG_ARTOS) && defined(CONFIG_MONITOR)
     const auto blinky_task
         = artos::thread::create(blinky_entry, "blinky", nullptr, artos::thread::priority_t::low, blinky_storage);
     if (!blinky_task)
     {
         cpu::port::fatal_trap();
     }
+
+    const auto monitor_task
+        = artos::thread::create(monitor_entry, "monitor", nullptr, artos::thread::priority_t::low, monitor_storage);
+    if (!monitor_task)
+    {
+        cpu::port::fatal_trap();
+    }
 #endif
-    artos::kernel::start();
-#elif defined(CONFIG_MONITOR)
-    monitor::run();
-#endif
-    for (;;)
-        __asm volatile("wfi" ::: "memory");
 }

@@ -72,6 +72,26 @@ config ARTOS_MAX_THREADS
       Maximum number of registered threads, including the kernel idle
       thread. Each thread's TCB and stack are allocated separately.
 
+config ARTOS_MAIN_THREAD_STACK_SIZE
+    int "Main thread stack size in bytes"
+    range 1024 65536
+    default 4096
+    depends on ARTOS
+    help
+      Size of the statically allocated stack for the main thread. The value
+      must be at least the minimum supported thread stack size and aligned to
+      the CPU port's stack alignment.
+
+config ARTOS_MAIN_THREAD_PRIORITY
+    int "Main thread priority"
+    range 0 255
+    default 0
+    depends on ARTOS
+    help
+      Scheduler priority assigned to the main thread. Zero is the highest
+      priority. Use a value below ARTOS_PRIORITY_LEVELS; the default is the
+      highest priority.
+
 config ARTOS_MAX_DEFERRED_WORK_ITEMS
     int "Maximum number of registered deferred work items"
     range 1 64
