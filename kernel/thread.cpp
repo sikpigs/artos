@@ -13,6 +13,8 @@
 #include <artos_port.h>
 #include <wait_queue.h>
 
+using namespace build_config::artos;
+
 namespace artos::thread {
     namespace internal {
         start_result_t create(func_t              func,
@@ -26,7 +28,7 @@ namespace artos::thread {
         {
             const critical_section_t cs {};
 
-            auto* thread = reinterpret_cast<tcb_base_t*>(tcb);
+            auto* thread = reinterpret_cast<tcb_t*>(tcb);
             if (std::ranges::find(threads, thread) != threads.end())
             {
                 return artos::unexpected(EEXIST);
@@ -42,17 +44,10 @@ namespace artos::thread {
                 return artos::unexpected(EAGAIN);
             }
 
-            thread = ::new (static_cast<void*>(tcb)) tcb_t<decltype(build_config::artos::scheduler)> {};
             const auto stack_word_count = stack_size_bytes / sizeof(stack_word_t);
             auto*      sp = port::initialize_stack(stack + stack_word_count, func, parameters);
 
-            thread->sp = sp;
-            thread->stack_begin = stack;
-            thread->stack_end = stack + stack_word_count;
-
-            thread->name = name;
-            thread->priority = priority;
-            thread->deadline = {};
+            thread = ::new (static_cast<void*>(tcb)) tcb_t { name, priority, sp, stack, stack_word_count };
 
             ++thread_count;
             *tcb_it = thread;

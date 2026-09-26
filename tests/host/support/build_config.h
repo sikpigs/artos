@@ -15,6 +15,10 @@ namespace build_config::artos {
     inline constexpr std::size_t   max_threads = 8;
     inline constexpr std::size_t   max_active_guards = 2;
     inline constexpr auto          scheduler = fixed_priority_round_robin_config {
-                 .priority_aging_ticks = std::nullopt,
+#if defined(ARTOS_TEST_PRIORITY_AGING)
+        .priority_aging_ticks = 2,
+#else
+        .priority_aging_ticks = std::nullopt,
+#endif
     };
 }

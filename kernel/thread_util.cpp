@@ -9,6 +9,36 @@
 namespace artos::thread::internal {
     using namespace build_config::artos;
 
+    void set_effective_priority(tcb_base_t* thread, priority_t new_priority) noexcept
+    {
+        if (thread->priority == new_priority)
+        {
+            return;
+        }
+
+        const auto old_priority = thread->priority;
+        const bool queued = thread->ready.queue != nullptr;
+
+        if (queued)
+        {
+            auto* old_queue = thread->ready.queue;
+            old_queue->remove(thread->ready);
+
+            if (old_queue->empty())
+            {
+                clear_priority_ready(old_priority);
+            }
+        }
+
+        thread->priority = new_priority;
+
+        if (queued)
+        {
+            ready_queue[std::to_underlying(new_priority)].push_back(thread->ready);
+            set_priority_ready(new_priority);
+        }
+    }
+
     void set_priority_ready(priority_t priority) noexcept
     {
         const auto p = std::to_underlying(priority);

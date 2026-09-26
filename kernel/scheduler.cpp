@@ -7,10 +7,10 @@
 #include <internal/time.h>
 
 #include <cassert>
+#include <utility>
 
 #include <artos.h>
 #include <artos_port.h>
-#include <utility>
 #include <wait_queue.h>
 
 using namespace build_config::artos;
@@ -55,7 +55,7 @@ namespace artos::kernel::internal {
     }
 
     [[nodiscard]]
-    thread::internal::tcb_base_t* select_next(fixed_priority_round_robin_config) noexcept
+    tcb_t* select_next(fixed_priority_round_robin_config) noexcept
     {
         if (current_thread != nullptr && current_thread != threads[0])
         {
@@ -81,18 +81,48 @@ namespace artos::kernel::internal {
         }
 
         auto& queue = ready_queue[std::to_underlying(*priority)];
-        return queue.front()->thread;
+        return reinterpret_cast<tcb_t*>(queue.front()->thread);
     }
 
-    thread::internal::tcb_base_t* select_next() noexcept
+    tcb_t* select_next() noexcept
     {
         return select_next(build_config::artos::scheduler);
     }
 
+    template<bool aging_enabled>
+    struct ager;
+
+    template<>
+    struct ager<false>
+    {
+        void operator()() const noexcept
+        {
+        }
+    };
+
+    template<>
+    struct ager<true>
+    {
+        void operator()() const noexcept
+        {
+            for (std::size_t ix = 1; ix < threads.size(); ++ix)
+            {
+                if (threads[ix] == nullptr || threads[ix] == next_thread || threads[ix] == current_thread)
+                {
+                    continue;
+                }
+
+                threads[ix]->age();
+            }
+        }
+    };
+
+    inline static constexpr ager<scheduler.priority_aging_ticks.has_value()> age {};
+
     void sched() noexcept
     {
         // Leave the PendSV startup selection intact until a thread is running.
-        if (thread::internal::current_thread == nullptr)
+        if (current_thread == nullptr)
         {
             return;
         }
@@ -102,8 +132,13 @@ namespace artos::kernel::internal {
         auto* selected = select_next(scheduler);
         // Refresh even if a previously requested PendSV is already pending
         // and a new tick now selects the current thread again.
-        thread::internal::next_thread = selected;
-        if (selected != thread::internal::current_thread)
+        next_thread = selected;
+
+        age();
+
+        next_thread->reset_priority();
+
+        if (selected != current_thread)
         {
             artos::port::pendsvset();
         }

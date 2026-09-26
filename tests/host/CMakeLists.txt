@@ -44,7 +44,7 @@ target_compile_definitions(cxa_guard_tests PRIVATE
     __cxa_guard_abort=artos_test_guard_abort
 )
 
-add_artos_native_test(scheduler
+set(ARTOS_SCHEDULER_TEST_SOURCES
     "${ARTOS_ROOT}/tests/scheduler.cpp"
     "${ARTOS_ROOT}/kernel/scheduler.cpp"
     "${ARTOS_ROOT}/kernel/thread_state.cpp"
@@ -53,12 +53,20 @@ add_artos_native_test(scheduler
     "${ARTOS_ROOT}/kernel/thread_queue.cpp"
     "${ARTOS_ROOT}/kernel/context.cpp"
 )
+add_artos_native_test(scheduler ${ARTOS_SCHEDULER_TEST_SOURCES})
 target_include_directories(scheduler_tests PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/support"
     "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
     "${ARTOS_ROOT}/kernel"
 )
-set_tests_properties(scheduler PROPERTIES TIMEOUT 30)
+add_artos_native_test(scheduler_aging ${ARTOS_SCHEDULER_TEST_SOURCES})
+target_include_directories(scheduler_aging_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
+target_compile_definitions(scheduler_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
+set_tests_properties(scheduler scheduler_aging PROPERTIES TIMEOUT 30)
 
 # Exercise the same automatic selection used by firmware consumers.
 add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")

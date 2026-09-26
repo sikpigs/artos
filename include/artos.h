@@ -187,7 +187,8 @@ namespace artos {
         static_assert(minimum_stack_bytes >= port::initial_frame_bytes);
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
-        inline constexpr auto tcb_size = static_cast<std::size_t>(88);
+        inline constexpr auto tcb_size
+            = static_cast<std::size_t>(88) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         enum class priority_t : std::uint8_t

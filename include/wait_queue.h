@@ -12,8 +12,13 @@ namespace artos {
 
     struct wait_queue_node_t
     {
-        list_hook_t                   hook;
-        thread::internal::tcb_base_t* thread {};
+        explicit wait_queue_node_t(thread::internal::tcb_base_t* thread_in) noexcept
+            : thread { thread_in }
+        {
+        }
+
+        list_hook_t                   hook {};
+        thread::internal::tcb_base_t* thread;
         wake_reason_t                 wake { wake_reason_t::none };
         wait_queue_t*                 queue { nullptr };
     };

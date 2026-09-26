@@ -16,8 +16,8 @@ namespace {
     void test_clear_releases_nodes()
     {
         artos::wait_queue_t      queue;
-        artos::wait_queue_node_t first;
-        artos::wait_queue_node_t second;
+        artos::wait_queue_node_t first { nullptr };
+        artos::wait_queue_node_t second { nullptr };
 
         queue.push_back(first);
         queue.push_back(second);

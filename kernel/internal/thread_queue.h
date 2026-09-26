@@ -2,17 +2,22 @@
 
 #include <intrusive_list.h>
 
-namespace artos::thread::internal {
-    struct tcb_base_t;
-}
-
 namespace artos {
+    namespace thread::internal {
+        struct tcb_base_t;
+    }
+
     class thread_queue_t;
 
     struct thread_queue_node_t
     {
-        list_hook_t                   hook;
-        thread::internal::tcb_base_t* thread {};
+        explicit thread_queue_node_t(thread::internal::tcb_base_t* thread_in) noexcept
+            : thread { thread_in }
+        {
+        }
+
+        list_hook_t                   hook {};
+        thread::internal::tcb_base_t* thread;
         thread_queue_t*               queue { nullptr };
     };
 

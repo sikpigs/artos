@@ -14,16 +14,18 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <optional>
 #include <sys/wait.h>
 #include <unistd.h>
 
 namespace {
-    using artos::thread::internal::tcb_base_t;
+    using artos::thread::internal::tcb_t;
     using artos::thread::internal::thread_state_t;
 
-    artos::tick_time_t                                       now {};
-    unsigned                                                 pendsv_count = 0;
-    std::array<tcb_base_t, build_config::artos::max_threads> tcbs {};
+    artos::tick_time_t                                                        now {};
+    unsigned                                                                  pendsv_count = 0;
+    std::array<std::optional<tcb_t>, build_config::artos::max_threads>        tcbs {};
+    std::array<artos::thread::stack_word_t, build_config::artos::max_threads> stacks {};
 
     void check(bool condition, const char* message)
     {
@@ -44,7 +46,7 @@ namespace {
         return state == thread_state_t::ready || state == thread_state_t::running;
     }
 
-    void enqueue_ready(tcb_base_t& thread)
+    void enqueue_ready(tcb_t& thread)
     {
         using namespace artos::thread::internal;
 
@@ -53,7 +55,7 @@ namespace {
         set_priority_ready(thread.priority);
     }
 
-    void remove_ready(tcb_base_t& thread)
+    void remove_ready(tcb_t& thread)
     {
         using namespace artos::thread::internal;
 
@@ -70,20 +72,15 @@ namespace {
         }
     }
 
-    tcb_base_t& install(std::size_t slot, std::uint8_t priority_value, thread_state_t state)
+    tcb_t& install(std::size_t slot, std::uint8_t priority_value, thread_state_t state)
     {
         using namespace artos::thread::internal;
 
-        auto& thread = tcbs[slot];
         check(threads[slot] == nullptr, "test installed the same thread slot twice");
-        check(thread.ready.queue == nullptr, "test installed a thread that was already ready-queued");
-        check(thread.waiter.queue == nullptr, "test installed a thread that was still waiting");
-
-        thread.priority = priority(priority_value);
+        check(!tcbs[slot].has_value(), "test installed the same thread slot twice");
+        auto& thread = tcbs[slot].emplace("test", priority(priority_value), &stacks[slot], &stacks[slot], 1);
         thread.state = state;
         thread.deadline = {};
-        thread.ready.thread = &thread;
-        thread.waiter.thread = &thread;
         thread.waiter.wake = artos::wake_reason_t::none;
         threads[slot] = &thread;
         ++thread_count;
@@ -96,7 +93,7 @@ namespace {
         return thread;
     }
 
-    void set_current(tcb_base_t& thread)
+    void set_current(tcb_t& thread)
     {
         using namespace artos::thread::internal;
 
@@ -109,7 +106,7 @@ namespace {
         current_thread = &thread;
     }
 
-    void make_not_ready(tcb_base_t& thread, thread_state_t state)
+    void make_not_ready(tcb_t& thread, thread_state_t state)
     {
         check(!is_runnable(state), "non-ready transition used a runnable state");
         remove_ready(thread);
@@ -129,10 +126,11 @@ namespace {
 
         for (auto& thread : tcbs)
         {
-            check(thread.waiter.queue == nullptr, "previous test left a waiter queued");
-            thread.state = thread_state_t::inactive;
-            thread.deadline = {};
-            thread.waiter.wake = artos::wake_reason_t::none;
+            if (thread.has_value())
+            {
+                check(thread->waiter.queue == nullptr, "previous test left a waiter queued");
+                thread.reset();
+            }
         }
 
         threads.fill(nullptr);
@@ -189,7 +187,7 @@ namespace {
     void test_idle_is_only_the_fallback()
     {
         reset_scheduler();
-        auto& idle = tcbs[0];
+        auto& idle = *tcbs[0];
         auto& current = install(1, 8, thread_state_t::running);
         set_current(current);
         make_not_ready(current, thread_state_t::blocked_forever);
@@ -338,6 +336,44 @@ namespace {
         check(second.state == thread_state_t::running, "incoming context was not marked running");
     }
 
+#if defined(ARTOS_TEST_PRIORITY_AGING)
+    void test_priority_aging_promotes_waiter()
+    {
+        reset_scheduler();
+        auto& current = install(1, 4, thread_state_t::running);
+        auto& waiting = install(2, 5, thread_state_t::ready);
+        set_current(current);
+
+        artos::kernel::internal::sched();
+        check(waiting.priority == priority(5) && waiting.ticks_at_priority == 1,
+              "waiting thread aged before the configured interval");
+        check(current.ticks_at_priority == 0, "running thread was aged");
+
+        artos::kernel::internal::sched();
+        check(waiting.priority == priority(4) && waiting.ticks_at_priority == 0,
+              "waiting thread was not promoted at the configured interval");
+        check(waiting.ready.queue == &artos::thread::internal::ready_queue[4],
+              "promoted thread was not moved to its new ready queue");
+
+        artos::kernel::internal::sched();
+        check(artos::thread::internal::next_thread == &waiting,
+              "promoted thread was not selected after reaching the running priority");
+        check(waiting.priority == priority(5) && waiting.ticks_at_priority == 0,
+              "selected thread did not regain its original priority");
+        check(waiting.ready.queue == &artos::thread::internal::ready_queue[5],
+              "selected thread was not returned to its original ready queue");
+    }
+
+    void test_priority_aging_stops_at_highest_priority()
+    {
+        reset_scheduler();
+        auto& highest = install(1, 0, thread_state_t::ready);
+        highest.age();
+        highest.age();
+        check(highest.priority == artos::thread::priority_t::high, "aging wrapped past the highest priority");
+    }
+#endif
+
     struct test_case_t
     {
         const char* name;
@@ -356,6 +392,10 @@ namespace {
         test_case_t { "startup selection", test_sched_preserves_startup_selection },
         test_case_t { "initial selection", test_initial_selection_uses_the_highest_priority_thread },
         test_case_t { "context state transitions", test_context_start_and_switch_state },
+#if defined(ARTOS_TEST_PRIORITY_AGING)
+        test_case_t { "priority aging promotion", test_priority_aging_promotes_waiter },
+        test_case_t { "priority aging limit", test_priority_aging_stops_at_highest_priority },
+#endif
     };
 }
 
