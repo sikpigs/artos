@@ -58,6 +58,13 @@ changes. See [development tooling](docs/development.md) for design details,
 configuration-database selection, performance tuning, CTest presets, and VS Code
 test tasks.
 
+## Continuous integration
+
+GitHub Actions builds the firmware for both NUCLEO-F411RE and NUCLEO-F439ZI on
+pushes and pull requests. The F411RE job also runs the host CTest suite. The
+workflow uses the same `./artos.py` commands as local development; see
+[the workflow](.github/workflows/ci.yml).
+
 ## Build and flash
 
 The project command driver wraps the CMake workflows while leaving CMake and

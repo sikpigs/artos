@@ -1,0 +1,45 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - board: nucleo_f411re
+            run_tests: true
+          - board: nucleo_f439zi
+            run_tests: false
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ gcc-arm-none-eabi \
+            libstdc++-arm-none-eabi-newlib python3-venv \
+            device-tree-compiler clang-format clang-tidy
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Configure firmware
+        run: ./artos.py configure -D KCONFIG_DEFCONFIG=configs/${{ matrix.board }}_defconfig
+
+      - name: Build firmware
+        run: ./artos.py build -j 2
+
+      - name: Run host tests
+        if: matrix.run_tests
+        run: ./artos.py test
