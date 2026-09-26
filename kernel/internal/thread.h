@@ -105,10 +105,10 @@ namespace artos::thread::internal {
 
         tcb_inst_t(std::string_view thread_name,
                    priority_t       thread_priority,
-                   stack_word_t*    sp,
+                   stack_word_t*    stack_pointer,
                    stack_word_t*    stack_start,
                    std::size_t      stack_word_count) noexcept
-            : tcb_base_t { thread_name, thread_priority, sp, stack_start, stack_word_count }
+            : tcb_base_t { thread_name, thread_priority, stack_pointer, stack_start, stack_word_count }
         {
             if constexpr (aging_enabled)
             {
