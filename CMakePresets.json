@@ -33,6 +33,14 @@
       }
     },
     {
+      "name": "rel-with-deb-info",
+      "displayName": "Release with Debug Info",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "min-size",
       "displayName": "Minimum Size",
       "inherits": "base",
@@ -60,6 +68,10 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "rel-with-deb-info",
+      "configurePreset": "rel-with-deb-info"
     },
     {
       "name": "min-size",

@@ -38,8 +38,7 @@ namespace artos::console {
             cpu::port::fatal_trap();
         }
 
-        board::init_console();
-        usart.configure(board::devices::console_config);
+        usart.configure(board::devices::console_config, board::devices::console_clock_hz);
         artos::irq::install<&buffered_console_t::irq_handler>(usart, *this);
 
         initialized = true;

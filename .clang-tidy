@@ -3,6 +3,7 @@
 Checks: >-
   -*,
   clang-analyzer-core.*,
+  -clang-analyzer-core.FixedAddressDereference,
   clang-analyzer-cplusplus.*,
   clang-analyzer-deadcode.*,
   bugprone-argument-comment,

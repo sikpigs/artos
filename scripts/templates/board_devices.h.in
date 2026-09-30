@@ -2,50 +2,30 @@
 
 #include <board.h>
 #include <stm32/usart.h>
-
-namespace board {
-    void init_console() noexcept;
-}
+#include <${soc}/usart.h>
 
 // Generated from the selected DTB; do not edit.
-#include <${soc}/generated/rcc.h>
+#include <${soc}/timer.h>
 namespace board::devices {
     inline constexpr auto heartbeat = chosen::heartbeat::pin;
+    inline constexpr auto stopwatch = ${soc}::timer::timer${timer_number};
+    inline constexpr artos::hertz_t stopwatch_clock_hz { chosen::stopwatch::clock::frequency_hz };
+    static_assert(stopwatch.address == chosen::stopwatch::address);
+    static_assert(stopwatch.max_reload == 0xFFFF'FFFFU);
     using console_node = chosen::console;
     static_assert(console_node::enabled);
-    inline constexpr stm32::usart::usart_t<typename console_node::registers,
-                                           console_node::rx,
-                                           console_node::tx,
-                                           console_node::address,
-                                           console_node::clock::frequency_hz,
-                                           console_node::alternate_function,
-                                           console_node::interrupt>
-        console {};
+    inline constexpr auto console = ${soc}::usart::${uart}_device<console_node::rx, console_node::tx>;
+    static_assert(console.address == console_node::address);
+    static_assert(console.irq_number == console_node::interrupt);
+    static_assert(console.alternate_function == console_node::alternate_function);
+    inline constexpr artos::hertz_t console_clock_hz { console_node::clock::frequency_hz };
 
     inline constexpr stm32::usart::config_t console_config {
         .baud_rate = console_node::baud_rate,
         .rx_dr_not_empty_intr_en = true,
     };
-    static_assert(stm32::usart::calculate_brr(console_node::clock::frequency_hz,
+    static_assert(stm32::usart::calculate_brr(console_clock_hz,
                                               console_config.baud_rate,
                                               console_config.sampling)
                   != 0);
 }
-
-// Keep template placeholders intact until the generator substitutes them.
-// clang-format off
-namespace board::devices {
-    inline void enable_heartbeat_clock() noexcept
-    {
-        ${soc}::rcc::RCC->AHB1ENR.set(${heartbeat_gate});
-        (void)${soc}::rcc::RCC->AHB1ENR.read();
-    }
-    inline void enable_console_clocks() noexcept
-    {
-        ${soc}::rcc::RCC->AHB1ENR.set(${console_gpio_gates});
-        (void)${soc}::rcc::RCC->AHB1ENR.read();
-        ${soc}::rcc::RCC->APB1ENR.set(${soc}::rcc::apb1enr::${uart}en);
-        (void)${soc}::rcc::RCC->APB1ENR.read();
-    }
-}
-// clang-format on

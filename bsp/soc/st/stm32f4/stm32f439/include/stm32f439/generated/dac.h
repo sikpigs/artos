@@ -27,6 +27,7 @@ namespace stm32f439::dac {
         struct dor2;
         struct sr;
     }
+
     using CR = artos::mmio::register_t<tags::cr>;
     using SWTRIGR = artos::mmio::write_only_register_t<tags::swtrigr>;
     using DHR12R1 = artos::mmio::register_t<tags::dhr12r1>;
@@ -135,6 +136,7 @@ namespace stm32f439::dac {
         stm32f439::dac::DOR2    DOR2;
         stm32f439::dac::SR      SR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR) == 0x00);
     static_assert(offsetof(registers_t, SWTRIGR) == 0x04);
@@ -154,59 +156,73 @@ namespace stm32f439::dac {
 
     inline constexpr std::uintptr_t dac_address = 0x40007400UL;
     inline registers_t* const       DAC = reinterpret_cast<registers_t*>(dac_address);
+
     namespace metadata::dac {
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace swtrigr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12r1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12l1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr8r1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12r2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12l2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr8r2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12rd {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr12ld {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dhr8rd {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dor1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dor2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

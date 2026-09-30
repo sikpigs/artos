@@ -1,6 +1,6 @@
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
-#include <internal/thread_state.h>
 
 #include <cassert>
 #include <optional>
@@ -9,15 +9,15 @@
 #include <artos.h>
 
 namespace artos::kernel {
-    using namespace thread::internal;
+    using namespace internal;
 
     namespace locked {
         void block_current(wait_queue_t& queue, std::optional<tick_time_t> deadline) noexcept
         {
-            auto* thread = thread::internal::current_thread;
+            auto* thread = current_thread;
 
             assert(thread);
-            assert(thread->state == thread::internal::thread_state_t::running);
+            assert(thread->state == thread::state_t::running);
             assert(thread->waiter.thread == thread);
             assert(thread->waiter.queue == nullptr);
 
@@ -27,12 +27,12 @@ namespace artos::kernel {
 
             if (deadline)
             {
-                thread->state = thread::internal::thread_state_t::blocked;
+                thread->state = thread::state_t::blocked;
                 block_sleep_thread(thread);
             }
             else
             {
-                thread->state = thread::internal::thread_state_t::blocked_forever;
+                thread->state = thread::state_t::indefinite;
             }
 
             internal::sched();
@@ -47,7 +47,7 @@ namespace artos::kernel {
                 block_current(queue, deadline);
             }
 
-            return thread::internal::current_thread->waiter.wake;
+            return current_thread->waiter.wake;
         }
 
         wake_reason_t block_current(wait_queue_t& queue, const tick_time_t& deadline, critical_section_t cs) noexcept
@@ -103,8 +103,7 @@ namespace artos::kernel {
 
             auto* thread = selected->thread;
 
-            assert(thread->state == thread::internal::thread_state_t::blocked
-                   || thread->state == thread::internal::thread_state_t::blocked_forever);
+            assert(thread->state == thread::state_t::blocked || thread->state == thread::state_t::indefinite);
             assert(selected->wake == wake_reason_t::none);
 
             queue.remove(*selected);
@@ -117,7 +116,7 @@ namespace artos::kernel {
                 thread->block_sleep.queue->remove(thread->block_sleep);
             }
 
-            return thread->priority < thread::internal::current_thread->priority;
+            return thread->priority < current_thread->priority;
         }
 
         bool wake_all(wait_queue_t& queue) noexcept
@@ -134,8 +133,7 @@ namespace artos::kernel {
             {
                 auto* thread = it->thread;
 
-                assert(thread->state == thread::internal::thread_state_t::blocked
-                       || thread->state == thread::internal::thread_state_t::blocked_forever);
+                assert(thread->state == thread::state_t::blocked || thread->state == thread::state_t::indefinite);
                 assert(it->wake == wake_reason_t::none);
 
                 it->wake = wake_reason_t::signaled;
@@ -147,7 +145,7 @@ namespace artos::kernel {
                     thread->block_sleep.queue->remove(thread->block_sleep);
                 }
 
-                higher_priority_thread_woken |= thread->priority < thread::internal::current_thread->priority;
+                higher_priority_thread_woken |= thread->priority < current_thread->priority;
 
                 ++it;
             }

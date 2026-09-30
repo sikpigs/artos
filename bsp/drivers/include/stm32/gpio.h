@@ -63,7 +63,7 @@ namespace stm32::gpio {
         alternate_function_t alt_func { alternate_function_t::AF0 };
     };
 
-    template<typename Registers, typename Fields, std::uintptr_t Address>
+    template<typename Registers, typename Fields, std::uintptr_t Address, typename ClockGate>
     struct pin_t
     {
         static constexpr auto address = Address;
@@ -80,24 +80,30 @@ namespace stm32::gpio {
         {
             return gpio()->ODR.read(Fields::output);
         }
+
         [[nodiscard]] bool read() const noexcept
         {
             return gpio()->IDR.read(Fields::input);
         }
+
         void write(bool value) const noexcept
         {
             value ? set() : reset();
         }
+
         void set() const noexcept
         {
             gpio()->BSRR.set(Fields::set);
         }
+
         void reset() const noexcept
         {
             gpio()->BSRR.set(Fields::reset);
         }
+
         void configure(const config_t& cfg) const noexcept
         {
+            ClockGate::enable();
             auto* registers = gpio();
             registers->OTYPER.write(Fields::output_type, std::to_underlying(cfg.output_type));
             registers->OSPEEDR.write(Fields::output_speed, std::to_underlying(cfg.output_speed));

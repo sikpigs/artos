@@ -19,6 +19,7 @@ namespace stm32f411::exti {
         struct swier;
         struct pr;
     }
+
     using IMR = artos::mmio::register_t<tags::imr>;
     using EMR = artos::mmio::register_t<tags::emr>;
     using RTSR = artos::mmio::register_t<tags::rtsr>;
@@ -191,6 +192,7 @@ namespace stm32f411::exti {
         stm32f411::exti::SWIER SWIER;
         stm32f411::exti::PR    PR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, IMR) == 0x00);
     static_assert(offsetof(registers_t, EMR) == 0x04);
@@ -202,27 +204,33 @@ namespace stm32f411::exti {
 
     inline constexpr std::uintptr_t exti_address = 0x40013C00UL;
     inline registers_t* const       EXTI = reinterpret_cast<registers_t*>(exti_address);
+
     namespace metadata::exti {
         namespace imr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace emr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace rtsr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ftsr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace swier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

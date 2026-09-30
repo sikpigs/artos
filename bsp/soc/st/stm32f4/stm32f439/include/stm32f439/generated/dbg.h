@@ -17,6 +17,7 @@ namespace stm32f439::dbg {
         struct dbgmcu_apb1_fz;
         struct dbgmcu_apb2_fz;
     }
+
     using DBGMCU_IDCODE = artos::mmio::read_only_register_t<tags::dbgmcu_idcode>;
     using DBGMCU_CR = artos::mmio::register_t<tags::dbgmcu_cr>;
     using DBGMCU_APB1_FZ = artos::mmio::register_t<tags::dbgmcu_apb1_fz>;
@@ -69,6 +70,7 @@ namespace stm32f439::dbg {
         stm32f439::dbg::DBGMCU_APB1_FZ DBGMCU_APB1_FZ;
         stm32f439::dbg::DBGMCU_APB2_FZ DBGMCU_APB2_FZ;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, DBGMCU_IDCODE) == 0x00);
     static_assert(offsetof(registers_t, DBGMCU_CR) == 0x04);
@@ -78,19 +80,23 @@ namespace stm32f439::dbg {
 
     inline constexpr std::uintptr_t dbg_address = 0xE0042000UL;
     inline registers_t* const       DBG = reinterpret_cast<registers_t*>(dbg_address);
+
     namespace metadata::dbg {
         namespace dbgmcu_idcode {
             inline constexpr std::uint32_t reset_value = 0x10006411UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dbgmcu_cr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dbgmcu_apb1_fz {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dbgmcu_apb2_fz {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

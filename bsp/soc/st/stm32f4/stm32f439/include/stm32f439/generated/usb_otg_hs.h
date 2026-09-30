@@ -78,6 +78,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_device {
         struct otg_hs_doepint6;
         struct otg_hs_doepint7;
     }
+
     using OTG_HS_DCFG = artos::mmio::register_t<tags::otg_hs_dcfg>;
     using OTG_HS_DCTL = artos::mmio::register_t<tags::otg_hs_dctl>;
     using OTG_HS_DSTS = artos::mmio::read_only_register_t<tags::otg_hs_dsts>;
@@ -853,6 +854,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_device {
         std::uint32_t                                             reserved_3cc[7];
         stm32f439::usb_otg_hs::otg_hs_device::OTG_HS_DOEPINT7     OTG_HS_DOEPINT7;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, OTG_HS_DCFG) == 0x00);
     static_assert(offsetof(registers_t, OTG_HS_DCTL) == 0x04);
@@ -923,263 +925,328 @@ namespace stm32f439::usb_otg_hs::otg_hs_device {
 
     inline constexpr std::uintptr_t otg_hs_device_address = 0x40040800UL;
     inline registers_t* const       OTG_HS_DEVICE = reinterpret_cast<registers_t*>(otg_hs_device_address);
+
     namespace metadata::otg_hs_device {
         namespace otg_hs_dcfg {
             inline constexpr std::uint32_t reset_value = 0x02200000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dctl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dsts {
             inline constexpr std::uint32_t reset_value = 0x00000010UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_daint {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_daintmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dvbusdis {
             inline constexpr std::uint32_t reset_value = 0x000017D7UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dvbuspulse {
             inline constexpr std::uint32_t reset_value = 0x000005B8UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dthrctl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepempmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_deachint {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_deachintmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepeachmsk1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepeachmsk1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint0 {
             inline constexpr std::uint32_t reset_value = 0x00000080UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepdma1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepdma2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepdma3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepdma4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepdma5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptsiz5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dtxfsts5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepctl7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_diepint7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepctl0 {
             inline constexpr std::uint32_t reset_value = 0x00008000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint0 {
             inline constexpr std::uint32_t reset_value = 0x00000080UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doeptsiz0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepctl1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doeptsiz1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepctl2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doeptsiz2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepctl3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doeptsiz3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doeptsiz4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_doepint7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1215,6 +1282,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_global {
         struct otg_hs_dieptxf6;
         struct otg_hs_dieptxf7;
     }
+
     using OTG_HS_GOTGCTL = artos::mmio::register_t<tags::otg_hs_gotgctl>;
     using OTG_HS_GOTGINT = artos::mmio::register_t<tags::otg_hs_gotgint>;
     using OTG_HS_GAHBCFG = artos::mmio::register_t<tags::otg_hs_gahbcfg>;
@@ -1473,22 +1541,27 @@ namespace stm32f439::usb_otg_hs::otg_hs_global {
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRSTCTL OTG_HS_GRSTCTL;
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GINTSTS OTG_HS_GINTSTS;
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GINTMSK OTG_HS_GINTMSK;
+
         union
         {
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRXSTSR_Host       OTG_HS_GRXSTSR_Host;
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRXSTSR_Peripheral OTG_HS_GRXSTSR_Peripheral;
         };
+
         union
         {
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRXSTSP_Host       OTG_HS_GRXSTSP_Host;
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRXSTSP_Peripheral OTG_HS_GRXSTSP_Peripheral;
         };
+
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GRXFSIZ OTG_HS_GRXFSIZ;
+
         union
         {
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GNPTXFSIZ_Host     OTG_HS_GNPTXFSIZ_Host;
             stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_TX0FSIZ_Peripheral OTG_HS_TX0FSIZ_Peripheral;
         };
+
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GNPTXSTS OTG_HS_GNPTXSTS;
         std::uint32_t                                         reserved_30[2];
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_GCCFG    OTG_HS_GCCFG;
@@ -1504,6 +1577,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_global {
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_DIEPTXF6 OTG_HS_DIEPTXF6;
         stm32f439::usb_otg_hs::otg_hs_global::OTG_HS_DIEPTXF7 OTG_HS_DIEPTXF7;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, OTG_HS_GOTGCTL) == 0x00);
     static_assert(offsetof(registers_t, OTG_HS_GOTGINT) == 0x04);
@@ -1534,103 +1608,128 @@ namespace stm32f439::usb_otg_hs::otg_hs_global {
 
     inline constexpr std::uintptr_t otg_hs_global_address = 0x40040000UL;
     inline registers_t* const       OTG_HS_GLOBAL = reinterpret_cast<registers_t*>(otg_hs_global_address);
+
     namespace metadata::otg_hs_global {
         namespace otg_hs_gotgctl {
             inline constexpr std::uint32_t reset_value = 0x00000800UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gotgint {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gahbcfg {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gusbcfg {
             inline constexpr std::uint32_t reset_value = 0x00000A00UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grstctl {
             inline constexpr std::uint32_t reset_value = 0x20000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gintsts {
             inline constexpr std::uint32_t reset_value = 0x04000020UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gintmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grxstsr_host {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grxstsr_peripheral {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grxstsp_host {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grxstsp_peripheral {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_grxfsiz {
             inline constexpr std::uint32_t reset_value = 0x00000200UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gnptxfsiz_host {
             inline constexpr std::uint32_t reset_value = 0x00000200UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_tx0fsiz_peripheral {
             inline constexpr std::uint32_t reset_value = 0x00000200UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gnptxsts {
             inline constexpr std::uint32_t reset_value = 0x00080200UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_gccfg {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_cid {
             inline constexpr std::uint32_t reset_value = 0x00001200UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hptxfsiz {
             inline constexpr std::uint32_t reset_value = 0x02000600UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf1 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf2 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf3 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf4 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf5 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf6 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_dieptxf7 {
             inline constexpr std::uint32_t reset_value = 0x02000400UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1720,6 +1819,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_host {
         struct otg_hs_hctsiz11;
         struct otg_hs_hcdma11;
     }
+
     using OTG_HS_HCFG = artos::mmio::register_t<tags::otg_hs_hcfg>;
     using OTG_HS_HFIR = artos::mmio::register_t<tags::otg_hs_hfir>;
     using OTG_HS_HFNUM = artos::mmio::read_only_register_t<tags::otg_hs_hfnum>;
@@ -2648,6 +2748,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_host {
         stm32f439::usb_otg_hs::otg_hs_host::OTG_HS_HCTSIZ11   OTG_HS_HCTSIZ11;
         stm32f439::usb_otg_hs::otg_hs_host::OTG_HS_HCDMA11    OTG_HS_HCDMA11;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, OTG_HS_HCFG) == 0x00);
     static_assert(offsetof(registers_t, OTG_HS_HFIR) == 0x04);
@@ -2732,319 +2833,398 @@ namespace stm32f439::usb_otg_hs::otg_hs_host {
 
     inline constexpr std::uintptr_t otg_hs_host_address = 0x40040400UL;
     inline registers_t* const       OTG_HS_HOST = reinterpret_cast<registers_t*>(otg_hs_host_address);
+
     namespace metadata::otg_hs_host {
         namespace otg_hs_hcfg {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hfir {
             inline constexpr std::uint32_t reset_value = 0x0000EA60UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hfnum {
             inline constexpr std::uint32_t reset_value = 0x00003FFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hptxsts {
             inline constexpr std::uint32_t reset_value = 0x00080100UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_haint {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_haintmsk {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hprt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma0 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma5 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma6 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma7 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma8 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma9 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma10 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcchar11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcsplt11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcint11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcintmsk11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hctsiz11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otg_hs_hcdma11 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -3056,6 +3236,7 @@ namespace stm32f439::usb_otg_hs::otg_hs_pwrclk {
     namespace tags {
         struct otg_hs_pcgcr;
     }
+
     using OTG_HS_PCGCR = artos::mmio::register_t<tags::otg_hs_pcgcr>;
 
     namespace otg_hs_pcgcr {
@@ -3068,12 +3249,14 @@ namespace stm32f439::usb_otg_hs::otg_hs_pwrclk {
     {
         stm32f439::usb_otg_hs::otg_hs_pwrclk::OTG_HS_PCGCR OTG_HS_PCGCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, OTG_HS_PCGCR) == 0x00);
     static_assert(sizeof(registers_t) == 0x4);
 
     inline constexpr std::uintptr_t otg_hs_pwrclk_address = 0x40040E00UL;
     inline registers_t* const       OTG_HS_PWRCLK = reinterpret_cast<registers_t*>(otg_hs_pwrclk_address);
+
     namespace metadata::otg_hs_pwrclk {
         namespace otg_hs_pcgcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;

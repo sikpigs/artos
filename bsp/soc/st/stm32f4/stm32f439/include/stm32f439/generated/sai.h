@@ -29,6 +29,7 @@ namespace stm32f439::sai {
         struct bclrfr;
         struct bdr;
     }
+
     using ACR1 = artos::mmio::register_t<tags::acr1>;
     using ACR2 = artos::mmio::register_t<tags::acr2>;
     using AFRCR = artos::mmio::register_t<tags::afrcr>;
@@ -216,6 +217,7 @@ namespace stm32f439::sai {
         stm32f439::sai::BCLRFR BCLRFR;
         stm32f439::sai::BDR    BDR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, ACR1) == 0x04);
     static_assert(offsetof(registers_t, ACR2) == 0x08);
@@ -237,67 +239,83 @@ namespace stm32f439::sai {
 
     inline constexpr std::uintptr_t sai_address = 0x40015800UL;
     inline registers_t* const       SAI = reinterpret_cast<registers_t*>(sai_address);
+
     namespace metadata::sai {
         namespace acr1 {
             inline constexpr std::uint32_t reset_value = 0x00000040UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace acr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrcr {
             inline constexpr std::uint32_t reset_value = 0x00000007UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace aslotr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace aim {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace asr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace aclrfr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace adr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bcr1 {
             inline constexpr std::uint32_t reset_value = 0x00000040UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bcr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bfrcr {
             inline constexpr std::uint32_t reset_value = 0x00000007UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bslotr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bim {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bclrfr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

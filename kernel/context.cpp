@@ -1,10 +1,12 @@
+#include <internal/kernel_state.h>
 #include <internal/thread.h>
-#include <internal/thread_state.h>
+
+#include <artos.h>
 
 extern "C"
 {
     using namespace artos::thread;
-    using namespace artos::thread::internal;
+    using namespace artos::kernel::internal;
 
     bool artos_context_started() noexcept
     {
@@ -13,9 +15,15 @@ extern "C"
 
     stack_word_t* artos_context_start() noexcept
     {
+        if (current_thread != nullptr)
+        {
+            reinterpret_cast<internal::tcb_t*>(current_thread)->post_run();
+        }
         current_thread = next_thread;
         next_thread = nullptr;
-        current_thread->state = thread_state_t::running;
+        current_thread->state = state_t::running;
+        reinterpret_cast<internal::tcb_t*>(current_thread)->pre_run();
+
         return current_thread->sp;
     }
 
@@ -24,16 +32,12 @@ extern "C"
         if (current_thread != nullptr)
         {
             current_thread->sp = outgoing_sp;
-            if (current_thread->state == thread_state_t::running)
+            if (current_thread->state == state_t::running)
             {
-                current_thread->state = thread_state_t::ready;
+                current_thread->state = state_t::ready;
             }
         }
 
-        current_thread = next_thread;
-        current_thread->state = thread_state_t::running;
-        next_thread = nullptr;
-
-        return current_thread->sp;
+        return artos_context_start();
     }
 }

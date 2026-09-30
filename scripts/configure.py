@@ -64,6 +64,12 @@ def main():
                                       if enabled else 0)
     priorities = int(kconf.syms["ARTOS_PRIORITY_LEVELS"].str_value) if enabled else 16
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
+    thread_stack_hwm = enabled and bool(kconf.syms["ARTOS_THREAD_STACK_HWM"].tri_value)
+    thread_stats = enabled and bool(kconf.syms["ARTOS_THREAD_STATS"].tri_value)
+    runtime_history_window_ms = (int(kconf.syms["ARTOS_RUNTIME_HISTORY_WINDOW_MS"].str_value)
+                                 if thread_stats else 1000)
+    runtime_history_bucket_count = (int(kconf.syms["ARTOS_RUNTIME_HISTORY_BUCKET_COUNT"].str_value)
+                                    if thread_stats else 10)
     main_thread_stack_size = (int(kconf.syms["ARTOS_MAIN_THREAD_STACK_SIZE"].str_value)
                               if enabled else 4096)
     main_thread_priority = (int(kconf.syms["ARTOS_MAIN_THREAD_PRIORITY"].str_value)
@@ -99,6 +105,16 @@ namespace build_config {{
         inline constexpr std::uint32_t scheduler_min_cycles_remaining = {scheduler_min_cycles_remaining};
         inline constexpr std::uint32_t priority_levels = {priorities};
         inline constexpr std::size_t max_threads = {max_threads};
+        inline constexpr bool thread_stack_hwm = {str(thread_stack_hwm).lower()};
+        inline constexpr bool thread_stats = {str(thread_stats).lower()};
+        inline constexpr std::uint32_t runtime_history_window_ms = {runtime_history_window_ms};
+        inline constexpr std::size_t runtime_history_bucket_count = {runtime_history_bucket_count};
+        static_assert(runtime_history_window_ms > 0);
+        static_assert(runtime_history_bucket_count > 0);
+        static_assert(runtime_history_window_ms % runtime_history_bucket_count == 0,
+                      "runtime history window must divide evenly by bucket count");
+        inline constexpr std::uint32_t runtime_history_bucket_ms
+            = runtime_history_window_ms / runtime_history_bucket_count;
         inline constexpr std::size_t main_thread_stack_size = {main_thread_stack_size};
         inline constexpr std::uint8_t main_thread_priority = {main_thread_priority};
         inline constexpr std::size_t max_deferred_work_items = {max_deferred_work_items};

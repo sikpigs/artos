@@ -1,22 +1,23 @@
 #pragma once
 
 #include <cstddef>
+#include <utility>
+
+#include <frequency.h>
 #include <irq.h>
 #include <mmio.h>
+
 #include <stm32/gpio.h>
-#include <utility>
 
 // Handwritten USART configuration, baud calculation, and device operations.
 namespace stm32::usart {
-    inline constexpr std::uint32_t fpclk = 16'000'000;
-
     enum class oversampling_t : std::uint8_t
     {
         by_16,
         by_8,
     };
 
-    [[nodiscard]] constexpr std::uint32_t calculate_brr(std::uint32_t  peripheral_clock_hz,
+    [[nodiscard]] constexpr std::uint32_t calculate_brr(artos::hertz_t peripheral_clock,
                                                         std::uint32_t  baud_rate,
                                                         oversampling_t mode = oversampling_t::by_16) noexcept
     {
@@ -25,8 +26,7 @@ namespace stm32::usart {
             return 0;
         }
 
-        const auto divider
-            = static_cast<std::uint32_t>((static_cast<std::uint64_t>(peripheral_clock_hz) + baud_rate / 2) / baud_rate);
+        const auto divider = (static_cast<std::uint64_t>(peripheral_clock.count()) + baud_rate / 2) / baud_rate;
 
         if (mode == oversampling_t::by_8)
         {
@@ -37,21 +37,14 @@ namespace stm32::usart {
 
             // In OVER8 mode BRR[3] must remain clear; the three fraction
             // bits retain their position while the mantissa shifts left.
-            return ((divider & ~0x7UL) << 1) | (divider & 0x7UL);
+            return static_cast<std::uint32_t>(((divider & ~std::uint64_t { 7 }) << 1) | (divider & 0x7U));
         }
 
-        return divider >= 16 && divider <= 0xFFFF ? divider : 0;
+        return divider >= 16 && divider <= 0xFFFF ? static_cast<std::uint32_t>(divider) : 0;
     }
 
-    [[nodiscard]] constexpr std::uint32_t calculate_brr(std::uint32_t  baud_rate,
-                                                        oversampling_t mode = oversampling_t::by_16) noexcept
-    {
-        return calculate_brr(fpclk, baud_rate, mode);
-    }
-
-    static_assert(calculate_brr(16'000'000, 115'200) == 0x008B);
-    static_assert(calculate_brr(115'200) == 0x008B);
-    static_assert(calculate_brr(16'000'000, 115'200, oversampling_t::by_8) == 0x0113);
+    static_assert(calculate_brr(artos::hertz_t { 16'000'000 }, 115'200) == 0x008B);
+    static_assert(calculate_brr(artos::hertz_t { 16'000'000 }, 115'200, oversampling_t::by_8) == 0x0113);
 
     enum class word_len_t : std::uint8_t
     {
@@ -111,9 +104,9 @@ namespace stm32::usart {
              auto                       RX,
              auto                       TX,
              std::uintptr_t             Address,
-             std::uint32_t              FpClk,
              gpio::alternate_function_t AltFunc,
-             artos::irq::irq_t          IRQNumber>
+             artos::irq::irq_t          IRQNumber,
+             typename ClockGate>
     struct usart_t
     {
         static_assert(offsetof(Registers, SR) == 0x00);
@@ -128,11 +121,15 @@ namespace stm32::usart {
         }
 
     public:
-        static constexpr auto               irq_number = IRQNumber;
+        static constexpr auto address = Address;
+        static constexpr auto irq_number = IRQNumber;
+        static constexpr auto alternate_function = AltFunc;
+
         [[nodiscard]] static constexpr bool has_overrun(std::uint32_t status) noexcept
         {
             return (status & (1U << 3)) != 0;
         }
+
         [[nodiscard]] static constexpr bool has_rx_data(std::uint32_t status) noexcept
         {
             return (status & (1U << 5)) != 0;
@@ -165,15 +162,16 @@ namespace stm32::usart {
             return (usart()->SR.read() & (1U << 7)) != 0;
         }
 
-        void configure(const config_t& cfg) const noexcept
+        void configure(const config_t& cfg, artos::hertz_t peripheral_clock) const noexcept
         {
+            ClockGate::enable();
             usart()->CR1.clear(artos::mmio::field_t<typename decltype(Registers::CR1)::tag_type, 13> {});
 
             constexpr gpio::config_t pin_cfg = { .port_mode = gpio::mode_t::alt_func, .alt_func = AltFunc };
             RX.configure(pin_cfg);
             TX.configure(pin_cfg);
 
-            usart()->BRR.write(calculate_brr(FpClk, cfg.baud_rate, cfg.sampling));
+            usart()->BRR.write(calculate_brr(peripheral_clock, cfg.baud_rate, cfg.sampling));
             usart()->CR1.write(cfg.cr1());
         }
     };

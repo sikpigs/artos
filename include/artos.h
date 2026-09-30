@@ -3,7 +3,6 @@
 #include <build_config.h>
 
 #include <array>
-#include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -18,8 +17,7 @@
 #include <wait_queue.h>
 
 namespace artos {
-    using tick_t = std::uint32_t; // TODO this should be based on CPU, like word_t or something, then tick generation
-                                  // could be conditional i.e. 64-bit no generation
+    using tick_t = port::tick_t;
     using err_t = int;
 
     struct wait_forever_t
@@ -64,16 +62,6 @@ namespace artos {
             const auto carry = static_cast<tick_t>(tick < ticks);
 
             return { .ticks = tick, .generation = tick_t { generation + addend.generation + carry } };
-        }
-
-        std::strong_ordering operator<=>(const tick_time_t& other) const noexcept
-        {
-            if (generation != other.generation)
-            {
-                return generation <=> other.generation;
-            }
-
-            return ticks <=> other.ticks;
         }
     };
 
@@ -188,9 +176,17 @@ namespace artos {
         static_assert(minimum_stack_bytes >= port::initial_frame_bytes);
         static_assert(minimum_stack_bytes % port::stack_alignment == 0);
 
-        inline constexpr auto tcb_size
-            = static_cast<std::size_t>(96) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0);
-        inline constexpr auto tcb_alignment = alignof(std::max_align_t);
+        enum class state_t : std::uint8_t
+        {
+            inactive,
+            ready,
+            running,
+            blocked,
+            indefinite,
+            suspended,
+            sleeping,
+            finished
+        };
 
         enum class priority_t : std::uint8_t
         {
@@ -198,12 +194,18 @@ namespace artos {
             low = build_config::artos::priority_levels - 1
         };
 
-        template<std::uint8_t Priority>
-        requires(Priority <= std::to_underlying(priority_t::low))
-        constexpr priority_t make_priority() noexcept
+        struct statistics_t
         {
-            return static_cast<priority_t>(Priority);
-        }
+            std::size_t execution_count {};
+            // Each bucket stores accumulated CPU cycles, independent of its time span.
+            std::array<std::uint32_t, build_config::artos::runtime_history_bucket_count> runtime_history_cycles {};
+        };
+
+        inline constexpr auto tcb_size
+            = static_cast<std::size_t>(96) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0)
+              + (build_config::artos::thread_stack_hwm ? sizeof(std::size_t) : 0)
+              + (build_config::artos::thread_stats ? (sizeof(std::uint32_t) + sizeof(statistics_t)) : 0);
+        inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
@@ -224,6 +226,13 @@ namespace artos {
                                   std::byte* const    tcb,
                                   stack_word_t* const stack,
                                   bool                start) noexcept;
+        }
+
+        template<std::uint8_t Priority>
+        requires(Priority <= std::to_underlying(priority_t::low))
+        constexpr priority_t make_priority() noexcept
+        {
+            return static_cast<priority_t>(Priority);
         }
 
         template<std::uint32_t StackSize>
@@ -264,10 +273,15 @@ namespace artos {
                 func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data(), start);
         }
 
-        [[nodiscard]] id_t get_current_thread() noexcept;
-        [[noreturn]] void  exit() noexcept;
+        [[nodiscard]] id_t        get_current_thread() noexcept;
+        [[nodiscard]] std::size_t get_high_watermark() noexcept;
+
+        [[noreturn]] void exit() noexcept;
+
+        void get_statistics(statistics_t& statistics) noexcept;
 
         void sleep_for(tick_t ticks) noexcept;
         void sleep_until(const tick_time_t& ticks) noexcept;
+
     }
 }

@@ -1,5 +1,6 @@
 #include <stm32f411/gpio.h>
 #include <stm32f411/regmap.h>
+#include <stm32f411/timer.h>
 
 namespace gpio = stm32f411::gpio;
 namespace rcc = stm32f411::rcc;
@@ -57,3 +58,16 @@ static_assert(usb::otg_fs_device::dieptsiz1::xfrsiz.value_mask == 0x7FFFF);
 static_assert(offsetof(usb::otg_fs_global::registers_t, FS_GRXSTSP_Device) == 0x20);
 static_assert(offsetof(usb::otg_fs_global::registers_t, FS_GRXSTSP_Host) == 0x20);
 static_assert(offsetof(usb::otg_fs_global::registers_t, FS_GRXFSIZ) == 0x24);
+
+static_assert(stm32f411::timer::timer2.free_running_up_counter().reload == 0xFFFF'FFFFU);
+static_assert(stm32f411::timer::timer3.free_running_up_counter().reload == 0xFFFFU);
+static_assert(!stm32::timer::calculate_prescaler(artos::hertz_t { 84'000'000 }, artos::hertz_t { 0 }));
+static_assert(stm32::timer::calculate_prescaler(artos::hertz_t { 84'000'000 }, artos::hertz_t { 1'000'000 }) == 83);
+static_assert(stm32::timer::calculate_prescaler(artos::hertz_t { 1'000 }, artos::hertz_t { 223 })
+              == 4); // 200 Hz is closer than 250 Hz.
+static_assert(stm32::timer::calculate_prescaler(artos::hertz_t { 84'000'000 }, artos::hertz_t { 1 }) == 65'535);
+static_assert(!stm32f411::timer::timer2.free_running_up_counter().tick_frequency);
+static_assert(artos::to_hertz(artos::megahertz_t { 84 }) == artos::hertz_t { 84'000'000 });
+static_assert(artos::to_hertz(artos::frequency_t<std::uint32_t, std::ratio<1, 2>> { 2 }) == artos::hertz_t { 1 });
+static_assert(!artos::to_hertz(artos::frequency_t<std::uint32_t, std::ratio<1, 2>> { 1 }));
+static_assert(!artos::to_hertz(artos::megahertz_t { 5'000 }));

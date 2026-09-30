@@ -20,6 +20,7 @@ namespace stm32f411::usart {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -111,6 +112,7 @@ namespace stm32f411::usart {
         stm32f411::usart::CR3  CR3;
         stm32f411::usart::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -123,31 +125,38 @@ namespace stm32f411::usart {
 
     inline constexpr std::uintptr_t usart1_address = 0x40011000UL;
     inline registers_t* const       USART1 = reinterpret_cast<registers_t*>(usart1_address);
+
     namespace metadata::usart1 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -156,31 +165,38 @@ namespace stm32f411::usart {
 
     inline constexpr std::uintptr_t usart2_address = 0x40004400UL;
     inline registers_t* const       USART2 = reinterpret_cast<registers_t*>(usart2_address);
+
     namespace metadata::usart2 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -189,31 +205,38 @@ namespace stm32f411::usart {
 
     inline constexpr std::uintptr_t usart6_address = 0x40011400UL;
     inline registers_t* const       USART6 = reinterpret_cast<registers_t*>(usart6_address);
+
     namespace metadata::usart6 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

@@ -27,6 +27,7 @@ namespace stm32f439::ethernet::ethernet_dma {
         struct dmachtbar;
         struct dmachrbar;
     }
+
     using DMABMR = artos::mmio::register_t<tags::dmabmr>;
     using DMATPDR = artos::mmio::register_t<tags::dmatpdr>;
     using DMARPDR = artos::mmio::register_t<tags::dmarpdr>;
@@ -175,6 +176,7 @@ namespace stm32f439::ethernet::ethernet_dma {
         stm32f439::ethernet::ethernet_dma::DMACHTBAR DMACHTBAR;
         stm32f439::ethernet::ethernet_dma::DMACHRBAR DMACHRBAR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, DMABMR) == 0x00);
     static_assert(offsetof(registers_t, DMATPDR) == 0x04);
@@ -194,59 +196,73 @@ namespace stm32f439::ethernet::ethernet_dma {
 
     inline constexpr std::uintptr_t ethernet_dma_address = 0x40029000UL;
     inline registers_t* const       Ethernet_DMA = reinterpret_cast<registers_t*>(ethernet_dma_address);
+
     namespace metadata::ethernet_dma {
         namespace dmabmr {
             inline constexpr std::uint32_t reset_value = 0x00002101UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmatpdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmarpdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmardlar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmatdlar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmasr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmaomr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmaier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmamfbocr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmarswtr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmachtdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmachrdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmachtbar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmachrbar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -277,6 +293,7 @@ namespace stm32f439::ethernet::ethernet_mac {
         struct maca3hr;
         struct maca3lr;
     }
+
     using MACCR = artos::mmio::register_t<tags::maccr>;
     using MACFFR = artos::mmio::register_t<tags::macffr>;
     using MACHTHR = artos::mmio::register_t<tags::machthr>;
@@ -465,6 +482,7 @@ namespace stm32f439::ethernet::ethernet_mac {
         stm32f439::ethernet::ethernet_mac::MACA3HR   MACA3HR;
         stm32f439::ethernet::ethernet_mac::MACA3LR   MACA3LR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, MACCR) == 0x00);
     static_assert(offsetof(registers_t, MACFFR) == 0x04);
@@ -490,83 +508,103 @@ namespace stm32f439::ethernet::ethernet_mac {
 
     inline constexpr std::uintptr_t ethernet_mac_address = 0x40028000UL;
     inline registers_t* const       Ethernet_MAC = reinterpret_cast<registers_t*>(ethernet_mac_address);
+
     namespace metadata::ethernet_mac {
         namespace maccr {
             inline constexpr std::uint32_t reset_value = 0x00008000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macffr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace machthr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace machtlr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macmiiar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macmiidr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macfcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macvlantr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macpmtcsr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macdbgr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macsr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace macimr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca0hr {
             inline constexpr std::uint32_t reset_value = 0x0010FFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca0lr {
             inline constexpr std::uint32_t reset_value = 0xFFFFFFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca1hr {
             inline constexpr std::uint32_t reset_value = 0x0000FFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca1lr {
             inline constexpr std::uint32_t reset_value = 0xFFFFFFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca2hr {
             inline constexpr std::uint32_t reset_value = 0x0000FFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca2lr {
             inline constexpr std::uint32_t reset_value = 0xFFFFFFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca3hr {
             inline constexpr std::uint32_t reset_value = 0x0000FFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace maca3lr {
             inline constexpr std::uint32_t reset_value = 0xFFFFFFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -588,6 +626,7 @@ namespace stm32f439::ethernet::ethernet_mmc {
         struct mmcrfaecr;
         struct mmcrgufcr;
     }
+
     using MMCCR = artos::mmio::register_t<tags::mmccr>;
     using MMCRIR = artos::mmio::register_t<tags::mmcrir>;
     using MMCTIR = artos::mmio::read_only_register_t<tags::mmctir>;
@@ -675,6 +714,7 @@ namespace stm32f439::ethernet::ethernet_mmc {
         std::uint32_t                                  reserved_9c[10];
         stm32f439::ethernet::ethernet_mmc::MMCRGUFCR   MMCRGUFCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, MMCCR) == 0x00);
     static_assert(offsetof(registers_t, MMCRIR) == 0x04);
@@ -691,47 +731,58 @@ namespace stm32f439::ethernet::ethernet_mmc {
 
     inline constexpr std::uintptr_t ethernet_mmc_address = 0x40028100UL;
     inline registers_t* const       Ethernet_MMC = reinterpret_cast<registers_t*>(ethernet_mmc_address);
+
     namespace metadata::ethernet_mmc {
         namespace mmccr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmcrir {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmctir {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmcrimr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmctimr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmctgfsccr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmctgfmsccr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmctgfcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmcrfcecr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmcrfaecr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace mmcrgufcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -753,6 +804,7 @@ namespace stm32f439::ethernet::ethernet_ptp {
         struct ptptssr;
         struct ptpppscr;
     }
+
     using PTPTSCR = artos::mmio::register_t<tags::ptptscr>;
     using PTPSSIR = artos::mmio::register_t<tags::ptpssir>;
     using PTPTSHR = artos::mmio::read_only_register_t<tags::ptptshr>;
@@ -843,6 +895,7 @@ namespace stm32f439::ethernet::ethernet_ptp {
         stm32f439::ethernet::ethernet_ptp::PTPTSSR  PTPTSSR;
         stm32f439::ethernet::ethernet_ptp::PTPPPSCR PTPPPSCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, PTPTSCR) == 0x00);
     static_assert(offsetof(registers_t, PTPSSIR) == 0x04);
@@ -859,47 +912,58 @@ namespace stm32f439::ethernet::ethernet_ptp {
 
     inline constexpr std::uintptr_t ethernet_ptp_address = 0x40028700UL;
     inline registers_t* const       Ethernet_PTP = reinterpret_cast<registers_t*>(ethernet_ptp_address);
+
     namespace metadata::ethernet_ptp {
         namespace ptptscr {
             inline constexpr std::uint32_t reset_value = 0x00002000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptpssir {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptshr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptslr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptshur {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptslur {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptsar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptthr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptpttlr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptptssr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ptpppscr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

@@ -16,6 +16,7 @@ namespace stm32f411::wwdg {
         struct cfr;
         struct sr;
     }
+
     using CR = artos::mmio::register_t<tags::cr>;
     using CFR = artos::mmio::register_t<tags::cfr>;
     using SR = artos::mmio::register_t<tags::sr>;
@@ -42,6 +43,7 @@ namespace stm32f411::wwdg {
         stm32f411::wwdg::CFR CFR;
         stm32f411::wwdg::SR  SR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR) == 0x00);
     static_assert(offsetof(registers_t, CFR) == 0x04);
@@ -50,15 +52,18 @@ namespace stm32f411::wwdg {
 
     inline constexpr std::uintptr_t wwdg_address = 0x40002C00UL;
     inline registers_t* const       WWDG = reinterpret_cast<registers_t*>(wwdg_address);
+
     namespace metadata::wwdg {
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x0000007FUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cfr {
             inline constexpr std::uint32_t reset_value = 0x0000007FUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

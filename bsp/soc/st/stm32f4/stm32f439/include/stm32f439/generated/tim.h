@@ -35,6 +35,7 @@ namespace stm32f439::tim::tim1 {
         struct dcr;
         struct dmar;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -259,16 +260,19 @@ namespace stm32f439::tim::tim1 {
         stm32f439::tim::tim1::DIER DIER;
         stm32f439::tim::tim1::SR   SR;
         stm32f439::tim::tim1::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim1::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim1::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim1::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim1::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim1::CCER CCER;
         stm32f439::tim::tim1::CNT  CNT;
         stm32f439::tim::tim1::PSC  PSC;
@@ -282,6 +286,7 @@ namespace stm32f439::tim::tim1 {
         stm32f439::tim::tim1::DCR  DCR;
         stm32f439::tim::tim1::DMAR DMAR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -309,91 +314,113 @@ namespace stm32f439::tim::tim1 {
 
     inline constexpr std::uintptr_t tim1_address = 0x40010000UL;
     inline registers_t* const       TIM1 = reinterpret_cast<registers_t*>(tim1_address);
+
     namespace metadata::tim1 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace rcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bdtr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -415,6 +442,7 @@ namespace stm32f439::tim::tim10 {
         struct arr;
         struct ccr1;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using DIER = artos::mmio::register_t<tags::dier>;
     using SR = artos::mmio::register_t<tags::sr>;
@@ -493,11 +521,13 @@ namespace stm32f439::tim::tim10 {
         stm32f439::tim::tim10::DIER DIER;
         stm32f439::tim::tim10::SR   SR;
         stm32f439::tim::tim10::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim10::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim10::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t               reserved_1c[1];
         stm32f439::tim::tim10::CCER CCER;
         stm32f439::tim::tim10::CNT  CNT;
@@ -506,6 +536,7 @@ namespace stm32f439::tim::tim10 {
         std::uint32_t               reserved_30[1];
         stm32f439::tim::tim10::CCR1 CCR1;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, DIER) == 0x0C);
@@ -522,47 +553,58 @@ namespace stm32f439::tim::tim10 {
 
     inline constexpr std::uintptr_t tim10_address = 0x40014400UL;
     inline registers_t* const       TIM10 = reinterpret_cast<registers_t*>(tim10_address);
+
     namespace metadata::tim10 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -585,6 +627,7 @@ namespace stm32f439::tim::tim11 {
         struct ccr1;
         struct or_;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using DIER = artos::mmio::register_t<tags::dier>;
     using SR = artos::mmio::register_t<tags::sr>;
@@ -668,11 +711,13 @@ namespace stm32f439::tim::tim11 {
         stm32f439::tim::tim11::DIER DIER;
         stm32f439::tim::tim11::SR   SR;
         stm32f439::tim::tim11::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim11::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim11::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t               reserved_1c[1];
         stm32f439::tim::tim11::CCER CCER;
         stm32f439::tim::tim11::CNT  CNT;
@@ -683,6 +728,7 @@ namespace stm32f439::tim::tim11 {
         std::uint32_t               reserved_38[6];
         stm32f439::tim::tim11::OR   OR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, DIER) == 0x0C);
@@ -700,51 +746,63 @@ namespace stm32f439::tim::tim11 {
 
     inline constexpr std::uintptr_t tim11_address = 0x40014800UL;
     inline registers_t* const       TIM11 = reinterpret_cast<registers_t*>(tim11_address);
+
     namespace metadata::tim11 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace or_ {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -769,6 +827,7 @@ namespace stm32f439::tim::tim12 {
         struct ccr1;
         struct ccr2;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -883,11 +942,13 @@ namespace stm32f439::tim::tim12 {
         stm32f439::tim::tim12::DIER DIER;
         stm32f439::tim::tim12::SR   SR;
         stm32f439::tim::tim12::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim12::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim12::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t               reserved_1c[1];
         stm32f439::tim::tim12::CCER CCER;
         stm32f439::tim::tim12::CNT  CNT;
@@ -897,6 +958,7 @@ namespace stm32f439::tim::tim12 {
         stm32f439::tim::tim12::CCR1 CCR1;
         stm32f439::tim::tim12::CCR2 CCR2;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -916,59 +978,73 @@ namespace stm32f439::tim::tim12 {
 
     inline constexpr std::uintptr_t tim12_address = 0x40001800UL;
     inline registers_t* const       TIM12 = reinterpret_cast<registers_t*>(tim12_address);
+
     namespace metadata::tim12 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -990,6 +1066,7 @@ namespace stm32f439::tim::tim13 {
         struct arr;
         struct ccr1;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using DIER = artos::mmio::register_t<tags::dier>;
     using SR = artos::mmio::register_t<tags::sr>;
@@ -1068,11 +1145,13 @@ namespace stm32f439::tim::tim13 {
         stm32f439::tim::tim13::DIER DIER;
         stm32f439::tim::tim13::SR   SR;
         stm32f439::tim::tim13::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim13::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim13::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t               reserved_1c[1];
         stm32f439::tim::tim13::CCER CCER;
         stm32f439::tim::tim13::CNT  CNT;
@@ -1081,6 +1160,7 @@ namespace stm32f439::tim::tim13 {
         std::uint32_t               reserved_30[1];
         stm32f439::tim::tim13::CCR1 CCR1;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, DIER) == 0x0C);
@@ -1097,47 +1177,58 @@ namespace stm32f439::tim::tim13 {
 
     inline constexpr std::uintptr_t tim13_address = 0x40001C00UL;
     inline registers_t* const       TIM13 = reinterpret_cast<registers_t*>(tim13_address);
+
     namespace metadata::tim13 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1159,6 +1250,7 @@ namespace stm32f439::tim::tim14 {
         struct arr;
         struct ccr1;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using DIER = artos::mmio::register_t<tags::dier>;
     using SR = artos::mmio::register_t<tags::sr>;
@@ -1237,11 +1329,13 @@ namespace stm32f439::tim::tim14 {
         stm32f439::tim::tim14::DIER DIER;
         stm32f439::tim::tim14::SR   SR;
         stm32f439::tim::tim14::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim14::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim14::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t               reserved_1c[1];
         stm32f439::tim::tim14::CCER CCER;
         stm32f439::tim::tim14::CNT  CNT;
@@ -1250,6 +1344,7 @@ namespace stm32f439::tim::tim14 {
         std::uint32_t               reserved_30[1];
         stm32f439::tim::tim14::CCR1 CCR1;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, DIER) == 0x0C);
@@ -1266,47 +1361,58 @@ namespace stm32f439::tim::tim14 {
 
     inline constexpr std::uintptr_t tim14_address = 0x40002000UL;
     inline registers_t* const       TIM14 = reinterpret_cast<registers_t*>(tim14_address);
+
     namespace metadata::tim14 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1338,6 +1444,7 @@ namespace stm32f439::tim::tim2 {
         struct dmar;
         struct or_;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -1538,16 +1645,19 @@ namespace stm32f439::tim::tim2 {
         stm32f439::tim::tim2::DIER DIER;
         stm32f439::tim::tim2::SR   SR;
         stm32f439::tim::tim2::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim2::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim2::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim2::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim2::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim2::CCER CCER;
         stm32f439::tim::tim2::CNT  CNT;
         stm32f439::tim::tim2::PSC  PSC;
@@ -1562,6 +1672,7 @@ namespace stm32f439::tim::tim2 {
         stm32f439::tim::tim2::DMAR DMAR;
         stm32f439::tim::tim2::OR   OR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -1588,87 +1699,108 @@ namespace stm32f439::tim::tim2 {
 
     inline constexpr std::uintptr_t tim2_address = 0x40000000UL;
     inline registers_t* const       TIM2 = reinterpret_cast<registers_t*>(tim2_address);
+
     namespace metadata::tim2 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace or_ {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1699,6 +1831,7 @@ namespace stm32f439::tim::tim3 {
         struct dcr;
         struct dmar;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -1894,16 +2027,19 @@ namespace stm32f439::tim::tim3 {
         stm32f439::tim::tim3::DIER DIER;
         stm32f439::tim::tim3::SR   SR;
         stm32f439::tim::tim3::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim3::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim3::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim3::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim3::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim3::CCER CCER;
         stm32f439::tim::tim3::CNT  CNT;
         stm32f439::tim::tim3::PSC  PSC;
@@ -1917,6 +2053,7 @@ namespace stm32f439::tim::tim3 {
         stm32f439::tim::tim3::DCR  DCR;
         stm32f439::tim::tim3::DMAR DMAR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -1942,83 +2079,103 @@ namespace stm32f439::tim::tim3 {
 
     inline constexpr std::uintptr_t tim3_address = 0x40000400UL;
     inline registers_t* const       TIM3 = reinterpret_cast<registers_t*>(tim3_address);
+
     namespace metadata::tim3 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -2049,6 +2206,7 @@ namespace stm32f439::tim::tim4 {
         struct dcr;
         struct dmar;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -2244,16 +2402,19 @@ namespace stm32f439::tim::tim4 {
         stm32f439::tim::tim4::DIER DIER;
         stm32f439::tim::tim4::SR   SR;
         stm32f439::tim::tim4::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim4::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim4::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim4::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim4::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim4::CCER CCER;
         stm32f439::tim::tim4::CNT  CNT;
         stm32f439::tim::tim4::PSC  PSC;
@@ -2267,6 +2428,7 @@ namespace stm32f439::tim::tim4 {
         stm32f439::tim::tim4::DCR  DCR;
         stm32f439::tim::tim4::DMAR DMAR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -2292,83 +2454,103 @@ namespace stm32f439::tim::tim4 {
 
     inline constexpr std::uintptr_t tim4_address = 0x40000800UL;
     inline registers_t* const       TIM4 = reinterpret_cast<registers_t*>(tim4_address);
+
     namespace metadata::tim4 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -2400,6 +2582,7 @@ namespace stm32f439::tim::tim5 {
         struct dmar;
         struct or_;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -2600,16 +2783,19 @@ namespace stm32f439::tim::tim5 {
         stm32f439::tim::tim5::DIER DIER;
         stm32f439::tim::tim5::SR   SR;
         stm32f439::tim::tim5::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim5::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim5::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim5::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim5::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim5::CCER CCER;
         stm32f439::tim::tim5::CNT  CNT;
         stm32f439::tim::tim5::PSC  PSC;
@@ -2624,6 +2810,7 @@ namespace stm32f439::tim::tim5 {
         stm32f439::tim::tim5::DMAR DMAR;
         stm32f439::tim::tim5::OR   OR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -2650,87 +2837,108 @@ namespace stm32f439::tim::tim5 {
 
     inline constexpr std::uintptr_t tim5_address = 0x40000C00UL;
     inline registers_t* const       TIM5 = reinterpret_cast<registers_t*>(tim5_address);
+
     namespace metadata::tim5 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace or_ {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -2749,6 +2957,7 @@ namespace stm32f439::tim::tim6 {
         struct psc;
         struct arr;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using DIER = artos::mmio::register_t<tags::dier>;
@@ -2808,6 +3017,7 @@ namespace stm32f439::tim::tim6 {
         stm32f439::tim::tim6::PSC  PSC;
         stm32f439::tim::tim6::ARR  ARR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -2821,35 +3031,43 @@ namespace stm32f439::tim::tim6 {
 
     inline constexpr std::uintptr_t tim6_address = 0x40001000UL;
     inline registers_t* const       TIM6 = reinterpret_cast<registers_t*>(tim6_address);
+
     namespace metadata::tim6 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -2868,6 +3086,7 @@ namespace stm32f439::tim::tim7 {
         struct psc;
         struct arr;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using DIER = artos::mmio::register_t<tags::dier>;
@@ -2927,6 +3146,7 @@ namespace stm32f439::tim::tim7 {
         stm32f439::tim::tim7::PSC  PSC;
         stm32f439::tim::tim7::ARR  ARR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -2940,35 +3160,43 @@ namespace stm32f439::tim::tim7 {
 
     inline constexpr std::uintptr_t tim7_address = 0x40001400UL;
     inline registers_t* const       TIM7 = reinterpret_cast<registers_t*>(tim7_address);
+
     namespace metadata::tim7 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -3001,6 +3229,7 @@ namespace stm32f439::tim::tim8 {
         struct dcr;
         struct dmar;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -3225,16 +3454,19 @@ namespace stm32f439::tim::tim8 {
         stm32f439::tim::tim8::DIER DIER;
         stm32f439::tim::tim8::SR   SR;
         stm32f439::tim::tim8::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim8::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim8::CCMR1_Output CCMR1_Output;
         };
+
         union
         {
             stm32f439::tim::tim8::CCMR2_Input  CCMR2_Input;
             stm32f439::tim::tim8::CCMR2_Output CCMR2_Output;
         };
+
         stm32f439::tim::tim8::CCER CCER;
         stm32f439::tim::tim8::CNT  CNT;
         stm32f439::tim::tim8::PSC  PSC;
@@ -3248,6 +3480,7 @@ namespace stm32f439::tim::tim8 {
         stm32f439::tim::tim8::DCR  DCR;
         stm32f439::tim::tim8::DMAR DMAR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -3275,91 +3508,113 @@ namespace stm32f439::tim::tim8 {
 
     inline constexpr std::uintptr_t tim8_address = 0x40010400UL;
     inline registers_t* const       TIM8 = reinterpret_cast<registers_t*>(tim8_address);
+
     namespace metadata::tim8 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr2_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace rcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bdtr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dmar {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -3384,6 +3639,7 @@ namespace stm32f439::tim::tim9 {
         struct ccr1;
         struct ccr2;
     }
+
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
     using SMCR = artos::mmio::register_t<tags::smcr>;
@@ -3498,11 +3754,13 @@ namespace stm32f439::tim::tim9 {
         stm32f439::tim::tim9::DIER DIER;
         stm32f439::tim::tim9::SR   SR;
         stm32f439::tim::tim9::EGR  EGR;
+
         union
         {
             stm32f439::tim::tim9::CCMR1_Input  CCMR1_Input;
             stm32f439::tim::tim9::CCMR1_Output CCMR1_Output;
         };
+
         std::uint32_t              reserved_1c[1];
         stm32f439::tim::tim9::CCER CCER;
         stm32f439::tim::tim9::CNT  CNT;
@@ -3512,6 +3770,7 @@ namespace stm32f439::tim::tim9 {
         stm32f439::tim::tim9::CCR1 CCR1;
         stm32f439::tim::tim9::CCR2 CCR2;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR1) == 0x00);
     static_assert(offsetof(registers_t, CR2) == 0x04);
@@ -3531,59 +3790,73 @@ namespace stm32f439::tim::tim9 {
 
     inline constexpr std::uintptr_t tim9_address = 0x40014000UL;
     inline registers_t* const       TIM9 = reinterpret_cast<registers_t*>(tim9_address);
+
     namespace metadata::tim9 {
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dier {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace egr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_input {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccmr1_output {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccer {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cnt {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace psc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace arr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

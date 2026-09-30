@@ -17,6 +17,7 @@ namespace stm32f411::iwdg {
         struct rlr;
         struct sr;
     }
+
     using KR = artos::mmio::write_only_register_t<tags::kr>;
     using PR = artos::mmio::register_t<tags::pr>;
     using RLR = artos::mmio::register_t<tags::rlr>;
@@ -46,6 +47,7 @@ namespace stm32f411::iwdg {
         stm32f411::iwdg::RLR RLR;
         stm32f411::iwdg::SR  SR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, KR) == 0x00);
     static_assert(offsetof(registers_t, PR) == 0x04);
@@ -55,19 +57,23 @@ namespace stm32f411::iwdg {
 
     inline constexpr std::uintptr_t iwdg_address = 0x40003000UL;
     inline registers_t* const       IWDG = reinterpret_cast<registers_t*>(iwdg_address);
+
     namespace metadata::iwdg {
         namespace kr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace rlr {
             inline constexpr std::uint32_t reset_value = 0x00000FFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

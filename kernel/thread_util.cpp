@@ -1,13 +1,14 @@
 #include <build_config.h>
 
+#include <internal/kernel_state.h>
 #include <internal/thread.h>
-#include <internal/thread_state.h>
 #include <internal/time.h>
 
 #include <artos.h>
 
 namespace artos::thread::internal {
     using namespace build_config::artos;
+    using namespace kernel::internal;
 
     void set_effective_priority(tcb_base_t* thread, priority_t new_priority) noexcept
     {
@@ -70,7 +71,7 @@ namespace artos::thread::internal {
 
     void make_thread_ready(tcb_base_t* thread) noexcept
     {
-        thread->state = thread_state_t::ready;
+        thread->state = thread::state_t::ready;
         ready_queue[std::to_underlying(thread->priority)].push_back(thread->ready);
         set_priority_ready(thread->priority);
     }

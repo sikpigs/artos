@@ -7,6 +7,7 @@
     chosen {
         artos,console = <&uart3>;
         artos,kernel-tick = <&systick>;
+        artos,stopwatch = <&tim2>;
         artos,heartbeat = <&heartbeat>;
     };
     leds {
@@ -23,4 +24,8 @@
     artos,tx-pin = <&gpiod 8 0>;
     artos,rx-pin = <&gpiod 9 0>;
     artos,alternate-function = <7>;
+};
+
+&tim2 {
+    status = "okay";
 };

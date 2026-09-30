@@ -1,9 +1,9 @@
 #include <build_config.h>
 
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
 #include <internal/thread_queue.h>
-#include <internal/thread_state.h>
 
 #include <cassert>
 

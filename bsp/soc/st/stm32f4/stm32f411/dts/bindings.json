@@ -19,5 +19,15 @@
   },
   "gpio_ports": [
     "a"
-  ]
+  ],
+  "timers": {
+    "tim2": {
+      "address": 1073741824,
+      "irq": 28
+    },
+    "tim5": {
+      "address": 1073744896,
+      "irq": 50
+    }
+  }
 }

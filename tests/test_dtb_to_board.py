@@ -34,22 +34,35 @@ class BoardGeneration(unittest.TestCase):
         return ((self.work / 'out/board.h').read_text(), (self.work / 'out/board_devices.h').read_text())
 
     def test_both_boards_deterministic(self):
-        for chip, board, pin, gate in [('stm32f411', 'nucleo_f411re', 'PA<2>', 'gpioaen'),
-                                       ('stm32f439', 'nucleo_f439zi', 'PD<8>', 'gpioden')]:
+        for chip, board, pin, uart in [('stm32f411', 'nucleo_f411re', 'PA<2>', 'usart2'),
+                                       ('stm32f439', 'nucleo_f439zi', 'PD<8>', 'usart3')]:
             with self.subTest(board=board):
                 first = self.generate(chip, board)
                 self.assertEqual(first, self.generate(chip, board))
                 self.assertIn(pin, first[0])
-                self.assertIn(gate, first[1])
+                self.assertIn(f'{chip}::usart::{uart}_device', first[1])
+                self.assertNotIn('enable_', first[1])
 
-    def test_description_changes_headers_and_clock_gates(self):
+    def test_description_changes_headers_and_devices(self):
         header, devices = self.generate('stm32f439', 'nucleo_f439zi',
             '&uart3 { current-speed = <57600>; };\n&heartbeat { gpios = <&gpiod 12 0>; };')
         self.assertIn('baud_rate = 57600', header)
         self.assertIn('PD<12>', header)
-        heartbeat_function = devices.split('enable_heartbeat_clock()')[1].split('enable_console_clocks()')[0]
-        self.assertIn('gpioden', heartbeat_function)
-        self.assertNotIn('gpioben', heartbeat_function)
+        self.assertIn('heartbeat = chosen::heartbeat::pin', devices)
+        self.assertNotIn('enable_', devices)
+
+    def test_chosen_selects_another_stopwatch_timer(self):
+        for chip, board in [('stm32f411', 'nucleo_f411re'), ('stm32f439', 'nucleo_f439zi')]:
+            with self.subTest(board=board):
+                header, devices = self.generate(chip, board, overlay='''/ {
+                    chosen { artos,stopwatch = <&tim5>; };
+                };
+                &tim5 { status = "okay"; };
+                &tim2 { status = "disabled"; };
+                ''')
+                self.assertIn('address = 0x40000c00UL', header)
+                self.assertIn('irq_t::tim5', header)
+                self.assertIn(f'{chip}::timer::timer5', devices)
 
     def test_chosen_selects_another_led(self):
         header, _ = self.generate(overlay='''/ {
@@ -82,6 +95,14 @@ class BoardGeneration(unittest.TestCase):
             ('&gpioa { #gpio-cells = <1>; };', 'two specifier cells'),
             ('&hsi { clock-frequency = <8000000>; };', '16 MHz'),
             ('&systick { reg = <0xe000e014 0x10>; };', 'SysTick range'),
+            ('&tim2 { status = "disabled"; };', 'disabled device'),
+            ('&tim2 { compatible = "unsupported,timer"; };', 'expected compatible'),
+            ('&tim2 { reg = <0x40000400 0x400>; };', 'stopwatch timer register range'),
+            ('&tim2 { counter-width = <16>; };', '32-bit timer'),
+            ('&tim2 { interrupts = <29>; };', 'Stopwatch IRQ'),
+            ('&tim2 { interrupt-parent = <&hsi>; };', 'Stopwatch interrupt controller'),
+            ('&tim2 { clocks = <0xdead>; };', 'Unknown phandle'),
+            ('/ { chosen { /delete-property/ artos,stopwatch; }; };', 'missing artos,stopwatch'),
             ('&nvic { #interrupt-cells = <2>; };', 'interrupt controller'),
             ('/ { chosen { artos,console = <0xdead>; }; };', 'Unknown phandle'),
             ('/ { chosen { /delete-property/ artos,heartbeat; }; };', 'missing artos,heartbeat'),

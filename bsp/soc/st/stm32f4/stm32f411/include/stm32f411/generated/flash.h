@@ -19,6 +19,7 @@ namespace stm32f411::flash {
         struct cr;
         struct optcr;
     }
+
     using ACR = artos::mmio::register_t<tags::acr>;
     using KEYR = artos::mmio::write_only_register_t<tags::keyr>;
     using OPTKEYR = artos::mmio::write_only_register_t<tags::optkeyr>;
@@ -85,6 +86,7 @@ namespace stm32f411::flash {
         stm32f411::flash::CR      CR;
         stm32f411::flash::OPTCR   OPTCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, ACR) == 0x00);
     static_assert(offsetof(registers_t, KEYR) == 0x04);
@@ -96,27 +98,33 @@ namespace stm32f411::flash {
 
     inline constexpr std::uintptr_t flash_address = 0x40023C00UL;
     inline registers_t* const       FLASH = reinterpret_cast<registers_t*>(flash_address);
+
     namespace metadata::flash {
         namespace acr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace keyr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace optkeyr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x80000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace optcr {
             inline constexpr std::uint32_t reset_value = 0x00000014UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

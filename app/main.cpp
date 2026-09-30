@@ -1,3 +1,5 @@
+#include <cstdint>
+
 #include <board_devices.h>
 #include <build_config.h>
 #include <cpu_port.h>
@@ -26,12 +28,33 @@ namespace {
         cpu::port::fatal_trap(); // The monitor is expected to run indefinitely.
     }
 
+    std::uint32_t get_the_ultimate_answer() noexcept
+    {
+        // SVC writes r0 through the assembly output operand.
+        // NOLINTNEXTLINE(misc-const-correctness)
+        register std::uint32_t result __asm__("r0") = 0;
+
+        __asm__ volatile("svc #0" : "+r"(result) : : "r1", "r2", "r3", "r12", "cc", "memory");
+
+        return result;
+    }
+
     void blinky_entry(void*)
     {
+        artos::tick_t ticks_to_wait = 0;
+        if (get_the_ultimate_answer() != 42)
+        {
+            ticks_to_wait = artos::kernel::ms_to_ticks(500);
+        }
+        else
+        {
+            ticks_to_wait = artos::kernel::ms_to_ticks(1000);
+        }
+
         while (true)
         {
             board::devices::heartbeat.write(!board::devices::heartbeat.read_output());
-            artos::thread::sleep_for(artos::kernel::ms_to_ticks(1000));
+            artos::thread::sleep_for(ticks_to_wait);
         }
     }
 }

@@ -72,6 +72,37 @@ config ARTOS_MAX_THREADS
       Maximum number of registered threads, including the kernel idle
       thread. Each thread's TCB and stack are allocated separately.
 
+config ARTOS_THREAD_STACK_HWM
+    bool "Enable thread stack high-water-mark support"
+    depends on ARTOS
+    help
+      Enable optional per-thread stack high-water-mark support.
+
+config ARTOS_THREAD_STATS
+    bool "Enable thread statistics"
+    depends on ARTOS
+    help
+      Enable optional per-thread statistics collection.
+
+config ARTOS_RUNTIME_HISTORY_WINDOW_MS
+    int "Thread runtime history window (milliseconds)"
+    range 1 3600000
+    default 1000
+    depends on ARTOS_THREAD_STATS
+    help
+      Total time covered by each thread's runtime history. History buckets
+      accumulate CPU cycles; this value only sets their time span.
+
+config ARTOS_RUNTIME_HISTORY_BUCKET_COUNT
+    int "Thread runtime history bucket count"
+    range 1 1000
+    default 10
+    depends on ARTOS_THREAD_STATS
+    help
+      Divide the history window into this many equal-duration buckets.
+      The history window must divide evenly by the bucket count. Each
+      bucket occupies four bytes per thread.
+
 config ARTOS_MAIN_THREAD_STACK_SIZE
     int "Main thread stack size in bytes"
     range 1024 65536

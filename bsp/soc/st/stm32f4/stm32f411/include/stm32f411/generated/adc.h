@@ -33,6 +33,7 @@ namespace stm32f411::adc::adc1 {
         struct jdr4;
         struct dr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using CR1 = artos::mmio::register_t<tags::cr1>;
     using CR2 = artos::mmio::register_t<tags::cr2>;
@@ -204,6 +205,7 @@ namespace stm32f411::adc::adc1 {
         stm32f411::adc::adc1::JDR4  JDR4;
         stm32f411::adc::adc1::DR    DR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, CR1) == 0x04);
@@ -229,83 +231,103 @@ namespace stm32f411::adc::adc1 {
 
     inline constexpr std::uintptr_t adc1_address = 0x40012000UL;
     inline registers_t* const       ADC1 = reinterpret_cast<registers_t*>(adc1_address);
+
     namespace metadata::adc1 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smpr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace smpr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jofr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jofr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jofr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jofr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace htr {
             inline constexpr std::uint32_t reset_value = 0x00000FFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ltr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sqr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sqr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sqr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jsqr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jdr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jdr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jdr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace jdr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -318,6 +340,7 @@ namespace stm32f411::adc::adc_common {
         struct csr;
         struct ccr;
     }
+
     using CSR = artos::mmio::read_only_register_t<tags::csr>;
     using CCR = artos::mmio::register_t<tags::ccr>;
 
@@ -356,6 +379,7 @@ namespace stm32f411::adc::adc_common {
         stm32f411::adc::adc_common::CSR CSR;
         stm32f411::adc::adc_common::CCR CCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CSR) == 0x00);
     static_assert(offsetof(registers_t, CCR) == 0x04);
@@ -363,11 +387,13 @@ namespace stm32f411::adc::adc_common {
 
     inline constexpr std::uintptr_t adc_common_address = 0x40012300UL;
     inline registers_t* const       ADC_Common = reinterpret_cast<registers_t*>(adc_common_address);
+
     namespace metadata::adc_common {
         namespace csr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ccr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

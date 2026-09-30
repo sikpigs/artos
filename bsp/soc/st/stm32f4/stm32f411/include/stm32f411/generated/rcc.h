@@ -34,6 +34,7 @@ namespace stm32f411::rcc {
         struct plli2scfgr;
         struct dckcfgr;
     }
+
     using CR = artos::mmio::register_t<tags::cr>;
     using PLLCFGR = artos::mmio::register_t<tags::pllcfgr>;
     using CFGR = artos::mmio::register_t<tags::cfgr>;
@@ -360,6 +361,7 @@ namespace stm32f411::rcc {
         std::uint32_t              reserved_88[1];
         stm32f411::rcc::DCKCFGR    DCKCFGR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR) == 0x00);
     static_assert(offsetof(registers_t, PLLCFGR) == 0x04);
@@ -386,87 +388,108 @@ namespace stm32f411::rcc {
 
     inline constexpr std::uintptr_t address = 0x40023800UL;
     inline registers_t* const       RCC = reinterpret_cast<registers_t*>(address);
+
     namespace metadata::rcc {
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x00000083UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pllcfgr {
             inline constexpr std::uint32_t reset_value = 0x24003010UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cfgr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cir {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb1rstr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb2rstr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb1rstr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb2rstr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb1enr {
             inline constexpr std::uint32_t reset_value = 0x00100000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb2enr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb1enr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb2enr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb1lpenr {
             inline constexpr std::uint32_t reset_value = 0x7E6791FFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ahb2lpenr {
             inline constexpr std::uint32_t reset_value = 0x000000F1UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb1lpenr {
             inline constexpr std::uint32_t reset_value = 0x36FEC9FFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace apb2lpenr {
             inline constexpr std::uint32_t reset_value = 0x00075F33UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bdcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace csr {
             inline constexpr std::uint32_t reset_value = 0x0E000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace sscgr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace plli2scfgr {
             inline constexpr std::uint32_t reset_value = 0x20003000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dckcfgr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

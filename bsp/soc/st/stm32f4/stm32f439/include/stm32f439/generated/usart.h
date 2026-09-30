@@ -19,6 +19,7 @@ namespace stm32f439::usart::uart4 {
         struct cr2;
         struct cr3;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -92,6 +93,7 @@ namespace stm32f439::usart::uart4 {
         stm32f439::usart::uart4::CR2 CR2;
         stm32f439::usart::uart4::CR3 CR3;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -103,27 +105,33 @@ namespace stm32f439::usart::uart4 {
 
     inline constexpr std::uintptr_t uart4_address = 0x40004C00UL;
     inline registers_t* const       UART4 = reinterpret_cast<registers_t*>(uart4_address);
+
     namespace metadata::uart4 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -140,6 +148,7 @@ namespace stm32f439::usart::uart5 {
         struct cr2;
         struct cr3;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -213,6 +222,7 @@ namespace stm32f439::usart::uart5 {
         stm32f439::usart::uart5::CR2 CR2;
         stm32f439::usart::uart5::CR3 CR3;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -224,27 +234,33 @@ namespace stm32f439::usart::uart5 {
 
     inline constexpr std::uintptr_t uart5_address = 0x40005000UL;
     inline registers_t* const       UART5 = reinterpret_cast<registers_t*>(uart5_address);
+
     namespace metadata::uart5 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -262,6 +278,7 @@ namespace stm32f439::usart::uart7 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -352,6 +369,7 @@ namespace stm32f439::usart::uart7 {
         stm32f439::usart::uart7::CR3  CR3;
         stm32f439::usart::uart7::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -364,31 +382,38 @@ namespace stm32f439::usart::uart7 {
 
     inline constexpr std::uintptr_t uart7_address = 0x40007800UL;
     inline registers_t* const       UART7 = reinterpret_cast<registers_t*>(uart7_address);
+
     namespace metadata::uart7 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -406,6 +431,7 @@ namespace stm32f439::usart::uart8 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -496,6 +522,7 @@ namespace stm32f439::usart::uart8 {
         stm32f439::usart::uart8::CR3  CR3;
         stm32f439::usart::uart8::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -508,31 +535,38 @@ namespace stm32f439::usart::uart8 {
 
     inline constexpr std::uintptr_t uart8_address = 0x40007C00UL;
     inline registers_t* const       UART8 = reinterpret_cast<registers_t*>(uart8_address);
+
     namespace metadata::uart8 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -550,6 +584,7 @@ namespace stm32f439::usart::usart1 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -640,6 +675,7 @@ namespace stm32f439::usart::usart1 {
         stm32f439::usart::usart1::CR3  CR3;
         stm32f439::usart::usart1::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -652,31 +688,38 @@ namespace stm32f439::usart::usart1 {
 
     inline constexpr std::uintptr_t usart1_address = 0x40011000UL;
     inline registers_t* const       USART1 = reinterpret_cast<registers_t*>(usart1_address);
+
     namespace metadata::usart1 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -694,6 +737,7 @@ namespace stm32f439::usart::usart2 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -784,6 +828,7 @@ namespace stm32f439::usart::usart2 {
         stm32f439::usart::usart2::CR3  CR3;
         stm32f439::usart::usart2::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -796,31 +841,38 @@ namespace stm32f439::usart::usart2 {
 
     inline constexpr std::uintptr_t usart2_address = 0x40004400UL;
     inline registers_t* const       USART2 = reinterpret_cast<registers_t*>(usart2_address);
+
     namespace metadata::usart2 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -838,6 +890,7 @@ namespace stm32f439::usart::usart3 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -928,6 +981,7 @@ namespace stm32f439::usart::usart3 {
         stm32f439::usart::usart3::CR3  CR3;
         stm32f439::usart::usart3::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -940,31 +994,38 @@ namespace stm32f439::usart::usart3 {
 
     inline constexpr std::uintptr_t usart3_address = 0x40004800UL;
     inline registers_t* const       USART3 = reinterpret_cast<registers_t*>(usart3_address);
+
     namespace metadata::usart3 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -982,6 +1043,7 @@ namespace stm32f439::usart::usart6 {
         struct cr3;
         struct gtpr;
     }
+
     using SR = artos::mmio::register_t<tags::sr>;
     using DR = artos::mmio::register_t<tags::dr>;
     using BRR = artos::mmio::register_t<tags::brr>;
@@ -1072,6 +1134,7 @@ namespace stm32f439::usart::usart6 {
         stm32f439::usart::usart6::CR3  CR3;
         stm32f439::usart::usart6::GTPR GTPR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, SR) == 0x00);
     static_assert(offsetof(registers_t, DR) == 0x04);
@@ -1084,31 +1147,38 @@ namespace stm32f439::usart::usart6 {
 
     inline constexpr std::uintptr_t usart6_address = 0x40011400UL;
     inline registers_t* const       USART6 = reinterpret_cast<registers_t*>(usart6_address);
+
     namespace metadata::usart6 {
         namespace sr {
             inline constexpr std::uint32_t reset_value = 0x00C00000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace brr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace gtpr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

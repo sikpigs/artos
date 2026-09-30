@@ -1,27 +1,40 @@
+#include <board_devices.h>
+#include <board_services.h>
 #include <build_config.h>
 
 #include <cpu_port.h>
 #include <internal/deferred.h>
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
-#include <internal/thread_state.h>
 
 #include <atomic>
+#include <limits>
 #include <memory>
 
 #ifdef CONFIG_CONSOLE
 #include <console/console.h>
 #endif
 
-#include <board.h>
-
 #include <artos.h>
 #include <artos_port.h>
 
 namespace artos::kernel {
     using namespace build_config::artos;
+    using namespace kernel::internal;
 
     namespace {
+        constexpr auto runtime_history_bucket_cycles_config
+            = (static_cast<std::uint64_t>(board::devices::stopwatch_clock_hz.count()) * runtime_history_bucket_ms)
+              / 1000;
+        constexpr auto runtime_history_tick_cycles_config
+            = (static_cast<std::uint64_t>(board::devices::stopwatch_clock_hz.count()) + tick_hz - 1) / tick_hz;
+        static_assert(!thread_stats
+                          || (runtime_history_bucket_cycles_config > 0
+                              && runtime_history_bucket_cycles_config + runtime_history_tick_cycles_config
+                                     <= std::numeric_limits<std::uint32_t>::max()),
+                      "runtime history bucket plus one tick exceeds 32-bit cycle capacity");
+
         // Slot zero is reserved by init(). This stack is for the idle loop;
         // exception handlers execute on MSP. Revisit its budget as the port grows.
         thread::thread_storage_t<thread::minimum_stack_bytes> idle_storage {};
@@ -29,6 +42,7 @@ namespace artos::kernel {
         [[noreturn]] void idle_entry(void*) noexcept
         {
             using namespace thread::internal;
+            using namespace internal;
 
             for (;;)
             {
@@ -36,7 +50,7 @@ namespace artos::kernel {
                     const critical_section_t cs {};
                     for (std::size_t ix = 0; ix < threads.size(); ++ix)
                     {
-                        if (threads[ix] == nullptr || threads[ix]->state != thread_state_t::finished)
+                        if (threads[ix] == nullptr || threads[ix]->state != thread::state_t::finished)
                         {
                             continue;
                         }
@@ -131,11 +145,43 @@ namespace artos::kernel {
 
         atomic_tick_time_t ticks {};
 
+        void collect_stats() noexcept
+        {
+            if constexpr (thread_stats)
+            {
+                const auto now = board::stopwatch::count();
+                const auto delta = now - static_cast<std::uint32_t>(runtime_history_window_start);
+                runtime_history_window_start = now;
+                runtime_history_window_counter += delta;
+
+                if (current_thread)
+                {
+                    reinterpret_cast<thread::internal::tcb_t*>(current_thread)->keep_running(now);
+                }
+
+                while (runtime_history_window_counter >= runtime_history_bucket_cycles)
+                {
+                    runtime_history_bucket_index = (runtime_history_bucket_index + 1) % runtime_history_bucket_count;
+                    runtime_history_window_counter -= runtime_history_bucket_cycles;
+
+                    for (auto* thread : threads)
+                    {
+                        if (thread != nullptr)
+                        {
+                            reinterpret_cast<thread::internal::tcb_t*>(thread)->clear_runtime_history_bucket(
+                                runtime_history_bucket_index);
+                        }
+                    }
+                }
+            }
+        }
+
         void on_tick() noexcept
         {
             ++ticks;
             deferred::internal::serve_deferred();
             sched();
+            collect_stats();
         }
     }
 
@@ -150,10 +196,10 @@ namespace artos::kernel {
     void init() noexcept
     {
         const global_interrupt_guard_t cs {};
-        thread::internal::threads.fill(nullptr);
-        thread::internal::thread_count = 0;
-        thread::internal::current_thread = nullptr;
-        thread::internal::next_thread = nullptr;
+        threads.fill(nullptr);
+        thread_count = 0;
+        current_thread = nullptr;
+        next_thread = nullptr;
 
         internal::ticks.reset();
 
@@ -167,6 +213,15 @@ namespace artos::kernel {
 
         port::init();
         port::start_tick();
+
+        if constexpr (build_config::artos::thread_stats)
+        {
+            board::stopwatch::init();
+            runtime_history_bucket_index = 0;
+            runtime_history_window_counter = 0;
+            runtime_history_window_start = board::stopwatch::count();
+            runtime_history_bucket_cycles = static_cast<std::uint32_t>(runtime_history_bucket_cycles_config);
+        }
     }
 
     extern "C" [[noreturn]] void start_first_task();
@@ -174,7 +229,7 @@ namespace artos::kernel {
     [[noreturn]]
     void start() noexcept
     {
-        thread::internal::next_thread = internal::select_next();
+        next_thread = select_next();
         start_first_task();
     }
 
@@ -201,9 +256,11 @@ namespace artos::kernel {
     extern "C" void kmain() noexcept
     {
         board::init();
+
 #ifdef CONFIG_CONSOLE
         artos::console::system_console().init();
 #endif
+
         init();
 
         [[maybe_unused]] const auto main_thread = thread::create<main_thread_stack_size>(

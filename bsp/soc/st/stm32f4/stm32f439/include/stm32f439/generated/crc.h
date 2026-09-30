@@ -16,6 +16,7 @@ namespace stm32f439::crc {
         struct idr;
         struct cr;
     }
+
     using DR = artos::mmio::register_t<tags::dr>;
     using IDR = artos::mmio::register_t<tags::idr>;
     using CR = artos::mmio::write_only_register_t<tags::cr>;
@@ -38,6 +39,7 @@ namespace stm32f439::crc {
         stm32f439::crc::IDR IDR;
         stm32f439::crc::CR  CR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, DR) == 0x00);
     static_assert(offsetof(registers_t, IDR) == 0x04);
@@ -46,15 +48,18 @@ namespace stm32f439::crc {
 
     inline constexpr std::uintptr_t crc_address = 0x40023000UL;
     inline registers_t* const       CRC = reinterpret_cast<registers_t*>(crc_address);
+
     namespace metadata::crc {
         namespace dr {
             inline constexpr std::uint32_t reset_value = 0xFFFFFFFFUL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

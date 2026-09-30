@@ -12,7 +12,7 @@ bsp/
       variants/             # STM32F411RE memory/package selection
     stm32f439/
       variants/             # STM32F439ZI memory/package selection
-  drivers/include/stm32/    # GPIO and USART implementations
+  drivers/include/stm32/    # GPIO, USART and timer implementations
   linker/cortex_m.ld.in     # Common sections with variant memory parameters
 arch/arm/cortex_m4/
   CMakeLists.txt            # Core sources and optional scheduler support
@@ -27,8 +27,11 @@ arch/arm/cortex_m4/
 | NUCLEO-F439ZI | STM32F439 / ZI, LQFP144 | USART3, PD8 TX / PD9 RX | PB0 (LD1) | 2 MiB flash, 192 KiB system SRAM |
 
 Both boards start on reset HSI at 16 MHz, with APB/AHB dividers of one, and use
-115200 baud. F439's separate 64 KiB CCM SRAM is described in `mcu.h` for address
-validation but is not allocated to the main heap, task stacks or globals. It is
+115200 baud. Each board selects TIM2 as the stopwatch timer through
+`/chosen/artos,stopwatch`; changing the phandle to TIM5 selects the other
+supported 32-bit timer. F439's separate 64 KiB CCM SRAM is described in
+`mcu.h` for address validation but is not allocated to the main heap, task
+stacks or globals. It is
 not a contiguous extension of the system SRAM. Backup SRAM is not treated as
 ordinary initialized RAM. Package identity is recorded; complete package-pin
 validation is future board-description work.
@@ -89,8 +92,8 @@ and vector order belong to the SoC, while NVIC operations belong to the CPU.
 
 Fault capture uses the variant's RAM ranges rather than an F411-specific limit.
 The shared reset still initializes `.data`/`.bss`, enables the FPU and calls C++
-constructors. Board initialization enables/configures the heartbeat LED; console
-clocks are enabled explicitly by `init_console()`.
+constructors. Board initialization configures the heartbeat LED. GPIO and
+USART drivers enable their peripheral clocks during configuration.
 
 Build and linked-vector checks run without a board. Hardware validation should
 check reset, ST-LINK console, LED and scheduler timing on the selected board.
@@ -121,9 +124,13 @@ the selected SoC headers. Memory/linker selection remains in the MCU variant.
 
 `board.h` preserves the current `board::root`, `labels` and `chosen` API.
 This first version emits a fixed role hierarchy for the selected devices, rather
-than exporting arbitrary tree nodes or DTS labels. `board_devices.h` instantiates
-the shared USART/GPIO drivers and emits RCC enables derived from the chosen pins
-and UART. Handwritten `board.cpp` calls those helpers and initializes the LED.
+than exporting arbitrary tree nodes or DTS labels. `board_devices.h`
+selects the SoC USART driver and exposes the chosen stopwatch timer as
+`board::devices::stopwatch`. Each peripheral enables its RCC clock during
+configuration. The selected SoC variant supplies the stopwatch source. The STM32F4
+implementation provides the service declared in `board_services.h`; the kernel
+uses that service without naming an SoC timer.
+Handwritten `board.cpp` initializes the LED.
 
 ### Initial binding contract
 
@@ -131,11 +138,16 @@ These are small Artos bindings, not Linux or Zephyr STM32 bindings. DTS include,
 node override and phandle syntax is handled by dtc; libfdt's `fdtget` reads the
 compiled data. The initial supported device graph is:
 
-- `/chosen`: `artos,console`, `artos,kernel-tick`, `artos,heartbeat`, each one phandle.
+- `/chosen`: `artos,console`, `artos,kernel-tick`, `artos,heartbeat`, and
+  `artos,stopwatch`, each one phandle.
 - USART: `artos,stm32f4-usart`, `reg`, `interrupt-parent`, `interrupts`, `clocks`,
   `current-speed`, `artos,tx-pin`, `artos,rx-pin`, `artos,alternate-function`.
   Pin properties contain `<&gpio pin flags>`. Only the reviewed USART2 PA2/PA3
   mapping on F411 and USART3 PD8/PD9 on F439, both AF7, are currently bound.
+- Stopwatch timer: `artos,stm32f4-timer`, `reg`, `interrupt-parent`,
+  `interrupts`, `clocks`, and `counter-width = <32>`. The selected TIM2 or TIM5
+  must be enabled; the generated board header provides its register type,
+  address, interrupt, and clock.
 - GPIO: `artos,stm32f4-gpio`, `reg`, `gpio-controller`, `#gpio-cells = <2>`.
   Initially the inventory includes GPIOA on F411 and GPIOB/GPIOD on F439.
 - Heartbeat: a child of `gpio-leds` with `gpios = <&gpio pin 0>`.

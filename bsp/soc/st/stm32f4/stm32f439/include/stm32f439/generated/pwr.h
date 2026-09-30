@@ -15,6 +15,7 @@ namespace stm32f439::pwr {
         struct cr;
         struct csr;
     }
+
     using CR = artos::mmio::register_t<tags::cr>;
     using CSR = artos::mmio::register_t<tags::csr>;
 
@@ -53,6 +54,7 @@ namespace stm32f439::pwr {
         stm32f439::pwr::CR  CR;
         stm32f439::pwr::CSR CSR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, CR) == 0x00);
     static_assert(offsetof(registers_t, CSR) == 0x04);
@@ -60,11 +62,13 @@ namespace stm32f439::pwr {
 
     inline constexpr std::uintptr_t pwr_address = 0x40007000UL;
     inline registers_t* const       PWR = reinterpret_cast<registers_t*>(pwr_address);
+
     namespace metadata::pwr {
         namespace cr {
             inline constexpr std::uint32_t reset_value = 0x0000C000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace csr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

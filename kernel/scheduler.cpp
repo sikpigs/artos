@@ -1,9 +1,9 @@
 #include <build_config.h>
 
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
 #include <internal/thread_queue.h>
-#include <internal/thread_state.h>
 #include <internal/time.h>
 
 #include <cassert>
@@ -17,6 +17,7 @@ using namespace build_config::artos;
 
 namespace artos::kernel::internal {
     using namespace thread::internal;
+    using namespace kernel::internal;
 
     void check_deadlines() noexcept
     {
@@ -27,11 +28,11 @@ namespace artos::kernel::internal {
         {
             auto* thread = it->thread;
 
-            if ((thread->state == thread_state_t::sleeping || thread->state == thread_state_t::blocked))
+            if ((thread->state == thread::state_t::sleeping || thread->state == thread::state_t::blocked))
             {
                 if (deadline_reached(now, thread->deadline))
                 {
-                    if (thread->state == thread_state_t::blocked)
+                    if (thread->state == thread::state_t::blocked)
                     {
                         thread->waiter.queue->remove(thread->waiter);
                         thread->waiter.wake = wake_reason_t::timeout;
@@ -59,7 +60,7 @@ namespace artos::kernel::internal {
     {
         if (current_thread != nullptr && current_thread != threads[0])
         {
-            if (current_thread->state == thread_state_t::running || current_thread->state == thread_state_t::ready)
+            if (current_thread->state == thread::state_t::running || current_thread->state == thread::state_t::ready)
             {
                 current_thread->ready.queue->rotate_after(current_thread->ready);
             }
@@ -77,7 +78,7 @@ namespace artos::kernel::internal {
         auto priority = get_highest_set_priority();
         if (!priority)
         {
-            return threads[0];
+            return reinterpret_cast<tcb_t*>(threads[0]);
         }
 
         auto& queue = ready_queue[std::to_underlying(*priority)];
@@ -112,7 +113,7 @@ namespace artos::kernel::internal {
                     continue;
                 }
 
-                threads[ix]->age();
+                reinterpret_cast<tcb_t*>(threads[ix])->age();
             }
         }
     };
@@ -133,7 +134,7 @@ namespace artos::kernel::internal {
             {
                 // The current thread may already be blocked. Remove it from the
                 // ready queue before idling until the next tick.
-                if (current_thread->state != thread_state_t::running && current_thread->state != thread_state_t::ready
+                if (current_thread->state != thread::state_t::running && current_thread->state != thread::state_t::ready
                     && current_thread->ready.queue != nullptr)
                 {
                     auto* queue = current_thread->ready.queue;
@@ -149,7 +150,12 @@ namespace artos::kernel::internal {
                 {
                     artos::port::pendsvset();
                 }
-                return;
+                else
+                {
+                    reinterpret_cast<tcb_t*>(current_thread)->keep_running();
+                }
+
+                return; // don't remove
             }
         }
 
@@ -162,11 +168,15 @@ namespace artos::kernel::internal {
 
         age();
 
-        next_thread->reset_priority();
+        reinterpret_cast<tcb_t*>(next_thread)->reset_priority();
 
         if (selected != current_thread)
         {
             artos::port::pendsvset();
+        }
+        else
+        {
+            reinterpret_cast<tcb_t*>(current_thread)->keep_running();
         }
     }
 }

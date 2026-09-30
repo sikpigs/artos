@@ -23,6 +23,7 @@ namespace stm32f439::gpio {
         struct afrl;
         struct afrh;
     }
+
     using MODER = artos::mmio::register_t<tags::moder>;
     using OTYPER = artos::mmio::register_t<tags::otyper>;
     using OSPEEDR = artos::mmio::register_t<tags::ospeedr>;
@@ -238,6 +239,7 @@ namespace stm32f439::gpio {
         stm32f439::gpio::AFRL    AFRL;
         stm32f439::gpio::AFRH    AFRH;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, MODER) == 0x00);
     static_assert(offsetof(registers_t, OTYPER) == 0x04);
@@ -269,7 +271,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs0;
         inline static constexpr auto   reset = bsrr::br0;
         inline static constexpr auto   alternate_function = afrl::afrl0;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -288,7 +291,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs1;
         inline static constexpr auto   reset = bsrr::br1;
         inline static constexpr auto   alternate_function = afrl::afrl1;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -307,7 +311,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs2;
         inline static constexpr auto   reset = bsrr::br2;
         inline static constexpr auto   alternate_function = afrl::afrl2;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -326,7 +331,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs3;
         inline static constexpr auto   reset = bsrr::br3;
         inline static constexpr auto   alternate_function = afrl::afrl3;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -345,7 +351,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs4;
         inline static constexpr auto   reset = bsrr::br4;
         inline static constexpr auto   alternate_function = afrl::afrl4;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -364,7 +371,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs5;
         inline static constexpr auto   reset = bsrr::br5;
         inline static constexpr auto   alternate_function = afrl::afrl5;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -383,7 +391,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs6;
         inline static constexpr auto   reset = bsrr::br6;
         inline static constexpr auto   alternate_function = afrl::afrl6;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -402,7 +411,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs7;
         inline static constexpr auto   reset = bsrr::br7;
         inline static constexpr auto   alternate_function = afrl::afrl7;
-        static AFRL&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRL& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRL;
         }
@@ -421,7 +431,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs8;
         inline static constexpr auto   reset = bsrr::br8;
         inline static constexpr auto   alternate_function = afrh::afrh8;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -440,7 +451,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs9;
         inline static constexpr auto   reset = bsrr::br9;
         inline static constexpr auto   alternate_function = afrh::afrh9;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -459,7 +471,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs10;
         inline static constexpr auto   reset = bsrr::br10;
         inline static constexpr auto   alternate_function = afrh::afrh10;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -478,7 +491,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs11;
         inline static constexpr auto   reset = bsrr::br11;
         inline static constexpr auto   alternate_function = afrh::afrh11;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -497,7 +511,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs12;
         inline static constexpr auto   reset = bsrr::br12;
         inline static constexpr auto   alternate_function = afrh::afrh12;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -516,7 +531,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs13;
         inline static constexpr auto   reset = bsrr::br13;
         inline static constexpr auto   alternate_function = afrh::afrh13;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -535,7 +551,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs14;
         inline static constexpr auto   reset = bsrr::br14;
         inline static constexpr auto   alternate_function = afrh::afrh14;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -554,7 +571,8 @@ namespace stm32f439::gpio {
         inline static constexpr auto   set = bsrr::bs15;
         inline static constexpr auto   reset = bsrr::br15;
         inline static constexpr auto   alternate_function = afrh::afrh15;
-        static AFRH&                   alternate_function_register(registers_t& registers) noexcept
+
+        static AFRH& alternate_function_register(registers_t& registers) noexcept
         {
             return registers.AFRH;
         }
@@ -562,43 +580,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioa_address = 0x40020000UL;
     inline registers_t* const       GPIOA = reinterpret_cast<registers_t*>(gpioa_address);
+
     namespace metadata::gpioa {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0xA8000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x64000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -607,43 +635,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpiob_address = 0x40020400UL;
     inline registers_t* const       GPIOB = reinterpret_cast<registers_t*>(gpiob_address);
+
     namespace metadata::gpiob {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000280UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x000000C0UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000100UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -652,43 +690,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioc_address = 0x40020800UL;
     inline registers_t* const       GPIOC = reinterpret_cast<registers_t*>(gpioc_address);
+
     namespace metadata::gpioc {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -697,43 +745,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpiod_address = 0x40020C00UL;
     inline registers_t* const       GPIOD = reinterpret_cast<registers_t*>(gpiod_address);
+
     namespace metadata::gpiod {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -742,43 +800,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioe_address = 0x40021000UL;
     inline registers_t* const       GPIOE = reinterpret_cast<registers_t*>(gpioe_address);
+
     namespace metadata::gpioe {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -787,43 +855,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpiof_address = 0x40021400UL;
     inline registers_t* const       GPIOF = reinterpret_cast<registers_t*>(gpiof_address);
+
     namespace metadata::gpiof {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -832,43 +910,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpiog_address = 0x40021800UL;
     inline registers_t* const       GPIOG = reinterpret_cast<registers_t*>(gpiog_address);
+
     namespace metadata::gpiog {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -877,43 +965,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioh_address = 0x40021C00UL;
     inline registers_t* const       GPIOH = reinterpret_cast<registers_t*>(gpioh_address);
+
     namespace metadata::gpioh {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -922,43 +1020,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioi_address = 0x40022000UL;
     inline registers_t* const       GPIOI = reinterpret_cast<registers_t*>(gpioi_address);
+
     namespace metadata::gpioi {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -967,43 +1075,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpioj_address = 0x40022400UL;
     inline registers_t* const       GPIOJ = reinterpret_cast<registers_t*>(gpioj_address);
+
     namespace metadata::gpioj {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
@@ -1012,43 +1130,53 @@ namespace stm32f439::gpio {
 
     inline constexpr std::uintptr_t gpiok_address = 0x40022800UL;
     inline registers_t* const       GPIOK = reinterpret_cast<registers_t*>(gpiok_address);
+
     namespace metadata::gpiok {
         namespace moder {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace otyper {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace ospeedr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pupdr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace idr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace odr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace bsrr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace lckr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrl {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace afrh {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;

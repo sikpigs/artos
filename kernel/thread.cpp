@@ -1,8 +1,8 @@
 #include <build_config.h>
 
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
-#include <internal/thread_state.h>
 #include <internal/time.h>
 
 #include <algorithm>
@@ -18,6 +18,9 @@
 using namespace build_config::artos;
 
 namespace artos::thread {
+    using namespace internal;
+    using namespace kernel::internal;
+
     namespace internal {
         start_result_t create(func_t              func,
                               std::string_view    name,
@@ -47,7 +50,12 @@ namespace artos::thread {
             }
 
             const auto stack_word_count = stack_size_bytes / sizeof(stack_word_t);
-            auto*      sp = port::initialize_stack(stack + stack_word_count, func, parameters);
+            if constexpr (tcb_t::high_watermark_enabled)
+            {
+                std::fill_n(stack, stack_word_count, internal::stack_fill_pattern);
+            }
+
+            auto* sp = port::initialize_stack(stack + stack_word_count, func, parameters);
 
             thread = ::new (static_cast<void*>(tcb)) tcb_t { name, priority, sp, stack, stack_word_count };
 
@@ -60,7 +68,7 @@ namespace artos::thread {
             }
             else
             {
-                thread->state = thread_state_t::suspended;
+                thread->state = thread::state_t::suspended;
             }
 
             const auto index = std::distance(threads.begin(), tcb_it);
@@ -82,7 +90,7 @@ namespace artos::thread {
             }
 
             current_thread->deadline = tick_time;
-            current_thread->state = thread_state_t::sleeping;
+            current_thread->state = thread::state_t::sleeping;
 
             block_sleep_thread(current_thread);
 
@@ -108,12 +116,12 @@ namespace artos::thread {
 
     id_t get_current_thread() noexcept
     {
-        return internal::current_thread ? internal::current_thread->id : invalid_id;
+        return current_thread ? current_thread->id : invalid_id;
     }
 
     void sleep_for(tick_t ticks) noexcept
     {
-        if (internal::current_thread == nullptr || ticks == 0)
+        if (current_thread == nullptr || ticks == 0)
         {
             return;
         }
@@ -129,11 +137,11 @@ namespace artos::thread {
 
     extern "C" [[noreturn]] void thread_exit() noexcept
     {
-        assert(internal::current_thread);
+        assert(current_thread);
 
-        auto* thread = internal::current_thread;
-        thread->state = internal::thread_state_t::finished;
-        kernel::internal::sched();
+        auto* thread = current_thread;
+        thread->state = thread::state_t::finished;
+        sched();
 
         for (;;)
         {
@@ -144,5 +152,25 @@ namespace artos::thread {
     [[noreturn]] void exit() noexcept
     {
         thread_exit();
+    }
+
+    [[nodiscard]] std::size_t get_high_watermark() noexcept
+    {
+        if constexpr (tcb_t::high_watermark_enabled)
+        {
+            return reinterpret_cast<tcb_t*>(current_thread)->get_high_watermark();
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    void get_statistics(statistics_t& statistics) noexcept
+    {
+        if constexpr (internal::tcb_t::statistics_enabled)
+        {
+            reinterpret_cast<tcb_t*>(current_thread)->get_statistics(statistics);
+        }
     }
 }

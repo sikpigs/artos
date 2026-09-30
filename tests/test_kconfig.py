@@ -35,14 +35,16 @@ class ConfigurationTests(unittest.TestCase):
         presets = json.loads((SOURCE / "CMakePresets.json").read_text())
         configure = {preset["name"]: preset for preset in presets["configurePresets"]}
         self.assertEqual(set(configure),
-                         {"base", "debug", "release", "min-size", "host-tests"})
+                         {"base", "debug", "release", "rel-with-deb-info", "min-size", "host-tests"})
         self.assertEqual(configure["debug"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Debug")
         self.assertEqual(configure["release"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "Release")
+        self.assertEqual(configure["rel-with-deb-info"]["cacheVariables"]["CMAKE_BUILD_TYPE"],
+                         "RelWithDebInfo")
         self.assertEqual(configure["min-size"]["cacheVariables"]["CMAKE_BUILD_TYPE"], "MinSizeRel")
         self.assertEqual(configure["host-tests"]["cacheVariables"]["ARTOS_HOST_TESTS"], "ON")
         self.assertNotIn("KCONFIG_DEFCONFIG", json.dumps(presets))
         self.assertEqual({preset["name"] for preset in presets["buildPresets"]},
-                         {"debug", "release", "min-size", "host-tests"})
+                         {"debug", "release", "rel-with-deb-info", "min-size", "host-tests"})
         self.assertEqual({preset["name"] for preset in presets["testPresets"]},
                          {"all", "native", "python", "hooks"})
         self.assertIn('configs/default_defconfig',
@@ -53,6 +55,8 @@ class ConfigurationTests(unittest.TestCase):
         header = self.build / "generated/build_config.h"
         self.assertIn("tick_hz = 1000", header.read_text())
         self.assertIn("max_threads = 8", header.read_text())
+        self.assertIn("runtime_history_window_ms = 1000", header.read_text())
+        self.assertIn("runtime_history_bucket_count = 10", header.read_text())
         self.assertIn("max_deferred_work_items = 8", header.read_text())
         self.assertIn("max_active_guards = 8", header.read_text())
         self.assertIn("scheduler = fixed_priority_round_robin_config { "
@@ -75,6 +79,71 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("scheduler_min_cycles_remaining = 0",
                       (self.build / "generated/build_config.h").read_text())
 
+    def test_thread_stack_hwm_config(self):
+        self.generate("")
+        self.assertIn("thread_stack_hwm = false",
+                      (self.build / "generated/build_config.h").read_text())
+        self.assertNotIn("CONFIG_ARTOS_THREAD_STACK_HWM",
+                         (self.build / "generated/autoconf.h").read_text())
+
+        (self.build / ".config").unlink()
+        self.generate("CONFIG_ARTOS_THREAD_STACK_HWM=y\n")
+        self.assertIn("thread_stack_hwm = true",
+                      (self.build / "generated/build_config.h").read_text())
+        self.assertIn("#define CONFIG_ARTOS_THREAD_STACK_HWM 1",
+                      (self.build / "generated/autoconf.h").read_text())
+
+    def test_thread_stats_config(self):
+        self.generate("")
+        self.assertIn("thread_stats = false",
+                      (self.build / "generated/build_config.h").read_text())
+        self.assertNotIn("CONFIG_ARTOS_THREAD_STATS",
+                         (self.build / "generated/autoconf.h").read_text())
+
+        (self.build / ".config").unlink()
+        self.generate("CONFIG_ARTOS_THREAD_STATS=y\n")
+        self.assertIn("thread_stats = true",
+                      (self.build / "generated/build_config.h").read_text())
+        self.assertIn("#define CONFIG_ARTOS_THREAD_STATS 1",
+                      (self.build / "generated/autoconf.h").read_text())
+
+    def test_runtime_history_duration_and_storage(self):
+        for window_ms, bucket_count, bucket_ms in ((1000, 10, 100), (1000, 100, 10), (1200, 12, 100)):
+            with self.subTest(window_ms=window_ms, bucket_count=bucket_count):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate("CONFIG_ARTOS_THREAD_STATS=y\n"
+                              f"CONFIG_ARTOS_RUNTIME_HISTORY_WINDOW_MS={window_ms}\n"
+                              f"CONFIG_ARTOS_RUNTIME_HISTORY_BUCKET_COUNT={bucket_count}\n")
+                header = (self.build / "generated/build_config.h").read_text()
+                self.assertIn(f"runtime_history_window_ms = {window_ms}", header)
+                self.assertIn(f"runtime_history_bucket_count = {bucket_count}", header)
+                self.assertIn("runtime_history_window_ms / runtime_history_bucket_count", header)
+                probe = f"""#include <artos.h>
+#include <array>
+#include <type_traits>
+static_assert(build_config::artos::runtime_history_bucket_ms == {bucket_ms});
+static_assert(std::is_same_v<
+    decltype(artos::thread::statistics_t{{}}.runtime_history_cycles),
+    std::array<std::uint32_t, {bucket_count}>>);
+"""
+                result = subprocess.run(
+                    ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
+                     "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
+                    input=probe, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_runtime_history_rejects_uneven_buckets_at_compile_time(self):
+        self.generate("CONFIG_ARTOS_THREAD_STATS=y\n"
+                      "CONFIG_ARTOS_RUNTIME_HISTORY_WINDOW_MS=1000\n"
+                      "CONFIG_ARTOS_RUNTIME_HISTORY_BUCKET_COUNT=30\n")
+        result = subprocess.run(
+            ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
+             "-I", str(self.build / "generated"), "-"],
+            input="#include <build_config.h>\n", capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("runtime history window must divide evenly", result.stderr)
+
     def test_saved_config_overrides_seed(self):
         self.generate("CONFIG_ARTOS_TICK_HZ=2000\nCONFIG_ARTOS_PRIORITY_LEVELS=256\nCONFIG_ARTOS_MAX_THREADS=12\n")
         self.generate("CONFIG_ARTOS_TICK_HZ=1000\n")
@@ -92,6 +161,8 @@ class ConfigurationTests(unittest.TestCase):
         header = (self.build / "generated/build_config.h").read_text()
         self.assertIn("enabled = false", header)
         self.assertIn("max_threads = 8", header)
+        self.assertIn("thread_stack_hwm = false", header)
+        self.assertIn("thread_stats = false", header)
         self.assertIn("max_deferred_work_items = 8", header)
         self.assertIn("max_active_guards = 8", header)
         self.assertIn("scheduler = fixed_priority_round_robin_config { "

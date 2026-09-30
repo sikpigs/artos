@@ -1,9 +1,10 @@
+#include <board_services.h>
 #include <build_config.h>
 
+#include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
 #include <internal/thread_queue.h>
-#include <internal/thread_state.h>
 
 #include <artos.h>
 #include <artos_port.h>
@@ -19,8 +20,12 @@
 #include <unistd.h>
 
 namespace {
+    using artos::kernel::internal::threads;
+    using artos::kernel::internal::next_thread;
+    using artos::kernel::internal::current_thread;
+    using artos::kernel::internal::ready_queue;
     using artos::thread::internal::tcb_t;
-    using artos::thread::internal::thread_state_t;
+    using artos::thread::state_t;
 
     artos::tick_time_t                                                        now {};
     unsigned                                                                  pendsv_count = 0;
@@ -42,9 +47,9 @@ namespace {
         return static_cast<artos::thread::priority_t>(value);
     }
 
-    bool is_runnable(thread_state_t state)
+    bool is_runnable(state_t state)
     {
-        return state == thread_state_t::ready || state == thread_state_t::running;
+        return state == state_t::ready || state == state_t::running;
     }
 
     void enqueue_ready(tcb_t& thread)
@@ -52,7 +57,7 @@ namespace {
         using namespace artos::thread::internal;
 
         check(thread.ready.queue == nullptr, "thread was already in a ready queue");
-        ready_queue[std::to_underlying(thread.priority)].push_back(thread.ready);
+        artos::kernel::internal::ready_queue[std::to_underlying(thread.priority)].push_back(thread.ready);
         set_priority_ready(thread.priority);
     }
 
@@ -73,18 +78,18 @@ namespace {
         }
     }
 
-    tcb_t& install(std::size_t slot, std::uint8_t priority_value, thread_state_t state)
+    tcb_t& install(std::size_t slot, std::uint8_t priority_value, state_t state)
     {
         using namespace artos::thread::internal;
 
-        check(threads[slot] == nullptr, "test installed the same thread slot twice");
+        check(artos::kernel::internal::threads[slot] == nullptr, "test installed the same thread slot twice");
         check(!tcbs[slot].has_value(), "test installed the same thread slot twice");
         auto& thread = tcbs[slot].emplace("test", priority(priority_value), &stacks[slot], &stacks[slot], 1);
         thread.state = state;
         thread.deadline = {};
         thread.waiter.wake = artos::wake_reason_t::none;
-        threads[slot] = &thread;
-        ++thread_count;
+        artos::kernel::internal::threads[slot] = &thread;
+        ++artos::kernel::internal::thread_count;
 
         if (is_runnable(state))
         {
@@ -99,15 +104,16 @@ namespace {
         using namespace artos::thread::internal;
 
         check(thread.ready.queue != nullptr, "current thread was not ready-queued");
-        if (current_thread != nullptr && current_thread->state == thread_state_t::running)
+        if (artos::kernel::internal::current_thread != nullptr
+            && artos::kernel::internal::current_thread->state == state_t::running)
         {
-            current_thread->state = thread_state_t::ready;
+            artos::kernel::internal::current_thread->state = state_t::ready;
         }
-        thread.state = thread_state_t::running;
-        current_thread = &thread;
+        thread.state = state_t::running;
+        artos::kernel::internal::current_thread = &thread;
     }
 
-    void make_not_ready(tcb_t& thread, thread_state_t state)
+    void make_not_ready(tcb_t& thread, state_t state)
     {
         check(!is_runnable(state), "non-ready transition used a runnable state");
         remove_ready(thread);
@@ -118,12 +124,12 @@ namespace {
     {
         using namespace artos::thread::internal;
 
-        for (auto& queue : ready_queue)
+        for (auto& queue : artos::kernel::internal::ready_queue)
         {
             queue.clear();
         }
-        block_sleep_queue.clear();
-        ready_bitmap.fill(0);
+        artos::kernel::internal::block_sleep_queue.clear();
+        artos::kernel::internal::ready_bitmap.fill(0);
 
         for (auto& thread : tcbs)
         {
@@ -134,22 +140,22 @@ namespace {
             }
         }
 
-        threads.fill(nullptr);
-        thread_count = 0;
-        current_thread = nullptr;
-        next_thread = nullptr;
+        artos::kernel::internal::threads.fill(nullptr);
+        artos::kernel::internal::thread_count = 0;
+        artos::kernel::internal::current_thread = nullptr;
+        artos::kernel::internal::next_thread = nullptr;
         now = {};
         pendsv_count = 0;
         cycles_remaining = 16000;
-        (void)install(0, 15, thread_state_t::suspended);
+        (void)install(0, 15, state_t::suspended);
     }
 
     void test_highest_priority_ready_thread_wins()
     {
         reset_scheduler();
-        auto& current = install(1, 8, thread_state_t::running);
-        (void)install(2, 5, thread_state_t::ready);
-        auto& highest = install(5, 2, thread_state_t::ready);
+        auto& current = install(1, 8, state_t::running);
+        (void)install(2, 5, state_t::ready);
+        auto& highest = install(5, 2, state_t::ready);
         set_current(current);
 
         check(artos::kernel::internal::select_next() == &highest,
@@ -159,9 +165,9 @@ namespace {
     void test_equal_priority_threads_rotate()
     {
         reset_scheduler();
-        auto& current = install(1, 4, thread_state_t::running);
-        auto& first = install(2, 4, thread_state_t::ready);
-        auto& second = install(3, 4, thread_state_t::ready);
+        auto& current = install(1, 4, state_t::running);
+        auto& first = install(2, 4, state_t::ready);
+        auto& second = install(3, 4, state_t::ready);
         set_current(current);
 
         check(artos::kernel::internal::select_next() == &first,
@@ -174,10 +180,10 @@ namespace {
     void test_non_runnable_threads_are_not_ready_queued()
     {
         reset_scheduler();
-        auto& current = install(1, 7, thread_state_t::running);
-        auto& blocked = install(2, 0, thread_state_t::blocked_forever);
-        auto& suspended = install(3, 1, thread_state_t::suspended);
-        auto& finished = install(4, 2, thread_state_t::finished);
+        auto& current = install(1, 7, state_t::running);
+        auto& blocked = install(2, 0, state_t::indefinite);
+        auto& suspended = install(3, 1, state_t::suspended);
+        auto& finished = install(4, 2, state_t::finished);
         set_current(current);
 
         check(blocked.ready.queue == nullptr, "blocked thread was ready-queued");
@@ -190,14 +196,14 @@ namespace {
     {
         reset_scheduler();
         auto& idle = *tcbs[0];
-        auto& current = install(1, 8, thread_state_t::running);
+        auto& current = install(1, 8, state_t::running);
         set_current(current);
-        make_not_ready(current, thread_state_t::blocked_forever);
+        make_not_ready(current, state_t::indefinite);
 
         check(artos::kernel::internal::select_next() == &idle,
               "selector did not fall back to idle when all applications blocked");
 
-        auto& application = install(2, 15, thread_state_t::ready);
+        auto& application = install(2, 15, state_t::ready);
         check(artos::kernel::internal::select_next() == &application,
               "idle competed with a runnable lowest-priority application thread");
     }
@@ -207,10 +213,10 @@ namespace {
         using namespace artos::thread::internal;
 
         reset_scheduler();
-        auto& blocked = install(1, 8, thread_state_t::running);
-        auto& ready = install(2, 2, thread_state_t::ready);
+        auto& blocked = install(1, 8, state_t::running);
+        auto& ready = install(2, 2, state_t::ready);
         set_current(blocked);
-        blocked.state = thread_state_t::blocked_forever;
+        blocked.state = state_t::indefinite;
         cycles_remaining = 100;
 
         artos::kernel::internal::sched();
@@ -221,7 +227,7 @@ namespace {
         check(ready.ready.queue != nullptr, "ready thread was removed while idling");
 
         current_thread = threads[0];
-        current_thread->state = thread_state_t::running;
+        current_thread->state = state_t::running;
         next_thread = nullptr;
         cycles_remaining = 16000;
         artos::kernel::internal::sched();
@@ -232,10 +238,10 @@ namespace {
     {
         reset_scheduler();
         now = { .ticks = 100, .generation = 3 };
-        auto& current = install(1, 8, thread_state_t::running);
-        auto& due = install(2, 2, thread_state_t::sleeping);
+        auto& current = install(1, 8, state_t::running);
+        auto& due = install(2, 2, state_t::sleeping);
         due.deadline = { .ticks = 100, .generation = 3 };
-        auto& future = install(3, 0, thread_state_t::sleeping);
+        auto& future = install(3, 0, state_t::sleeping);
         future.deadline = { .ticks = 101, .generation = 3 };
         artos::thread::internal::block_sleep_thread(&future);
         artos::thread::internal::block_sleep_thread(&due);
@@ -243,11 +249,11 @@ namespace {
 
         artos::kernel::internal::sched();
 
-        check(artos::thread::internal::next_thread == &due, "scheduler did not select the due sleeper");
-        check(due.state == thread_state_t::ready, "due sleeper was not transitioned to ready");
+        check(next_thread == &due, "scheduler did not select the due sleeper");
+        check(due.state == state_t::ready, "due sleeper was not transitioned to ready");
         check(due.ready.queue != nullptr, "due sleeper was not inserted into a ready queue");
         check(due.block_sleep.queue == nullptr, "due sleeper remained in the deadline queue");
-        check(future.state == thread_state_t::sleeping, "future sleeper was readied early");
+        check(future.state == state_t::sleeping, "future sleeper was readied early");
         check(future.ready.queue == nullptr, "future sleeper was inserted into a ready queue");
         check(future.block_sleep.queue != nullptr, "future sleeper was removed from the deadline queue");
     }
@@ -256,8 +262,8 @@ namespace {
     {
         reset_scheduler();
         now = { .ticks = 50, .generation = 1 };
-        auto& current = install(1, 9, thread_state_t::running);
-        auto& timed = install(2, 3, thread_state_t::blocked);
+        auto& current = install(1, 9, state_t::running);
+        auto& timed = install(2, 3, state_t::blocked);
         timed.deadline = now;
         artos::wait_queue_t queue;
         queue.push_back(timed.waiter);
@@ -266,8 +272,8 @@ namespace {
 
         artos::kernel::internal::sched();
 
-        check(artos::thread::internal::next_thread == &timed, "scheduler did not select the timed-out thread");
-        check(timed.state == thread_state_t::ready, "timed-out thread was not made ready");
+        check(next_thread == &timed, "scheduler did not select the timed-out thread");
+        check(timed.state == state_t::ready, "timed-out thread was not made ready");
         check(timed.ready.queue != nullptr, "timed-out thread was not inserted into a ready queue");
         check(timed.block_sleep.queue == nullptr, "timed-out thread remained in the deadline queue");
         check(timed.waiter.wake == artos::wake_reason_t::timeout, "timed-out waiter recorded the wrong wake reason");
@@ -278,10 +284,10 @@ namespace {
     {
         reset_scheduler();
         now = { .ticks = 1, .generation = 4 };
-        auto& current = install(1, 8, thread_state_t::running);
-        auto& wrapped = install(2, 2, thread_state_t::sleeping);
+        auto& current = install(1, 8, state_t::running);
+        auto& wrapped = install(2, 2, state_t::sleeping);
         wrapped.deadline = { .ticks = std::numeric_limits<artos::tick_t>::max(), .generation = 3 };
-        auto& next_generation = install(3, 0, thread_state_t::sleeping);
+        auto& next_generation = install(3, 0, state_t::sleeping);
         next_generation.deadline = { .ticks = 1, .generation = 5 };
         artos::thread::internal::block_sleep_thread(&next_generation);
         artos::thread::internal::block_sleep_thread(&wrapped);
@@ -289,48 +295,45 @@ namespace {
 
         artos::kernel::internal::sched();
 
-        check(artos::thread::internal::next_thread == &wrapped,
-              "scheduler did not select the sleeper spanning tick rollover");
-        check(wrapped.state == thread_state_t::ready,
+        check(next_thread == &wrapped, "scheduler did not select the sleeper spanning tick rollover");
+        check(wrapped.state == state_t::ready,
               "deadline immediately before tick rollover was not recognized as elapsed");
-        check(next_generation.state == thread_state_t::sleeping,
-              "deadline in the next generation was treated as elapsed");
+        check(next_generation.state == state_t::sleeping, "deadline in the next generation was treated as elapsed");
     }
 
     void test_sched_refreshes_pending_selection()
     {
         reset_scheduler();
-        auto& current = install(1, 8, thread_state_t::running);
-        auto& higher = install(2, 2, thread_state_t::ready);
+        auto& current = install(1, 8, state_t::running);
+        auto& higher = install(2, 2, state_t::ready);
         set_current(current);
 
         artos::kernel::internal::sched();
-        check(artos::thread::internal::next_thread == &higher, "sched did not publish its selection");
+        check(next_thread == &higher, "sched did not publish its selection");
         check(pendsv_count == 1, "sched did not pend a required context switch");
 
-        make_not_ready(higher, thread_state_t::blocked_forever);
+        make_not_ready(higher, state_t::indefinite);
         artos::kernel::internal::sched();
-        check(artos::thread::internal::next_thread == &current, "sched did not refresh a stale pending destination");
+        check(next_thread == &current, "sched did not refresh a stale pending destination");
         check(pendsv_count == 1, "sched pended a switch when the current thread remained selected");
     }
 
     void test_sched_preserves_startup_selection()
     {
         reset_scheduler();
-        auto& selected = install(1, 2, thread_state_t::ready);
-        artos::thread::internal::next_thread = &selected;
+        auto& selected = install(1, 2, state_t::ready);
+        next_thread = &selected;
 
         artos::kernel::internal::sched();
-        check(artos::thread::internal::next_thread == &selected,
-              "sched overwrote the startup selection before a context existed");
+        check(next_thread == &selected, "sched overwrote the startup selection before a context existed");
         check(pendsv_count == 0, "sched pended PendSV before the first context started");
     }
 
     void test_initial_selection_uses_the_highest_priority_thread()
     {
         reset_scheduler();
-        (void)install(1, 5, thread_state_t::ready);
-        auto& highest = install(2, 2, thread_state_t::ready);
+        (void)install(1, 5, state_t::ready);
+        auto& highest = install(2, 2, state_t::ready);
 
         check(artos::kernel::internal::select_next() == &highest,
               "initial selection did not choose the highest-priority ready thread");
@@ -346,30 +349,47 @@ namespace {
         artos::thread::stack_word_t first_stack {};
         artos::thread::stack_word_t second_stack {};
         artos::thread::stack_word_t saved_stack {};
-        auto&                       first = install(1, 4, thread_state_t::ready);
-        auto&                       second = install(2, 4, thread_state_t::ready);
+        auto&                       first = install(1, 4, state_t::ready);
+        auto&                       second = install(2, 4, state_t::ready);
         first.sp = &first_stack;
         second.sp = &second_stack;
-        artos::thread::internal::next_thread = &first;
+        next_thread = &first;
 
         check(!artos_context_started(), "context reported started before first dispatch");
         check(artos_context_start() == &first_stack, "context start returned the wrong stack");
         check(artos_context_started(), "context did not report started after first dispatch");
-        check(first.state == thread_state_t::running, "first context was not marked running");
+        check(first.state == state_t::running, "first context was not marked running");
 
-        artos::thread::internal::next_thread = &second;
+#if defined(ARTOS_TEST_THREAD_STATS)
+        check(first.statistics.execution_count == 1, "first dispatch was not counted");
+        check(second.statistics.execution_count == 0, "undispatched thread was counted");
+        check(first.statistics.runtime_history_cycles.size() == build_config::artos::runtime_history_bucket_count,
+              "runtime history bucket count did not match configuration");
+        check(first.statistics.runtime_history_cycles[0] == 0, "runtime history was not zero-initialized");
+        first.statistics.runtime_history_cycles[0] = 1234;
+        artos::thread::statistics_t copied_statistics {};
+        first.get_statistics(copied_statistics);
+        check(copied_statistics.runtime_history_cycles[0] == 1234, "runtime history was not copied");
+#endif
+
+        next_thread = &second;
         check(artos_context_switch(&saved_stack) == &second_stack, "context switch returned the wrong incoming stack");
-        check(first.sp == &saved_stack && first.state == thread_state_t::ready,
+        check(first.sp == &saved_stack && first.state == state_t::ready,
               "outgoing context was not saved and made ready");
-        check(second.state == thread_state_t::running, "incoming context was not marked running");
+        check(second.state == state_t::running, "incoming context was not marked running");
+
+#if defined(ARTOS_TEST_THREAD_STATS)
+        check(first.statistics.execution_count == 1, "outgoing thread was counted twice");
+        check(second.statistics.execution_count == 1, "incoming dispatch was not counted");
+#endif
     }
 
 #if defined(ARTOS_TEST_PRIORITY_AGING)
     void test_priority_aging_promotes_waiter()
     {
         reset_scheduler();
-        auto& current = install(1, 4, thread_state_t::running);
-        auto& waiting = install(2, 5, thread_state_t::ready);
+        auto& current = install(1, 4, state_t::running);
+        auto& waiting = install(2, 5, state_t::ready);
         set_current(current);
 
         artos::kernel::internal::sched();
@@ -380,22 +400,19 @@ namespace {
         artos::kernel::internal::sched();
         check(waiting.priority == priority(4) && waiting.ticks_at_priority == 0,
               "waiting thread was not promoted at the configured interval");
-        check(waiting.ready.queue == &artos::thread::internal::ready_queue[4],
-              "promoted thread was not moved to its new ready queue");
+        check(waiting.ready.queue == &ready_queue[4], "promoted thread was not moved to its new ready queue");
 
         artos::kernel::internal::sched();
-        check(artos::thread::internal::next_thread == &waiting,
-              "promoted thread was not selected after reaching the running priority");
+        check(next_thread == &waiting, "promoted thread was not selected after reaching the running priority");
         check(waiting.priority == priority(5) && waiting.ticks_at_priority == 0,
               "selected thread did not regain its original priority");
-        check(waiting.ready.queue == &artos::thread::internal::ready_queue[5],
-              "selected thread was not returned to its original ready queue");
+        check(waiting.ready.queue == &ready_queue[5], "selected thread was not returned to its original ready queue");
     }
 
     void test_priority_aging_stops_at_highest_priority()
     {
         reset_scheduler();
-        auto& highest = install(1, 0, thread_state_t::ready);
+        auto& highest = install(1, 0, state_t::ready);
         highest.age();
         highest.age();
         check(highest.priority == artos::thread::priority_t::high, "aging wrapped past the highest priority");
@@ -427,6 +444,13 @@ namespace {
 #endif
     };
 }
+
+#if defined(ARTOS_TEST_THREAD_STATS)
+std::uint32_t board::stopwatch::count() noexcept
+{
+    return 0;
+}
+#endif
 
 namespace artos::kernel {
     tick_time_t tick_time() noexcept

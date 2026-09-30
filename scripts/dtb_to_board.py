@@ -97,6 +97,11 @@ def generate(dtb, profile_path, board, output, fdtget='fdtget'):
     profile = json.loads(Path(profile_path).read_text())
     soc = profile['soc']
     uart = profile['uart']
+    timers = profile['timers']
+    require(all(re.fullmatch(r'tim[0-9]+', name) and isinstance(timer, dict)
+                and set(timer) == {'address', 'irq'}
+                and all(isinstance(value, int) for value in timer.values())
+                for name, timer in timers.items()), 'Invalid timer binding profile')
     # Binding profiles are code-owned; DTS never supplies C++ fragments.
     require(re.fullmatch(r'stm32f\d+', soc), 'Invalid SoC binding')
     tree = Tree(dtb, fdtget)
@@ -108,12 +113,12 @@ def generate(dtb, profile_path, board, output, fdtget='fdtget'):
     tree.compatible('/soc', 'simple-bus')
     tree.properties('/soc', 'compatible #address-cells #size-cells ranges')
     require(tree.data('/soc', 'ranges') == b'', '/soc: address translation is unsupported')
-    tree.properties('/chosen', 'artos,console artos,kernel-tick artos,heartbeat')
+    tree.properties('/chosen', 'artos,console artos,kernel-tick artos,heartbeat artos,stopwatch')
     selected = {name: tree.ref(tree.cells('/chosen', 'artos,' + name, 1)[0])
-                for name in ('console', 'kernel-tick', 'heartbeat')}
-    console, tick, led = (selected[key] for key in ('console', 'kernel-tick', 'heartbeat'))
-    require(console.rpartition('/')[0] == '/soc' and tick.rpartition('/')[0] == '/soc',
-            'Console and SysTick must use the identity-mapped /soc bus')
+                for name in ('console', 'kernel-tick', 'heartbeat', 'stopwatch')}
+    console, tick, led, stopwatch = (selected[key] for key in ('console', 'kernel-tick', 'heartbeat', 'stopwatch'))
+    require(all(device.rpartition('/')[0] == '/soc' for device in (console, tick, stopwatch)),
+            'Console, SysTick and stopwatch must use the identity-mapped /soc bus')
     tree.compatible(console, 'artos,stm32f4-usart')
     tree.properties(console, 'compatible reg interrupt-parent interrupts clocks current-speed artos,tx-pin artos,rx-pin artos,alternate-function')
     require(tree.cells(console, 'reg', 2) == [uart['address'], 0x400], 'Unsupported console register range')
@@ -127,7 +132,19 @@ def generate(dtb, profile_path, board, output, fdtget='fdtget'):
     tree.compatible(tick, 'artos,cortex-m-systick')
     tree.properties(tick, 'compatible reg clocks')
     require(tree.cells(tick, 'reg', 2) == [0xe000e010, 0x10], 'Unsupported SysTick range')
-    for device in (console, tick):
+    tree.compatible(stopwatch, 'artos,stm32f4-timer')
+    tree.properties(stopwatch, 'compatible reg interrupt-parent interrupts clocks counter-width')
+    timer_reg = tree.cells(stopwatch, 'reg', 2)
+    matching_timers = [name for name, timer in timers.items() if timer_reg == [timer['address'], 0x400]]
+    require(len(matching_timers) == 1, 'Unsupported stopwatch timer register range')
+    timer_name = matching_timers[0]
+    timer_binding = timers[timer_name]
+    require(tree.ref(tree.cells(stopwatch, 'interrupt-parent', 1)[0]) == nvic,
+            'Stopwatch interrupt controller does not match SoC')
+    require(tree.cells(stopwatch, 'interrupts', 1) == [timer_binding['irq']],
+            'Stopwatch IRQ does not match SoC')
+    require(tree.cells(stopwatch, 'counter-width', 1) == [32], 'Stopwatch requires a 32-bit timer')
+    for device in (console, tick, stopwatch):
         clock = tree.ref(tree.cells(device, 'clocks', 1)[0])
         tree.compatible(clock, 'fixed-clock')
         tree.properties(clock, 'compatible #clock-cells clock-frequency')
@@ -170,6 +187,7 @@ def generate(dtb, profile_path, board, output, fdtget='fdtget'):
 #include <irq.h>
 #include <{soc}/gpio.h>
 #include <{soc}/generated/usart.h>
+#include <{soc}/generated/tim.h>
 namespace board {{
     struct root {{
         struct clocks {{
@@ -183,6 +201,15 @@ namespace board {{
             }};
             struct apb1 {{
                 using clock = clocks::core;
+                struct stopwatch_timer {{
+                    using registers = {soc}::tim::{timer_name}::registers_t;
+                    static constexpr std::uintptr_t address = 0x{timer_binding['address']:x}UL;
+                    static_assert(address == {soc}::tim::{timer_name}::{timer_name}_address);
+                    static constexpr std::uint32_t counter_width = 32;
+                    static constexpr auto interrupt = artos::irq::irq_t::{timer_name};
+                    static_assert(static_cast<unsigned>(interrupt) == {timer_binding['irq']});
+                    using clock = apb1::clock;
+                }};
                 struct serial {{
                     using registers = {uart['registers']};
                     static constexpr bool enabled = true;
@@ -206,22 +233,20 @@ namespace board {{
         using {uart['label']} = root::soc::apb1::serial;
         using console_uart = {uart['label']};
         using systick = root::soc::systick;
+        using stopwatch_timer = root::soc::apb1::stopwatch_timer;
         using heartbeat = root::leds::heartbeat;
     }}
     namespace chosen {{
         using console = labels::console_uart;
         using kernel_tick = labels::systick;
+        using stopwatch = labels::stopwatch_timer;
         using heartbeat = labels::heartbeat;
     }}
     void init() noexcept;
-    void init_console() noexcept;
 }}
 '''
-    def gate(port):
-        return f'{soc}::rcc::ahb1enr::gpio{port}en'
     devices = Template((Path(__file__).parent / 'templates/board_devices.h.in').read_text()).substitute(
-        soc=soc, uart=uart['name'], heartbeat_gate=gate(heartbeat[0]),
-        console_gpio_gates=' | '.join(gate(port) for port in sorted({tx[0], rx[0]})))
+        soc=soc, uart=uart['name'], timer_number=timer_name[3:])
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     for name, contents in [('board.h', header), ('board_devices.h', devices)]:

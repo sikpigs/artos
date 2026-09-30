@@ -20,6 +20,7 @@ namespace stm32f411::syscfg {
         struct exticr4;
         struct cmpcr;
     }
+
     using MEMRM = artos::mmio::register_t<tags::memrm>;
     using PMC = artos::mmio::register_t<tags::pmc>;
     using EXTICR1 = artos::mmio::register_t<tags::exticr1>;
@@ -80,6 +81,7 @@ namespace stm32f411::syscfg {
         std::uint32_t              reserved_18[2];
         stm32f411::syscfg::CMPCR   CMPCR;
     };
+
     static_assert(alignof(registers_t) == alignof(std::uint32_t));
     static_assert(offsetof(registers_t, MEMRM) == 0x00);
     static_assert(offsetof(registers_t, PMC) == 0x04);
@@ -92,31 +94,38 @@ namespace stm32f411::syscfg {
 
     inline constexpr std::uintptr_t syscfg_address = 0x40013800UL;
     inline registers_t* const       SYSCFG = reinterpret_cast<registers_t*>(syscfg_address);
+
     namespace metadata::syscfg {
         namespace memrm {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace pmc {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace exticr1 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace exticr2 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace exticr3 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace exticr4 {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
         }
+
         namespace cmpcr {
             inline constexpr std::uint32_t reset_value = 0x00000000UL;
             inline constexpr std::uint32_t reset_mask = 0xFFFFFFFFUL;
