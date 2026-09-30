@@ -18,7 +18,9 @@
 using namespace build_config::artos;
 
 namespace artos::thread {
+    using namespace build_config::artos;
     using namespace internal;
+    using namespace kernel;
     using namespace kernel::internal;
 
     namespace internal {
@@ -28,6 +30,7 @@ namespace artos::thread {
                               void*               parameters,
                               priority_t          priority,
                               std::byte* const    tcb,
+                              stack_word_t* const canary,
                               stack_word_t* const stack,
                               bool                start) noexcept
         {
@@ -57,12 +60,17 @@ namespace artos::thread {
             const auto stack_word_count = stack_size_bytes / sizeof(stack_word_t);
             if constexpr (tcb_t::high_watermark_enabled)
             {
-                std::fill_n(stack, stack_word_count, internal::stack_fill_pattern);
+                std::fill_n(stack, stack_word_count, stack_fill_pattern);
+            }
+
+            if constexpr (thread_stack_canary)
+            {
+                std::fill_n(canary, canary_word_count, stack_fill_pattern);
             }
 
             auto* sp = port::initialize_stack(stack + stack_word_count, func, parameters);
 
-            thread = ::new (static_cast<void*>(tcb)) tcb_t { name, priority, sp, stack, stack_word_count };
+            thread = ::new (static_cast<void*>(tcb)) tcb_t { name, priority, sp, stack, stack_word_count, canary };
 
             ++thread_count;
             *tcb_it = thread;
@@ -80,7 +88,7 @@ namespace artos::thread {
             return thread->make_thread_id(static_cast<std::size_t>(index));
         }
 
-        void sleep_until(const tick_time_t& tick_time)
+        void sleep_until(const tick_time_t& deadline)
         {
             if (current_thread == nullptr)
             {
@@ -89,19 +97,19 @@ namespace artos::thread {
 
             const artos::critical_section_t cs {};
 
-            if (kernel::internal::deadline_reached(kernel::tick_time(), tick_time))
+            if (deadline_reached(tick_time(), deadline))
             {
                 return;
             }
 
-            current_thread->deadline = tick_time;
-            current_thread->state = thread::state_t::sleeping;
+            current_thread->deadline = deadline;
+            current_thread->state = state_t::sleeping;
 
             block_sleep_thread(current_thread);
 
             // Select and publish a runnable destination before requesting PendSV.
             // The switch executes after this critical section restores interrupts.
-            kernel::internal::sched();
+            sched();
         }
 
         void on_exit(id_t thread_id, func_t on_exit, void* ctx) noexcept
@@ -131,7 +139,7 @@ namespace artos::thread {
             return;
         }
 
-        const auto now = kernel::tick_time();
+        const auto now = tick_time();
         internal::sleep_until(now + ticks);
     }
 

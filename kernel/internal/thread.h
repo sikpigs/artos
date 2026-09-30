@@ -110,6 +110,17 @@ namespace artos::thread::internal {
     };
 
     template<bool enabled>
+    struct canary_state_t
+    {
+    };
+
+    template<>
+    struct canary_state_t<true>
+    {
+        stack_word_t* canary_begin {};
+    };
+
+    template<bool enabled>
     struct thread_stats_t
     {
     };
@@ -121,11 +132,12 @@ namespace artos::thread::internal {
         uint32_t     execution_start {};
     };
 
-    template<typename Scheduler, bool aging_enabled, bool hwm_enabled, bool stats_enabled>
+    template<typename Scheduler, bool aging_enabled, bool hwm_enabled, bool canary_enabled, bool stats_enabled>
     struct tcb_inst_t
         : tcb_base_t
         , priority_aging_state_t<aging_enabled>
         , high_watermark_t<hwm_enabled>
+        , canary_state_t<canary_enabled>
         , thread_stats_t<stats_enabled>
     {
         static constexpr bool priority_aging_enabled = aging_enabled;
@@ -136,13 +148,34 @@ namespace artos::thread::internal {
                    priority_t       thread_priority,
                    stack_word_t*    stack_pointer,
                    stack_word_t*    stack_start,
-                   std::size_t      stack_word_count) noexcept
+                   std::size_t      stack_word_count,
+                   stack_word_t*    canary = nullptr) noexcept
             : tcb_base_t { thread_name, thread_priority, stack_pointer, stack_start, stack_word_count }
         {
             if constexpr (aging_enabled)
             {
                 this->original_priority = thread_priority;
             }
+            if constexpr (canary_enabled)
+            {
+                this->canary_begin = canary;
+            }
+        }
+
+        [[nodiscard]] bool canary_intact() const noexcept
+        {
+            if constexpr (canary_enabled)
+            {
+                const volatile stack_word_t* const words = this->canary_begin;
+                for (std::size_t index = 0; index < canary_word_count; ++index)
+                {
+                    if (words[index] != stack_fill_pattern)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         void age() noexcept
@@ -257,6 +290,7 @@ namespace artos::thread::internal {
     using tcb_t = tcb_inst_t<decltype(build_config::artos::scheduler),
                              build_config::artos::scheduler.priority_aging_ticks.has_value(),
                              build_config::artos::thread_stack_hwm,
+                             build_config::artos::thread_stack_canary,
                              build_config::artos::thread_stats>;
 
 #ifndef ARTOS_HOST_TEST

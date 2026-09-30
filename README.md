@@ -216,6 +216,18 @@ record**; use Attach with a matching ELF to inspect an existing crash. Configura
 fault enable bits retain their existing settings, so disabled fault classes
 still escalate to HardFault.
 
+### Thread stack overflow record
+
+With `ARTOS_THREAD_STACK_CANARY` enabled, a damaged thread guard stops the CPU
+at `fatal_trap()`. Attach a debugger and inspect `stack_overflow_record` with
+`-exec p/x stack_overflow_record`. Check `complete == 1`; `reason == 1` means a
+thread stack canary changed, and `phase` is outgoing (1) or incoming (2).
+`slot` and `tcb_address` identify the thread; `thread_id` is best effort because
+the TCB may already be damaged. The record is cleared on reset. Canaries are
+checked at context switches, so they do not prevent the initial overwrite or
+protect the MSP interrupt stack. To exercise both checks on a board, follow the
+[hardware test instructions](tests/hardware/README.md).
+
 Host checks (no board needed):
 
 ```sh

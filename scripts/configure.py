@@ -66,6 +66,7 @@ def main():
     max_threads = int(kconf.syms["ARTOS_MAX_THREADS"].str_value) if enabled else 8
     max_thread_name_length = int(kconf.syms["ARTOS_MAX_THREAD_NAME_LENGTH"].str_value) if enabled else 15
     thread_stack_hwm = enabled and bool(kconf.syms["ARTOS_THREAD_STACK_HWM"].tri_value)
+    thread_stack_canary = enabled and bool(kconf.syms["ARTOS_THREAD_STACK_CANARY"].tri_value)
     thread_stats = enabled and bool(kconf.syms["ARTOS_THREAD_STATS"].tri_value)
     runtime_history_window_ms = (int(kconf.syms["ARTOS_RUNTIME_HISTORY_WINDOW_MS"].str_value)
                                  if thread_stats else 1000)
@@ -108,6 +109,7 @@ namespace build_config {{
         inline constexpr std::size_t max_threads = {max_threads};
         inline constexpr std::size_t max_thread_name_length = {max_thread_name_length};
         inline constexpr bool thread_stack_hwm = {str(thread_stack_hwm).lower()};
+        inline constexpr bool thread_stack_canary = {str(thread_stack_canary).lower()};
         inline constexpr bool thread_stats = {str(thread_stats).lower()};
         inline constexpr std::uint32_t runtime_history_window_ms = {runtime_history_window_ms};
         inline constexpr std::size_t runtime_history_bucket_count = {runtime_history_bucket_count};

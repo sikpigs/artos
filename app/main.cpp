@@ -17,10 +17,10 @@
 #if defined(CONFIG_ARTOS) && defined(CONFIG_MONITOR)
 namespace {
     // Startup resets MSP: task storage must outlive main's boot stack.
-    artos::thread::thread_storage_t<4096> monitor_storage {};
+    artos::thread::storage_t<4096> monitor_storage {};
     // Includes nested sleep/scheduler calls and the saved exception context.
     // A 256-byte stack overflows into the TCB in the unoptimized Debug build.
-    artos::thread::thread_storage_t<artos::thread::minimum_stack_bytes> blinky_storage {};
+    artos::thread::storage_t<artos::thread::minimum_stack_bytes> blinky_storage {};
 
     void monitor_entry(void*)
     {

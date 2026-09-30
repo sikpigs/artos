@@ -37,7 +37,7 @@ namespace artos::kernel {
 
         // Slot zero is reserved by init(). This stack is for the idle loop;
         // exception handlers execute on MSP. Revisit its budget as the port grows.
-        thread::thread_storage_t<thread::minimum_stack_bytes> idle_storage {};
+        thread::storage_t<thread::minimum_stack_bytes> idle_storage {};
 
         [[noreturn]] void idle_entry(void*) noexcept
         {

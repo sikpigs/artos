@@ -1,5 +1,6 @@
 #pragma once
 
+#include <arch/artos.h>
 #include <build_config.h>
 
 #include <array>
@@ -169,6 +170,9 @@ namespace artos {
         using start_result_t = artos::expected<id_t, err_t>;
         using stack_word_t = port::stack_word_t;
 
+        inline constexpr auto canary_word_count = build_config::artos::thread_stack_canary ? 2 : 0;
+        static_assert(!build_config::artos::thread_stack_canary
+                      || canary_word_count * sizeof(stack_word_t) % port::stack_alignment == 0);
         inline constexpr id_t invalid_id = std::numeric_limits<id_t>::max();
 
         // Total allocated bytes, including saved context. This is a baseline
@@ -218,14 +222,36 @@ namespace artos {
             = static_cast<std::size_t>(96) - (sizeof(std::string_view) + 5) / 4 * 4 + (sizeof(name_t) + 5) / 4 * 4
               + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0)
               + (build_config::artos::thread_stack_hwm ? sizeof(std::size_t) : 0)
+              + (build_config::artos::thread_stack_canary ? sizeof(stack_word_t*) : 0)
               + (build_config::artos::thread_stats ? (sizeof(std::uint32_t) + sizeof(statistics_t)) : 0);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
+        template<bool Enabled>
+        struct canary_storage_t
+        {
+            stack_word_t* data() noexcept
+            {
+                return nullptr;
+            }
+        };
+
+        template<>
+        struct canary_storage_t<true>
+        {
+            alignas(port::stack_alignment) std::array<stack_word_t, canary_word_count> words {};
+
+            stack_word_t* data() noexcept
+            {
+                return words.data();
+            }
+        };
+
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
-        struct thread_storage_t
+        struct storage_t
         {
             alignas(tcb_alignment) std::array<std::byte, tcb_size> tcb {};
+            [[no_unique_address]] canary_storage_t<build_config::artos::thread_stack_canary> canary {};
             alignas(port::stack_alignment) std::array<stack_word_t, StackSize / sizeof(stack_word_t)> stack {};
         };
 
@@ -238,6 +264,7 @@ namespace artos {
                                   void*               parameters,
                                   priority_t          priority,
                                   std::byte* const    tcb,
+                                  stack_word_t* const canary,
                                   stack_word_t* const stack,
                                   bool                start) noexcept;
         }
@@ -255,11 +282,18 @@ namespace artos {
         start_result_t create(
             func_t func, std::string_view name, void* parameters, priority_t priority, bool start) noexcept
         {
-            using storage_t = thread::thread_storage_t<StackSize>;
+            using storage_t = thread::storage_t<StackSize>;
             auto storage = std::make_unique_for_overwrite<storage_t>();
 
-            auto result = internal::create(
-                func, name, StackSize, parameters, priority, storage->tcb.data(), storage->stack.data(), start);
+            auto result = internal::create(func,
+                                           name,
+                                           StackSize,
+                                           parameters,
+                                           priority,
+                                           storage->tcb.data(),
+                                           storage->canary.data(),
+                                           storage->stack.data(),
+                                           start);
 
             if (result)
             {
@@ -276,15 +310,22 @@ namespace artos {
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
         [[nodiscard]]
-        start_result_t create(func_t                       func,
-                              std::string_view             name,
-                              void*                        parameters,
-                              priority_t                   priority,
-                              thread_storage_t<StackSize>& storage,
-                              bool                         start = true) noexcept
+        start_result_t create(func_t                func,
+                              std::string_view      name,
+                              void*                 parameters,
+                              priority_t            priority,
+                              storage_t<StackSize>& storage,
+                              bool                  start = true) noexcept
         {
-            return internal::create(
-                func, name, StackSize, parameters, priority, storage.tcb.data(), storage.stack.data(), start);
+            return internal::create(func,
+                                    name,
+                                    StackSize,
+                                    parameters,
+                                    priority,
+                                    storage.tcb.data(),
+                                    storage.canary.data(),
+                                    storage.stack.data(),
+                                    start);
         }
 
         [[nodiscard]] id_t        get_current_thread() noexcept;

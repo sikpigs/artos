@@ -88,6 +88,14 @@ config ARTOS_THREAD_STACK_HWM
     help
       Enable optional per-thread stack high-water-mark support.
 
+config ARTOS_THREAD_STACK_CANARY
+    bool "Enable thread stack canaries"
+    depends on ARTOS
+    help
+      Place a guard below each thread stack and check it during context
+      switches. On damage, record the affected thread and halt. This does
+      not protect the main interrupt stack.
+
 config ARTOS_THREAD_STATS
     bool "Enable thread statistics"
     depends on ARTOS

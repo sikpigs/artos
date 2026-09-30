@@ -14,6 +14,13 @@ endfunction()
 add_artos_native_test(intrusive_list "${ARTOS_ROOT}/tests/intrusive_list.cpp")
 add_artos_native_test(expected "${ARTOS_ROOT}/tests/expected.cpp")
 add_artos_native_test(thread_id "${ARTOS_ROOT}/tests/thread_id.cpp")
+add_artos_native_test(stack_canary "${ARTOS_ROOT}/tests/stack_canary.cpp")
+target_include_directories(stack_canary_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
+target_compile_definitions(stack_canary_tests PRIVATE ARTOS_TEST_THREAD_CANARY=1)
 target_include_directories(thread_id_tests PRIVATE "${ARTOS_ROOT}/kernel")
 add_artos_native_test(wait
     "${ARTOS_ROOT}/tests/wait.cpp"
