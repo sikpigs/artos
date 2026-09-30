@@ -72,6 +72,16 @@ config ARTOS_MAX_THREADS
       Maximum number of registered threads, including the kernel idle
       thread. Each thread's TCB and stack are allocated separately.
 
+config ARTOS_MAX_THREAD_NAME_LENGTH
+    int "Maximum thread name length (bytes)"
+    range 1 63
+    default 15
+    depends on ARTOS
+    help
+      Maximum number of bytes in a thread name, excluding the terminating
+      null byte. Each TCB and thread snapshot reserves this many bytes plus
+      one, so names can be copied without a separate allocation.
+
 config ARTOS_THREAD_STACK_HWM
     bool "Enable thread stack high-water-mark support"
     depends on ARTOS

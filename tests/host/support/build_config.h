@@ -14,6 +14,7 @@ namespace build_config::artos {
     inline constexpr std::uint32_t scheduler_min_cycles_remaining = 500;
     inline constexpr std::uint32_t priority_levels = 16;
     inline constexpr std::size_t   max_threads = 8;
+    inline constexpr std::size_t   max_thread_name_length = 15;
     inline constexpr bool          thread_stack_hwm = false;
 #if defined(ARTOS_TEST_THREAD_STATS)
     inline constexpr bool thread_stats = true;

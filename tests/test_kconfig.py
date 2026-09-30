@@ -79,6 +79,25 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("scheduler_min_cycles_remaining = 0",
                       (self.build / "generated/build_config.h").read_text())
 
+    def test_max_thread_name_length_config(self):
+        self.generate("")
+        self.assertIn("max_thread_name_length = 15",
+                      (self.build / "generated/build_config.h").read_text())
+
+        (self.build / ".config").unlink()
+        self.generate("CONFIG_ARTOS_MAX_THREAD_NAME_LENGTH=31\n")
+        self.assertIn("max_thread_name_length = 31",
+                      (self.build / "generated/build_config.h").read_text())
+        self.assertIn("#define CONFIG_ARTOS_MAX_THREAD_NAME_LENGTH 31",
+                      (self.build / "generated/autoconf.h").read_text())
+        probe = "#include <artos.h>\nstatic_assert(sizeof(artos::thread::name_t) == 32);\n"
+        result = subprocess.run(
+            ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
+             "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+             "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
+            input=probe, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_thread_stack_hwm_config(self):
         self.generate("")
         self.assertIn("thread_stack_hwm = false",

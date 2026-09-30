@@ -75,6 +75,22 @@ target_include_directories(scheduler_stats_tests PRIVATE
 target_compile_definitions(scheduler_stats_tests PRIVATE ARTOS_TEST_THREAD_STATS=1)
 set_tests_properties(scheduler scheduler_aging scheduler_stats PROPERTIES TIMEOUT 30)
 
+foreach(snapshot_test IN ITEMS thread_snapshot thread_snapshot_stats)
+    add_artos_native_test(${snapshot_test}
+        "${ARTOS_ROOT}/tests/thread_snapshot.cpp"
+        "${ARTOS_ROOT}/kernel/thread.cpp"
+        "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+    )
+    target_include_directories(${snapshot_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    target_compile_options(${snapshot_test}_tests PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(${snapshot_test}_tests PRIVATE -Wl,--gc-sections)
+endforeach()
+target_compile_definitions(thread_snapshot_stats_tests PRIVATE ARTOS_TEST_THREAD_STATS=1)
+
 # Exercise the same automatic selection used by firmware consumers.
 add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")
 target_compile_definitions(expected_auto_tests PRIVATE ARTOS_TEST_AUTO_EXPECTED=1)

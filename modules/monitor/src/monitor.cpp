@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <charconv>
@@ -5,8 +6,12 @@
 #include <iterator>
 #include <limits>
 #include <span>
+#include <string_view>
 #include <system_error>
 
+#include <artos.h>
+#include <board_services.h>
+#include <build_config.h>
 #include <console/console.h>
 #include <monitor/monitor.h>
 
@@ -124,11 +129,78 @@ void dump(artos::console::buffered_console_t& usart, std::span<const volatile st
     }
 }
 
+static void write_text(artos::console::buffered_console_t& console, std::string_view value)
+{
+    console.write(std::span<const char>(value.data(), value.size()));
+}
+
+#ifdef CONFIG_ARTOS_THREAD_STATS
+static void write_decimal(artos::console::buffered_console_t& console, std::uint64_t value)
+{
+    std::array<char, 20> buffer {};
+    const auto [end, ec] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
+    if (ec == std::errc {})
+    {
+        console.write(std::span<const char>(buffer.data(), static_cast<std::size_t>(end - buffer.data())));
+    }
+}
+#endif
+
+static void measure_snapshot_latency(artos::console::buffered_console_t& console)
+{
+#ifdef CONFIG_ARTOS_THREAD_STATS
+    static artos::thread::snapshot_array_t snapshot {};
+    constexpr std::uint32_t                sample_count = 32;
+    std::uint32_t                          min_cycles = std::numeric_limits<std::uint32_t>::max();
+    std::uint32_t                          max_cycles = 0;
+    std::uint64_t                          total_cycles = 0;
+    std::size_t                            thread_count = 0;
+
+    for (std::uint32_t sample = 0; sample < sample_count; ++sample)
+    {
+        const auto start = board::stopwatch::count();
+        thread_count = artos::thread::get_snapshot(snapshot);
+        const auto elapsed = board::stopwatch::count() - start;
+        min_cycles = std::min(min_cycles, elapsed);
+        max_cycles = std::max(max_cycles, elapsed);
+        total_cycles += elapsed;
+    }
+
+    const auto clock_hz = board::stopwatch::clock_hz();
+    console.write(new_line);
+    write_text(console, "snapshot threads=");
+    write_decimal(console, thread_count);
+    write_text(console, " samples=");
+    write_decimal(console, sample_count);
+    write_text(console, " cycles min/avg/max=");
+    write_decimal(console, min_cycles);
+    write_text(console, "/");
+    write_decimal(console, total_cycles / sample_count);
+    write_text(console, "/");
+    write_decimal(console, max_cycles);
+    write_text(console, " max_us=");
+    write_decimal(console, (static_cast<std::uint64_t>(max_cycles) * 1'000'000 + clock_hz - 1) / clock_hz);
+    write_text(console, " tick_pct=");
+    write_decimal(console,
+                  (static_cast<std::uint64_t>(max_cycles) * build_config::artos::tick_hz * 100 + clock_hz - 1)
+                      / clock_hz);
+    write_text(console, "%");
+#else
+    console.write(new_line);
+    write_text(console, "snapshot latency requires CONFIG_ARTOS_THREAD_STATS=y");
+#endif
+}
+
 static bool process_line(artos::console::buffered_console_t& console, std::span<const char> line)
 {
     if (line.empty())
     {
         return false;
+    }
+    if (std::string_view { line.data(), line.size() } == "snapshot")
+    {
+        measure_snapshot_latency(console);
+        return true;
     }
     auto*       cursor = line.data();
     const auto* end = cursor + line.size();

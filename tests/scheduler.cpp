@@ -150,6 +150,21 @@ namespace {
         (void)install(0, 15, state_t::suspended);
     }
 
+    void test_thread_name_is_owned_and_terminated()
+    {
+        artos::thread::name_t source {};
+        source.fill('x');
+        source.back() = '\0';
+        tcb_t thread { std::string_view { source.data(), build_config::artos::max_thread_name_length },
+                       priority(0),
+                       &stacks[0],
+                       &stacks[0],
+                       1 };
+        source[0] = 'y';
+        check(thread.name.front() == 'x', "thread name borrowed the caller's storage");
+        check(thread.name.back() == '\0', "maximum-length thread name was not terminated");
+    }
+
     void test_highest_priority_ready_thread_wins()
     {
         reset_scheduler();
@@ -426,6 +441,7 @@ namespace {
     };
 
     const std::array cases {
+        test_case_t { "owned thread name", test_thread_name_is_owned_and_terminated },
         test_case_t { "highest priority", test_highest_priority_ready_thread_wins },
         test_case_t { "equal-priority rotation", test_equal_priority_threads_rotate },
         test_case_t { "ready-queue membership", test_non_runnable_threads_are_not_ready_queued },

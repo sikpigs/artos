@@ -33,6 +33,11 @@ namespace artos::thread {
         {
             const critical_section_t cs {};
 
+            if (name.size() > max_thread_name_length)
+            {
+                return artos::unexpected(ENAMETOOLONG);
+            }
+
             auto* thread = reinterpret_cast<tcb_t*>(tcb);
             if (std::ranges::find(threads, thread) != threads.end())
             {
@@ -172,5 +177,30 @@ namespace artos::thread {
         {
             reinterpret_cast<tcb_t*>(current_thread)->get_statistics(statistics);
         }
+    }
+
+    std::size_t get_snapshot(snapshot_array_t& snapshot) noexcept
+    {
+        const critical_section_t cs {};
+
+        std::size_t count = 0;
+        for (auto* base : threads)
+        {
+            if (base == nullptr)
+            {
+                continue;
+            }
+
+            auto* thread = static_cast<tcb_t*>(base);
+            auto& entry = snapshot[count++];
+            entry.id = thread->id;
+            entry.name = thread->name;
+            entry.priority = thread->priority;
+            entry.state = thread->state;
+            entry.statistics = {};
+            thread->get_statistics(entry.statistics);
+        }
+
+        return count;
     }
 }

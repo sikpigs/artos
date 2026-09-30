@@ -37,8 +37,7 @@ namespace artos::thread::internal {
                    stack_word_t*    stack_pointer,
                    stack_word_t*    stack_start,
                    auto             stack_word_count) noexcept
-            : name { thread_name }
-            , priority { thread_priority }
+            : priority { thread_priority }
             , state { state_t::inactive }
             , sp { stack_pointer }
             , stack_begin { stack_start }
@@ -47,6 +46,11 @@ namespace artos::thread::internal {
             , block_sleep { this }
             , waiter { this }
         {
+            if (!thread_name.empty())
+            {
+                std::memcpy(name.data(), thread_name.data(), thread_name.size());
+            }
+            name[thread_name.size()] = '\0';
         }
 
         tcb_base_t(const tcb_base_t&) = delete;
@@ -54,9 +58,9 @@ namespace artos::thread::internal {
 
         ~tcb_base_t() noexcept = default;
 
-        std::string_view name;
-        priority_t       priority;
-        state_t          state;
+        name_t     name {};
+        priority_t priority;
+        state_t    state;
 
         stack_word_t* sp;
         stack_word_t* stack_begin;
@@ -237,9 +241,15 @@ namespace artos::thread::internal {
 
         void get_statistics(statistics_t& stats) noexcept
         {
+            using namespace kernel::internal;
             if constexpr (statistics_enabled)
             {
                 std::memcpy(std::addressof(stats), &this->statistics, sizeof(stats));
+                if (this == current_thread && this->state == state_t::running)
+                {
+                    stats.runtime_history_cycles[runtime_history_bucket_index]
+                        += board::stopwatch::count() - this->execution_start;
+                }
             }
         }
     };

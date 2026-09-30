@@ -19,6 +19,16 @@ four bytes; counts are numbers of 32-bit words, not bytes or end addresses.
 | `08000000` | Read one word |
 | `08000000.4` | Read four words |
 | `address: value value ...` | Write successive 32-bit words |
+| `snapshot` | Measure 32 thread-snapshot calls with the hardware stopwatch |
+
+The `snapshot` command reports the number of registered threads, min/average/max
+call cycles, maximum microseconds, and maximum as a percentage of one kernel tick.
+The latter two values round up to avoid understating latency.
+Enable `CONFIG_ARTOS_THREAD_STATS=y` to use it. The reported call time includes
+timer reads and any higher-priority interrupt that preempts the call, so it is a
+conservative bound on the kernel-interrupt masked time. Output is sent only
+after all samples. The measurement uses the currently registered thread count
+and configured history size; repeat it with the expected production load.
 
 The monitor accepts CR or CRLF line endings; LF alone is ignored. Backspace and
 Delete erase input. Lines longer than 128 characters are discarded through CR.

@@ -164,6 +164,7 @@ namespace artos {
 
     namespace thread {
         using id_t = std::uintptr_t;
+        using name_t = std::array<char, build_config::artos::max_thread_name_length + 1>;
         using func_t = void (*)(void*);
         using start_result_t = artos::expected<id_t, err_t>;
         using stack_word_t = port::stack_word_t;
@@ -201,8 +202,21 @@ namespace artos {
             std::array<std::uint32_t, build_config::artos::runtime_history_bucket_count> runtime_history_cycles {};
         };
 
+        struct snapshot_t
+        {
+            id_t         id;
+            name_t       name;
+            state_t      state;
+            priority_t   priority;
+            statistics_t statistics;
+        };
+
+        using snapshot_array_t = std::array<snapshot_t, build_config::artos::max_threads>;
+
+        // Round the name and two one-byte fields up to the first pointer's alignment.
         inline constexpr auto tcb_size
-            = static_cast<std::size_t>(96) + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0)
+            = static_cast<std::size_t>(96) - (sizeof(std::string_view) + 5) / 4 * 4 + (sizeof(name_t) + 5) / 4 * 4
+              + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0)
               + (build_config::artos::thread_stack_hwm ? sizeof(std::size_t) : 0)
               + (build_config::artos::thread_stats ? (sizeof(std::uint32_t) + sizeof(statistics_t)) : 0);
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
@@ -283,5 +297,6 @@ namespace artos {
         void sleep_for(tick_t ticks) noexcept;
         void sleep_until(const tick_time_t& ticks) noexcept;
 
+        std::size_t get_snapshot(snapshot_array_t& snapshot) noexcept;
     }
 }
