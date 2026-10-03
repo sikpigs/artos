@@ -1,22 +1,90 @@
 #pragma once
 
-#include <board_services.h>
-#include <build_config.h>
-
-#include <internal/kernel_state.h>
-#include <internal/thread_id.h>
-#include <internal/thread_queue.h>
-
 #include <algorithm>
 #include <cstring>
 #include <optional>
 #include <utility>
 
+#include <board_services.h>
+#include <build_config.h>
+
 #include <artos.h>
 #include <intrusive_list.h>
+#include <mutex.h>
 #include <wait_queue.h>
 
+#include <internal/container_of.h>
+#include <internal/kernel_state.h>
+#include <internal/thread_id.h>
+#include <internal/thread_queue.h>
+
 namespace artos::thread::internal {
+
+    class mutexes_held_t
+    {
+    public:
+        class iterator_t
+        {
+        public:
+            explicit iterator_t(mutex_t* mutex_node)
+                : mutex { mutex_node }
+            {
+            }
+
+            ~iterator_t() noexcept = default;
+
+            mutex_t& operator*() noexcept
+            {
+                return *mutex;
+            }
+
+            mutex_t* operator->() noexcept
+            {
+                return mutex;
+            }
+
+            bool operator==(const iterator_t& other) const noexcept = default;
+
+            iterator_t operator++() noexcept
+            {
+                auto next = mutex->hook.next;
+                mutex = ARTOS_CONTAINER_OF(next, mutex_t, hook);
+                return *this;
+            }
+
+        protected:
+            mutex_t* mutex;
+        };
+
+        void push_back(mutex_t* mutex) noexcept
+        {
+            list.push_back(mutex->hook);
+        }
+
+        [[nodiscard]] bool empty() noexcept
+        {
+            return list.empty();
+        }
+
+        void erase(mutex_t* mutex) noexcept
+        {
+            list.erase(mutex->hook);
+        }
+
+        [[nodiscard]] iterator_t begin() noexcept
+        {
+            return iterator_t { ARTOS_CONTAINER_OF(list.front(), mutex_t, hook) };
+        }
+
+        [[nodiscard]] iterator_t end() noexcept
+        {
+            return iterator_t { ARTOS_CONTAINER_OF(list.end(), mutex_t, hook) };
+        }
+
+    private:
+        intrusive_list_t list;
+    };
+
     inline constexpr stack_word_t stack_fill_pattern = 0xA5A5A5A5u;
 
     struct tcb_base_t;
@@ -38,7 +106,7 @@ namespace artos::thread::internal {
                    stack_word_t*    stack_start,
                    auto             stack_word_count) noexcept
             : priority { thread_priority }
-            , state { state_t::inactive }
+            , base_priority { priority }
             , sp { stack_pointer }
             , stack_begin { stack_start }
             , stack_end { stack_start + stack_word_count }
@@ -60,7 +128,8 @@ namespace artos::thread::internal {
 
         name_t     name {};
         priority_t priority;
-        state_t    state;
+        priority_t base_priority;
+        state_t    state { state_t::inactive };
 
         stack_word_t* sp;
         stack_word_t* stack_begin;
@@ -69,6 +138,9 @@ namespace artos::thread::internal {
         thread_queue_node_t ready;
         thread_queue_node_t block_sleep;
         wait_queue_node_t   waiter;
+
+        mutexes_held_t mutexes {};
+        mutex_t*       waiting_mutex {};
 
         tick_time_t deadline {};
 
@@ -94,8 +166,8 @@ namespace artos::thread::internal {
     template<>
     struct priority_aging_state_t<true>
     {
-        priority_t original_priority {};
-        tick_t     ticks_at_priority {};
+        std::optional<priority_t> aged_priority {};
+        tick_t                    ticks_at_priority {};
     };
 
     template<bool enabled>
@@ -152,10 +224,6 @@ namespace artos::thread::internal {
                    stack_word_t*    canary = nullptr) noexcept
             : tcb_base_t { thread_name, thread_priority, stack_pointer, stack_start, stack_word_count }
         {
-            if constexpr (aging_enabled)
-            {
-                this->original_priority = thread_priority;
-            }
             if constexpr (canary_enabled)
             {
                 this->canary_begin = canary;
@@ -187,8 +255,9 @@ namespace artos::thread::internal {
                 {
                     if (this->priority != priority_t::high)
                     {
-                        const auto next_priority = std::to_underlying(this->priority) - 1U;
-                        set_effective_priority(this, static_cast<priority_t>(next_priority));
+                        const auto next_priority = static_cast<priority_t>(std::to_underlying(this->priority) - 1U);
+                        this->aged_priority = next_priority;
+                        kernel::internal::recalculate_priority(this->id);
                     }
 
                     this->ticks_at_priority = 0;
@@ -200,7 +269,12 @@ namespace artos::thread::internal {
         {
             if constexpr (priority_aging_enabled)
             {
-                set_effective_priority(this, this->original_priority);
+                if (this->aged_priority)
+                {
+                    this->aged_priority.reset();
+                    kernel::internal::recalculate_priority(this->id);
+                }
+
                 this->ticks_at_priority = 0;
             }
         }
@@ -293,8 +367,8 @@ namespace artos::thread::internal {
                              build_config::artos::thread_stack_canary,
                              build_config::artos::thread_stats>;
 
-#ifndef ARTOS_HOST_TEST
+    static_assert(sizeof(thread_queue_node_t) == thread_queue_storage_layout.padded_size());
+    static_assert(alignof(thread_queue_node_t) == thread_queue_storage_layout.alignment);
     static_assert(sizeof(tcb_t) == tcb_size);
     static_assert(alignof(tcb_t) <= tcb_alignment);
-#endif
 }

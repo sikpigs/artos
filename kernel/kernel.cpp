@@ -1,16 +1,12 @@
+#include <atomic>
+#include <limits>
+#include <memory>
+
 #include <board_devices.h>
 #include <board_services.h>
 #include <build_config.h>
 
 #include <cpu_port.h>
-#include <internal/deferred.h>
-#include <internal/kernel_state.h>
-#include <internal/scheduler.h>
-#include <internal/thread.h>
-
-#include <atomic>
-#include <limits>
-#include <memory>
 
 #ifdef CONFIG_CONSOLE
 #include <console/console.h>
@@ -18,6 +14,11 @@
 
 #include <artos.h>
 #include <artos_port.h>
+
+#include <internal/deferred.h>
+#include <internal/kernel_state.h>
+#include <internal/scheduler.h>
+#include <internal/thread.h>
 
 namespace artos::kernel {
     using namespace build_config::artos;
@@ -244,6 +245,19 @@ namespace artos::kernel {
     {
         const critical_section_t cs {};
         return static_cast<tick_time_t>(internal::ticks);
+    }
+
+    void yield() noexcept
+    {
+        artos::port::pendsvset();
+    }
+
+    void yield(bool higher_priority_thread_woken) noexcept
+    {
+        if (higher_priority_thread_woken)
+        {
+            sched();
+        }
     }
 
     extern "C" void app_main() noexcept;

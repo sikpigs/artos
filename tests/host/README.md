@@ -31,6 +31,40 @@ location, added nodes are detached, erased nodes belong to the list, and nodes
 outlive their membership. Inserting an already-linked node, erasing a foreign
 node, copying a live list, and concurrent mutation are outside these tests.
 
+## Mutex tests
+
+`mutex` and `mutex_aging` run the same scenarios with priority aging disabled
+and enabled. They cover acquisition, owner-only release, scheduling after release,
+timed and indefinite contention, deadline rollover and retries, priority
+inheritance and restoration, several owned mutexes, and dependency chains.
+Regression cases check donation removal through a chain and preservation of
+live donations when an owning thread's own wait times out. `mutex_aging` also
+checks both orderings: aging before donation, and donation before aging. The
+latter checks restoration after aging resets and the donation ends through
+either release or timeout.
+Additional regressions check that blocked, sleeping, and finished threads do
+not age, that scheduling preserves the donation from a mutex waiter, and that
+a new mutex owner immediately inherits from any remaining waiters.
+They also specify desired runtime rejection of ISR use, self-locking, and a
+cycle between two mutexes; the deadlock checks require an explicit error result
+rather than allowing the thread to block.
+
+```sh
+ctest --test-dir build/host-tests -R '^mutex(_aging)?$' --output-on-failure
+```
+
+The tests link the production mutex, blocking, wait queue, deadline scanner, and
+scheduler code. The host port simulates a context switch when a blocking call
+releases its interrupt mask, then runs each scenario's other-thread actions.
+Each scenario runs in a separate child process so a failed assertion cannot
+hide the remaining results. Assertions and signals count as test failures.
+These tests do not exercise ARM exclusive instructions, actual exception entry,
+or assembly context switching; those require hardware validation.
+The Kconfig suite also compiles ARM TCB layout checks with aging enabled and
+disabled, four thread name lengths, and optional TCB extensions enabled and
+disabled. Native builds also enforce their own TCB size assertions. ARM checks
+skip if `arm-none-eabi-g++` is unavailable.
+
 ## Expected compatibility implementation
 
 `include/expected.h` implements an allocation-free `artos::expected<T, E>` for

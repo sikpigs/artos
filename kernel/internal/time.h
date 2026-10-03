@@ -1,7 +1,8 @@
 #pragma once
 
-#include <artos.h>
 #include <limits>
+
+#include <artos.h>
 
 namespace artos::kernel::internal {
     constexpr bool deadline_reached(const tick_time_t& now, const tick_time_t& deadline) noexcept
@@ -16,5 +17,18 @@ namespace artos::kernel::internal {
         }
 
         return now.ticks >= deadline.ticks;
+    }
+
+    inline bool update_deadline(tick_time_t& deadline) noexcept
+    {
+        const auto now = kernel::locked::tick_time();
+        if (deadline_reached(now, deadline))
+        {
+            return false;
+        }
+
+        const auto remaining = deadline - now;
+        deadline = now + remaining;
+        return true;
     }
 }

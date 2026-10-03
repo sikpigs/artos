@@ -1,12 +1,14 @@
-#include <internal/kernel_state.h>
-#include <internal/scheduler.h>
-#include <internal/thread.h>
-
 #include <cassert>
 #include <optional>
 #include <utility>
 
 #include <artos.h>
+#include <defs.h>
+#include <mutex.h>
+
+#include <internal/kernel_state.h>
+#include <internal/scheduler.h>
+#include <internal/thread.h>
 
 namespace artos::kernel {
     using namespace internal;
@@ -25,6 +27,11 @@ namespace artos::kernel {
             thread->deadline = deadline.value_or(tick_time_t {});
             queue.push_back(thread->waiter);
 
+            if (thread->waiting_mutex)
+            {
+                kernel::internal::prioritize(thread->waiting_mutex);
+            }
+
             if (deadline)
             {
                 thread->state = thread::state_t::blocked;
@@ -35,7 +42,7 @@ namespace artos::kernel {
                 thread->state = thread::state_t::indefinite;
             }
 
-            internal::sched();
+            sched();
         }
 
         [[nodiscard]] wake_reason_t block_current_until(wait_queue_t&              queue,
@@ -108,6 +115,7 @@ namespace artos::kernel {
 
             queue.remove(*selected);
             selected->wake = wake_reason_t::signaled;
+            thread->waiting_mutex = nullptr;
 
             thread::internal::make_thread_ready(thread);
 
@@ -119,7 +127,7 @@ namespace artos::kernel {
             return thread->priority < current_thread->priority;
         }
 
-        bool wake_all(wait_queue_t& queue) noexcept
+        bool wake_all(wait_queue_t& queue, wake_reason_t reason) noexcept
         {
             if (queue.empty())
             {
@@ -136,7 +144,8 @@ namespace artos::kernel {
                 assert(thread->state == thread::state_t::blocked || thread->state == thread::state_t::indefinite);
                 assert(it->wake == wake_reason_t::none);
 
-                it->wake = wake_reason_t::signaled;
+                it->wake = reason;
+                thread->waiting_mutex = nullptr;
 
                 thread::internal::make_thread_ready(thread);
 

@@ -1,4 +1,6 @@
-# Thread stack canary hardware tests
+# Hardware tests
+
+## Thread stack canary
 
 `test_stack_canary.py` flashes a canary-enabled Debug ELF, runs it twice under
 OpenOCD/GDB, and tests both context-switch checks. It changes one guard word
@@ -32,3 +34,30 @@ a stack top that does not match the selected board.
 
 This is a deliberate guard-corruption test. It verifies detection and the
 postmortem record, without forcing a real stack overflow into adjacent data.
+
+## Queue shutdown
+
+`test_queue.py` flashes an isolated queue-test ELF. A high-priority main thread
+starts lower-priority reader and writer threads, verifies both are blocked,
+then closes each queue with `close_and_wait()`. GDB counts two actual indefinite
+waits by the closer. The firmware checks both operations return `closed`, failed
+pops preserve their outputs, repeated close calls are harmless, and separate
+reader and writer waits expire with `timeout`. It reports a numbered failure
+code through `queue_hw_result` if any assertion fails.
+
+Build and run it on an F411 from the repository root:
+
+```sh
+cmake -S . -B build/queue-hw -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi-gcc.cmake \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DKCONFIG_DEFCONFIG=configs/nucleo_f411re_defconfig \
+  -DARTOS_QUEUE_HARDWARE_TEST=ON
+cmake --build build/queue-hw
+python3 tests/hardware/test_queue.py \
+  --board nucleo_f411re --elf build/queue-hw/artos.elf
+```
+
+For an F439, use its defconfig and `--board nucleo_f439zi` in a separate build
+directory. The test requires `openocd`, `gdb-multiarch`, and `arm-none-eabi-nm`.
+It overwrites the board's firmware; flash the normal build afterward.

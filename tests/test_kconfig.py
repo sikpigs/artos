@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -97,6 +98,39 @@ class ConfigurationTests(unittest.TestCase):
              "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
             input=probe, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def check_arm_tcb_layout(self, aging):
+        compiler = shutil.which("arm-none-eabi-g++")
+        if compiler is None:
+            self.skipTest("arm-none-eabi-g++ is required for ARM TCB layout checks")
+        # Cover each name-padding residue and optional TCB extension layout.
+        for name_length, extensions in ((15, False), (1, False), (2, False), (3, False),
+                                        (15, True), (1, True), (2, True), (3, True)):
+            with self.subTest(aging=aging, name_length=name_length, extensions=extensions):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate(
+                    f"CONFIG_ARTOS_SCHEDULER_PRIORITY_AGING={'y' if aging else 'n'}\n"
+                    f"CONFIG_ARTOS_MAX_THREAD_NAME_LENGTH={name_length}\n"
+                    f"CONFIG_ARTOS_THREAD_STACK_HWM={'y' if extensions else 'n'}\n"
+                    f"CONFIG_ARTOS_THREAD_STACK_CANARY={'y' if extensions else 'n'}\n"
+                    f"CONFIG_ARTOS_THREAD_STATS={'y' if extensions else 'n'}\n")
+                # Compile the real ARM layout, including storage size assertions.
+                probe = "#include <internal/thread.h>\n"
+                result = subprocess.run(
+                    [compiler, "-std=c++23", "-mcpu=cortex-m4", "-mthumb",
+                     "-fsyntax-only", "-x", "c++",
+                     "-I", str(self.build / "generated"),
+                     "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "arch/arm/cortex_m4/include"),
+                     "-I", str(SOURCE / "kernel"), "-"],
+                    input=probe, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_arm_tcb_layout_without_aging(self):
+        self.check_arm_tcb_layout(False)
+
+    def test_arm_tcb_layout_with_aging(self):
+        self.check_arm_tcb_layout(True)
 
     def test_thread_stack_hwm_config(self):
         self.generate("")

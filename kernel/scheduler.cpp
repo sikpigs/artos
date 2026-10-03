@@ -1,4 +1,12 @@
+#include <cassert>
+#include <utility>
+
 #include <build_config.h>
+
+#include <artos.h>
+#include <artos_port.h>
+#include <mutex.h>
+#include <wait_queue.h>
 
 #include <internal/kernel_state.h>
 #include <internal/scheduler.h>
@@ -6,18 +14,51 @@
 #include <internal/thread_queue.h>
 #include <internal/time.h>
 
-#include <cassert>
-#include <utility>
-
-#include <artos.h>
-#include <artos_port.h>
-#include <wait_queue.h>
-
 using namespace build_config::artos;
 
 namespace artos::kernel::internal {
     using namespace thread::internal;
     using namespace kernel::internal;
+
+    void prioritize(mutex_t* mutex) noexcept
+    {
+        mutex->prioritize();
+    }
+
+    template<typename Thread>
+    thread::priority_t include_aging(Thread* owning_thread, thread::priority_t effective) noexcept
+    {
+        if constexpr (Thread::priority_aging_enabled)
+        {
+            if (owning_thread->aged_priority)
+            {
+                effective = std::min(effective, *owning_thread->aged_priority);
+            }
+        }
+
+        return effective;
+    }
+
+    void recalculate_priority(thread::id_t thread_id) noexcept
+    {
+        auto ix = tcb_base_t::id_layout::extract_id(thread_id);
+        assert(ix < threads.size());
+        auto* thread = reinterpret_cast<tcb_t*>(threads[ix]);
+        assert(thread == nullptr || thread->id == thread_id);
+
+        auto effective = include_aging(thread, thread->base_priority);
+
+        for (auto owned_mutex = thread->mutexes.begin(); owned_mutex != thread->mutexes.end(); ++owned_mutex)
+        {
+            for (auto waiter : owned_mutex->waiters)
+            {
+                auto* waiting_thread = waiter.thread;
+                effective = std::min(effective, waiting_thread->priority);
+            }
+        }
+
+        set_effective_priority(thread, effective);
+    }
 
     void check_deadlines() noexcept
     {
@@ -36,6 +77,12 @@ namespace artos::kernel::internal {
                     {
                         thread->waiter.queue->remove(thread->waiter);
                         thread->waiter.wake = wake_reason_t::timeout;
+
+                        if (thread->waiting_mutex)
+                        {
+                            prioritize(thread->waiting_mutex);
+                            thread->waiting_mutex = nullptr;
+                        }
                     }
 
                     make_thread_ready(thread);
@@ -113,7 +160,10 @@ namespace artos::kernel::internal {
                     continue;
                 }
 
-                reinterpret_cast<tcb_t*>(threads[ix])->age();
+                if (threads[ix]->state == thread::state_t::ready)
+                {
+                    reinterpret_cast<tcb_t*>(threads[ix])->age();
+                }
             }
         }
     };

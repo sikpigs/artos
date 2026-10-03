@@ -85,6 +85,7 @@ namespace {
         check(artos::kernel::internal::threads[slot] == nullptr, "test installed the same thread slot twice");
         check(!tcbs[slot].has_value(), "test installed the same thread slot twice");
         auto& thread = tcbs[slot].emplace("test", priority(priority_value), &stacks[slot], &stacks[slot], 1);
+        (void)thread.make_thread_id(slot);
         thread.state = state;
         thread.deadline = {};
         thread.waiter.wake = artos::wake_reason_t::none;

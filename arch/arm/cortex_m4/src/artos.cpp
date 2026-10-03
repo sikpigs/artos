@@ -1,11 +1,11 @@
+#include <arch/regmap.h>
+#include <build_config.h>
+
 #include <artos.h>
 #include <artos_port.h>
 #include <bits.h>
 #include <board.h>
-#include <build_config.h>
 #include <mmio.h>
-
-#include <arch/regmap.h>
 
 namespace artos::port {
     namespace {
@@ -17,6 +17,7 @@ namespace artos::port {
         static_assert(reload > 0 && reload <= 0x00FFFFFF, "SysTick reload must fit 24 bits");
         static_assert(build_config::artos::scheduler_min_cycles_remaining < reload,
                       "scheduler cutoff must be shorter than a SysTick period");
+
         namespace systick_regmap {
             namespace tags {
                 struct ctrl;
@@ -51,6 +52,7 @@ namespace artos::port {
                 systick_regmap::LOAD LOAD;
                 systick_regmap::VAL  VAL;
             };
+
             // NOLINTEND(readability-identifier-naming)
 
             static_assert(alignof(registers_t) == alignof(std::uint32_t));

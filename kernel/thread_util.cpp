@@ -92,7 +92,7 @@ namespace artos::thread::internal {
 
         while (forward_it != block_sleep_queue.end())
         {
-            if (kernel::internal::deadline_reached(forward_it->thread->deadline, thread->deadline))
+            if (deadline_reached(forward_it->thread->deadline, thread->deadline))
             {
                 break;
             }

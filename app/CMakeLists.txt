@@ -1,1 +1,6 @@
-target_sources(firmware PRIVATE main.cpp)
+option(ARTOS_QUEUE_HARDWARE_TEST "Build the queue shutdown hardware test app" OFF)
+if(ARTOS_QUEUE_HARDWARE_TEST)
+    target_sources(firmware PRIVATE "${CMAKE_SOURCE_DIR}/tests/hardware/queue_firmware.cpp")
+else()
+    target_sources(firmware PRIVATE main.cpp)
+endif()

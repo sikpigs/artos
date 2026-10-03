@@ -1,8 +1,5 @@
 #pragma once
 
-#include <arch/artos.h>
-#include <build_config.h>
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -11,10 +8,15 @@
 #include <string_view>
 #include <utility>
 
-#include <artos_port.h>
+#include <build_config.h>
+
+#include <arch/artos.h>
 #include <cpu_port.h>
+
+#include <artos_port.h>
 #include <defs.h>
 #include <expected_compat.h>
+#include <intrusive_list.h>
 #include <wait_queue.h>
 
 namespace artos {
@@ -122,7 +124,6 @@ namespace artos {
     };
 
     namespace kernel {
-
         namespace internal {
             // Called by the selected timer ISR.
             void on_tick() noexcept;
@@ -140,10 +141,14 @@ namespace artos {
             return static_cast<std::uint64_t>(ticks) * 1000u / build_config::artos::tick_hz;
         }
 
-        void                      init() noexcept;
-        [[noreturn]] void         start() noexcept;
+        void              init() noexcept;
+        [[noreturn]] void start() noexcept;
+
         [[nodiscard]] tick_t      ticks() noexcept;
         [[nodiscard]] tick_time_t tick_time() noexcept;
+
+        void yield(bool higher_priority_thread_woken) noexcept;
+        void yield() noexcept;
 
         namespace locked {
             [[nodiscard]] wake_reason_t block_current(wait_queue_t&      queue,
@@ -158,7 +163,7 @@ namespace artos {
 
             [[nodiscard]] tick_time_t tick_time() noexcept;
 
-            bool wake_all(wait_queue_t& queue) noexcept;
+            bool wake_all(wait_queue_t& queue, wake_reason_t reason = wake_reason_t::signaled) noexcept;
             bool wake_one(wait_queue_t& queue) noexcept;
         }
     }
@@ -217,13 +222,86 @@ namespace artos {
 
         using snapshot_array_t = std::array<snapshot_t, build_config::artos::max_threads>;
 
-        // Round the name and two one-byte fields up to the first pointer's alignment.
-        inline constexpr auto tcb_size
-            = static_cast<std::size_t>(96) - (sizeof(std::string_view) + 5) / 4 * 4 + (sizeof(name_t) + 5) / 4 * 4
-              + (build_config::artos::scheduler.priority_aging_ticks.has_value() ? 8 : 0)
-              + (build_config::artos::thread_stack_hwm ? sizeof(std::size_t) : 0)
-              + (build_config::artos::thread_stack_canary ? sizeof(stack_word_t*) : 0)
-              + (build_config::artos::thread_stats ? (sizeof(std::uint32_t) + sizeof(statistics_t)) : 0);
+        namespace internal {
+            // Describe storage without including kernel-private TCB or queue
+            // headers. Kernel assertions verify this model against real types.
+            struct storage_layout_t
+            {
+                std::size_t size {};
+                std::size_t alignment { 1 };
+
+                constexpr void append(std::size_t field_size,
+                                      std::size_t field_alignment,
+                                      std::size_t count = 1) noexcept
+                {
+                    size = (size + field_alignment - 1) / field_alignment * field_alignment;
+                    size += field_size * count;
+                    alignment = alignment < field_alignment ? field_alignment : alignment;
+                }
+
+                template<typename Field>
+                constexpr void append(std::size_t count = 1) noexcept
+                {
+                    append(sizeof(Field), alignof(Field), count);
+                }
+
+                [[nodiscard]] constexpr std::size_t padded_size() const noexcept
+                {
+                    return (size + alignment - 1) / alignment * alignment;
+                }
+            };
+
+            inline constexpr auto thread_queue_storage_layout = [] {
+                storage_layout_t layout;
+                layout.append<list_hook_t>();
+                layout.append<void*>(2); // Thread and queue pointers.
+                return layout;
+            }();
+
+            consteval std::size_t calculate_tcb_size() noexcept
+            {
+                storage_layout_t layout;
+                layout.append<name_t>();
+                layout.append<priority_t>(2); // Effective and base priorities.
+                layout.append<state_t>();
+                layout.append<stack_word_t*>(3); // SP, stack begin and end.
+                layout.append(thread_queue_storage_layout.padded_size(), thread_queue_storage_layout.alignment, 2);
+                layout.append<wait_queue_node_t>();
+                layout.append<intrusive_list_t>(); // Owned mutexes.
+                layout.append<void*>();            // Waiting mutex.
+                layout.append<tick_time_t>();
+                layout.append<id_t>();
+                layout.append<func_t>();
+                layout.append<void*>();             // Exit callback context.
+                layout.size = layout.padded_size(); // Complete tcb_base_t.
+
+                if constexpr (build_config::artos::scheduler.priority_aging_ticks.has_value())
+                {
+                    storage_layout_t aging;
+                    aging.append<std::optional<priority_t>>();
+                    aging.append<tick_t>();
+                    layout.append(aging.padded_size(), aging.alignment);
+                }
+                if constexpr (build_config::artos::thread_stack_hwm)
+                {
+                    layout.append<std::size_t>();
+                }
+                if constexpr (build_config::artos::thread_stack_canary)
+                {
+                    layout.append<stack_word_t*>();
+                }
+                if constexpr (build_config::artos::thread_stats)
+                {
+                    storage_layout_t stats;
+                    stats.append<std::uint32_t>();
+                    stats.append<statistics_t>();
+                    layout.append(stats.padded_size(), stats.alignment);
+                }
+                return layout.padded_size();
+            }
+        }
+
+        inline constexpr auto tcb_size = internal::calculate_tcb_size();
         inline constexpr auto tcb_alignment = alignof(std::max_align_t);
 
         template<bool Enabled>

@@ -13,5 +13,6 @@ if(CONFIG_ARTOS)
         context.cpp
         thread_util.cpp
         service_call.cpp
+        mutex.cpp
     )
 endif()

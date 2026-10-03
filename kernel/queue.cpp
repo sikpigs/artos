@@ -1,43 +1,56 @@
-#include "internal/scheduler.h"
-#include "internal/time.h"
-
+#include <cassert>
 #include <cstring>
+#include <optional>
+#include <utility>
 
 #include <artos.h>
+#include <defs.h>
 #include <queue.h>
 #include <wait_queue.h>
 
+#include <internal/scheduler.h>
+#include <internal/time.h>
+
 namespace artos::internal {
-    bool update_deadline(tick_time_t& deadline) noexcept
+    [[nodiscard]] queue_result_t queue_core_t::push_front(const void*           element,
+                                                          std::optional<tick_t> ticks_to_wait) noexcept
     {
-        const auto now = kernel::locked::tick_time();
-        if (kernel::internal::deadline_reached(now, deadline))
+        const operation_guard_t operation { *this };
+        if (!operation.entered())
         {
-            return false;
+            return queue_result_t::closed;
         }
 
-        const auto remaining = deadline - now;
-        deadline = now + remaining;
-        return true;
-    }
-
-    [[nodiscard]] bool queue_core_t::push_front(const void* element, tick_t ticks_to_wait) noexcept
-    {
-        tick_time_t deadline = kernel::tick_time() + ticks_to_wait;
+        tick_time_t deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
 
         while (true)
         {
             critical_section_t cs {};
+            if (state == state_t::closed)
+            {
+                return queue_result_t::closed;
+            }
+
             if (is_full())
             {
-                if (!update_deadline(deadline))
+                if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
                 {
-                    return false;
+                    return queue_result_t::timeout;
                 }
 
-                if (kernel::locked::block_current(writer_queue, deadline, std::move(cs)) != wake_reason_t::signaled)
+                wake_reason_t reason;
+                if (ticks_to_wait)
                 {
-                    return false;
+                    reason = kernel::locked::block_current(writer_queue, deadline, std::move(cs));
+                }
+                else
+                {
+                    reason = kernel::locked::block_current(writer_queue, wait_forever, std::move(cs));
+                }
+
+                if (reason != wake_reason_t::signaled)
+                {
+                    return reason == wake_reason_t::cancelled ? queue_result_t::closed : queue_result_t::timeout;
                 }
             }
             else
@@ -53,28 +66,50 @@ namespace artos::internal {
                     kernel::internal::sched();
                 }
 
-                return true;
+                return queue_result_t::success;
             }
         }
     }
 
-    [[nodiscard]] bool queue_core_t::push_back(const void* element, tick_t ticks_to_wait) noexcept
+    [[nodiscard]] queue_result_t queue_core_t::push_back(const void*           element,
+                                                         std::optional<tick_t> ticks_to_wait) noexcept
     {
-        tick_time_t deadline = kernel::tick_time() + ticks_to_wait;
+        const operation_guard_t operation { *this };
+        if (!operation.entered())
+        {
+            return queue_result_t::closed;
+        }
+
+        tick_time_t deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
 
         while (true)
         {
             critical_section_t cs {};
+            if (state == state_t::closed)
+            {
+                return queue_result_t::closed;
+            }
+
             if (is_full())
             {
-                if (!update_deadline(deadline))
+                if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
                 {
-                    return false;
+                    return queue_result_t::timeout;
                 }
 
-                if (kernel::locked::block_current(writer_queue, deadline, std::move(cs)) != wake_reason_t::signaled)
+                wake_reason_t reason;
+                if (ticks_to_wait)
                 {
-                    return false;
+                    reason = kernel::locked::block_current(writer_queue, deadline, std::move(cs));
+                }
+                else
+                {
+                    reason = kernel::locked::block_current(writer_queue, wait_forever, std::move(cs));
+                }
+
+                if (reason != wake_reason_t::signaled)
+                {
+                    return reason == wake_reason_t::cancelled ? queue_result_t::closed : queue_result_t::timeout;
                 }
             }
             else
@@ -89,28 +124,49 @@ namespace artos::internal {
                     kernel::internal::sched();
                 }
 
-                return true;
+                return queue_result_t::success;
             }
         }
     }
 
-    [[nodiscard]] bool queue_core_t::pop_front(void* element, tick_t ticks_to_wait) noexcept
+    [[nodiscard]] queue_result_t queue_core_t::pop_front(void* element, std::optional<tick_t> ticks_to_wait) noexcept
     {
-        tick_time_t deadline = kernel::tick_time() + ticks_to_wait;
+        const operation_guard_t operation { *this };
+        if (!operation.entered())
+        {
+            return queue_result_t::closed;
+        }
+
+        tick_time_t deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
 
         while (true)
         {
             critical_section_t cs {};
+            if (state == state_t::closed)
+            {
+                return queue_result_t::closed;
+            }
+
             if (is_empty())
             {
-                if (!update_deadline(deadline))
+                if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
                 {
-                    return false;
+                    return queue_result_t::timeout;
                 }
 
-                if (kernel::locked::block_current(reader_queue, deadline, std::move(cs)) != wake_reason_t::signaled)
+                wake_reason_t reason;
+                if (ticks_to_wait)
                 {
-                    return false;
+                    reason = kernel::locked::block_current(reader_queue, deadline, std::move(cs));
+                }
+                else
+                {
+                    reason = kernel::locked::block_current(reader_queue, wait_forever, std::move(cs));
+                }
+
+                if (reason != wake_reason_t::signaled)
+                {
+                    return reason == wake_reason_t::cancelled ? queue_result_t::closed : queue_result_t::timeout;
                 }
             }
             else
@@ -125,28 +181,49 @@ namespace artos::internal {
                     kernel::internal::sched();
                 }
 
-                return true;
+                return queue_result_t::success;
             }
         }
     }
 
-    [[nodiscard]] bool queue_core_t::pop_back(void* element, tick_t ticks_to_wait) noexcept
+    [[nodiscard]] queue_result_t queue_core_t::pop_back(void* element, std::optional<tick_t> ticks_to_wait) noexcept
     {
-        tick_time_t deadline = kernel::tick_time() + ticks_to_wait;
+        const operation_guard_t operation { *this };
+        if (!operation.entered())
+        {
+            return queue_result_t::closed;
+        }
+
+        tick_time_t deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
 
         while (true)
         {
             critical_section_t cs {};
+            if (state == state_t::closed)
+            {
+                return queue_result_t::closed;
+            }
+
             if (is_empty())
             {
-                if (!update_deadline(deadline))
+                if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
                 {
-                    return false;
+                    return queue_result_t::timeout;
                 }
 
-                if (kernel::locked::block_current(reader_queue, deadline, std::move(cs)) != wake_reason_t::signaled)
+                wake_reason_t reason;
+                if (ticks_to_wait)
                 {
-                    return false;
+                    reason = kernel::locked::block_current(reader_queue, deadline, std::move(cs));
+                }
+                else
+                {
+                    reason = kernel::locked::block_current(reader_queue, wait_forever, std::move(cs));
+                }
+
+                if (reason != wake_reason_t::signaled)
+                {
+                    return reason == wake_reason_t::cancelled ? queue_result_t::closed : queue_result_t::timeout;
                 }
             }
             else
@@ -161,8 +238,186 @@ namespace artos::internal {
                     kernel::internal::sched();
                 }
 
-                return true;
+                return queue_result_t::success;
             }
+        }
+    }
+
+    [[nodiscard]] queue_result_t queue_core_t::try_push_front(const void* element,
+                                                              bool*       higher_priority_thread_woken) noexcept
+    {
+        const critical_section_t cs {};
+
+        if (state == state_t::closed)
+        {
+            return queue_result_t::closed;
+        }
+
+        if (is_full())
+        {
+            return queue_result_t::full;
+        }
+
+        head = (head - 1 + capacity) % capacity;
+        auto destination = buffer + (head * elem_size);
+        std::memcpy(destination, element, elem_size);
+        ++size;
+
+        const auto woken = artos::kernel::locked::wake_one(reader_queue);
+        if (higher_priority_thread_woken && woken)
+        {
+            *higher_priority_thread_woken = woken;
+        }
+
+        return queue_result_t::success;
+    }
+
+    [[nodiscard]] queue_result_t queue_core_t::try_push_back(const void* element,
+                                                             bool*       higher_priority_thread_woken) noexcept
+    {
+        const critical_section_t cs {};
+
+        if (state == state_t::closed)
+        {
+            return queue_result_t::closed;
+        }
+
+        if (is_full())
+        {
+            return queue_result_t::full;
+        }
+
+        auto* destination = buffer + (tail * elem_size);
+        std::memcpy(destination, element, elem_size);
+        tail = (tail + 1) % capacity;
+        ++size;
+
+        const auto woken = artos::kernel::locked::wake_one(reader_queue);
+        if (higher_priority_thread_woken && woken)
+        {
+            *higher_priority_thread_woken = woken;
+        }
+
+        return queue_result_t::success;
+    }
+
+    [[nodiscard]] queue_result_t queue_core_t::try_pop_front(void* element, bool* higher_priority_thread_woken) noexcept
+    {
+        const critical_section_t cs {};
+
+        if (state == state_t::closed)
+        {
+            return queue_result_t::closed;
+        }
+
+        if (is_empty())
+        {
+            return queue_result_t::empty;
+        }
+
+        const auto* source = buffer + (head * elem_size);
+        std::memcpy(element, source, elem_size);
+        head = (head + 1) % capacity;
+        --size;
+
+        const auto woken = artos::kernel::locked::wake_one(writer_queue);
+        if (higher_priority_thread_woken && woken)
+        {
+            *higher_priority_thread_woken = woken;
+        }
+
+        return queue_result_t::success;
+    }
+
+    [[nodiscard]] queue_result_t queue_core_t::try_pop_back(void* element, bool* higher_priority_thread_woken) noexcept
+    {
+        const critical_section_t cs {};
+
+        if (state == state_t::closed)
+        {
+            return queue_result_t::closed;
+        }
+
+        if (is_empty())
+        {
+            return queue_result_t::empty;
+        }
+
+        tail = (tail - 1 + capacity) % capacity;
+        const auto* source = buffer + (tail * elem_size);
+        std::memcpy(element, source, elem_size);
+        --size;
+
+        const auto woken = artos::kernel::locked::wake_one(writer_queue);
+        if (higher_priority_thread_woken && woken)
+        {
+            *higher_priority_thread_woken = woken;
+        }
+
+        return queue_result_t::success;
+    }
+
+    queue_core_t::operation_guard_t::operation_guard_t(queue_core_t& owner) noexcept
+        : queue { owner }
+    {
+        const critical_section_t cs {};
+        if (owner.state == state_t::open)
+        {
+            ++owner.active_operations;
+            active = true;
+        }
+    }
+
+    queue_core_t::operation_guard_t::~operation_guard_t() noexcept
+    {
+        if (active)
+        {
+            queue.finish_operation();
+        }
+    }
+
+    void queue_core_t::finish_operation() noexcept
+    {
+        const critical_section_t cs {};
+        assert(active_operations > 0);
+        --active_operations;
+        if (state == state_t::closed && active_operations == 0 && kernel::locked::wake_all(close_queue))
+        {
+            kernel::internal::sched();
+        }
+    }
+
+    void queue_core_t::close() noexcept
+    {
+        const critical_section_t cs {};
+        if (state == state_t::closed)
+        {
+            return;
+        }
+
+        state = state_t::closed;
+        const bool wake_writer = kernel::locked::wake_all(writer_queue, wake_reason_t::cancelled);
+        const bool wake_reader = kernel::locked::wake_all(reader_queue, wake_reason_t::cancelled);
+        if (wake_writer || wake_reader)
+        {
+            kernel::internal::sched();
+        }
+    }
+
+    void queue_core_t::close_and_wait() noexcept
+    {
+        close();
+        while (true)
+        {
+            critical_section_t cs {};
+            if (active_operations == 0)
+            {
+                return;
+            }
+
+            [[maybe_unused]] const auto reason
+                = kernel::locked::block_current(close_queue, wait_forever, std::move(cs));
+            assert(reason == wake_reason_t::signaled);
         }
     }
 }

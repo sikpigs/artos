@@ -239,7 +239,7 @@ namespace artos::kernel::locked {
         on_block();
     }
 
-    bool wake_all(wait_queue_t&) noexcept
+    bool wake_all(wait_queue_t&, wake_reason_t) noexcept
     {
         ++wake_all_count;
         return wake_higher_priority;

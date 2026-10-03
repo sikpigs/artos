@@ -59,6 +59,7 @@ set(ARTOS_SCHEDULER_TEST_SOURCES
     "${ARTOS_ROOT}/kernel/wait_queue.cpp"
     "${ARTOS_ROOT}/kernel/thread_queue.cpp"
     "${ARTOS_ROOT}/kernel/context.cpp"
+    "${ARTOS_ROOT}/kernel/mutex.cpp"
 )
 add_artos_native_test(scheduler ${ARTOS_SCHEDULER_TEST_SOURCES})
 target_include_directories(scheduler_tests PRIVATE
@@ -80,7 +81,34 @@ target_include_directories(scheduler_stats_tests PRIVATE
     "${ARTOS_ROOT}/kernel"
 )
 target_compile_definitions(scheduler_stats_tests PRIVATE ARTOS_TEST_THREAD_STATS=1)
+# The scheduler needs mutex priority helpers, but not the blocking/CPU-port API.
+foreach(scheduler_test IN ITEMS scheduler scheduler_aging scheduler_stats)
+    target_compile_options(${scheduler_test}_tests PRIVATE -ffunction-sections -fdata-sections)
+    target_link_options(${scheduler_test}_tests PRIVATE -Wl,--gc-sections)
+endforeach()
 set_tests_properties(scheduler scheduler_aging scheduler_stats PROPERTIES TIMEOUT 30)
+
+# Keep blocking and scheduling real; the host port simulates context switches.
+set(ARTOS_MUTEX_TEST_SOURCES
+    "${ARTOS_ROOT}/tests/mutex.cpp"
+    "${ARTOS_ROOT}/kernel/mutex.cpp"
+    "${ARTOS_ROOT}/kernel/blocking.cpp"
+    "${ARTOS_ROOT}/kernel/scheduler.cpp"
+    "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+    "${ARTOS_ROOT}/kernel/thread_util.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+    "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+)
+foreach(mutex_test IN ITEMS mutex mutex_aging)
+    add_artos_native_test(${mutex_test} ${ARTOS_MUTEX_TEST_SOURCES})
+    target_include_directories(${mutex_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    set_tests_properties(${mutex_test} PROPERTIES TIMEOUT 30)
+endforeach()
+target_compile_definitions(mutex_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
 
 foreach(snapshot_test IN ITEMS thread_snapshot thread_snapshot_stats)
     add_artos_native_test(${snapshot_test}
