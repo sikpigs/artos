@@ -82,6 +82,7 @@ namespace artos {
 
             void close() noexcept;
             void close_and_wait() noexcept;
+            void close_and_delete() noexcept;
 
         private:
             class operation_guard_t
@@ -112,6 +113,7 @@ namespace artos {
             std::size_t head { 0 };
             std::size_t tail { 0 };
             state_t     state { state_t::closed };
+            bool        delete_on_close { false };
             std::size_t active_operations { 0 };
 
             wait_queue_t reader_queue {};
@@ -249,6 +251,11 @@ namespace artos {
         void close_and_wait() noexcept
         {
             super::close_and_wait();
+        }
+
+        void close_and_delete() noexcept
+        {
+            super::close_and_delete();
         }
     };
 }

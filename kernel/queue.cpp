@@ -381,9 +381,15 @@ namespace artos::internal {
         const critical_section_t cs {};
         assert(active_operations > 0);
         --active_operations;
-        if (state == state_t::closed && active_operations == 0 && kernel::locked::wake_all(close_queue))
+        const auto active_operations_complete = active_operations == 0;
+        if (state == state_t::closed && active_operations_complete && kernel::locked::wake_all(close_queue))
         {
             kernel::internal::sched();
+        }
+
+        if (active_operations_complete && delete_on_close)
+        {
+            delete this;
         }
     }
 
@@ -418,6 +424,28 @@ namespace artos::internal {
             [[maybe_unused]] const auto reason
                 = kernel::locked::block_current(close_queue, wait_forever, std::move(cs));
             assert(reason == wake_reason_t::signaled);
+        }
+    }
+
+    void queue_core_t::close_and_delete() noexcept
+    {
+        const critical_section_t cs {};
+        delete_on_close = true;
+        if (state != state_t::closed)
+        {
+            state = state_t::closed;
+
+            const bool wake_writer = kernel::locked::wake_all(writer_queue, wake_reason_t::cancelled);
+            const bool wake_reader = kernel::locked::wake_all(reader_queue, wake_reason_t::cancelled);
+            if (wake_writer || wake_reader)
+            {
+                kernel::internal::sched();
+            }
+        }
+
+        if (active_operations == 0)
+        {
+            delete this;
         }
     }
 }

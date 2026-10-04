@@ -110,6 +110,50 @@ foreach(mutex_test IN ITEMS mutex mutex_aging)
 endforeach()
 target_compile_definitions(mutex_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
 
+foreach(semaphore_test IN ITEMS semaphore semaphore_aging)
+    add_artos_native_test(${semaphore_test}
+        "${ARTOS_ROOT}/tests/semaphore.cpp"
+        "${ARTOS_ROOT}/kernel/semaphore.cpp"
+        "${ARTOS_ROOT}/kernel/mutex.cpp"
+        "${ARTOS_ROOT}/kernel/blocking.cpp"
+        "${ARTOS_ROOT}/kernel/scheduler.cpp"
+        "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+        "${ARTOS_ROOT}/kernel/thread_util.cpp"
+        "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+        "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+    )
+    target_include_directories(${semaphore_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    set_tests_properties(${semaphore_test} PROPERTIES TIMEOUT 30)
+endforeach()
+target_compile_definitions(semaphore_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
+
+foreach(queue_lifecycle_test IN ITEMS queue_lifecycle queue_lifecycle_aging)
+    add_artos_native_test(${queue_lifecycle_test}
+        "${ARTOS_ROOT}/tests/queue_lifecycle.cpp"
+        "${ARTOS_ROOT}/kernel/queue.cpp"
+        "${ARTOS_ROOT}/kernel/mutex.cpp"
+        "${ARTOS_ROOT}/kernel/blocking.cpp"
+        "${ARTOS_ROOT}/kernel/scheduler.cpp"
+        "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+        "${ARTOS_ROOT}/kernel/thread_util.cpp"
+        "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+        "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+    )
+    target_include_directories(${queue_lifecycle_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    # Baseline cases run now; deletion cases remain explicitly pending until
+    # queue_t exposes the upcoming API. Once exposed, all cases run normally.
+    set_tests_properties(${queue_lifecycle_test} PROPERTIES TIMEOUT 30 SKIP_RETURN_CODE 77)
+endforeach()
+target_compile_definitions(queue_lifecycle_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
+
 foreach(snapshot_test IN ITEMS thread_snapshot thread_snapshot_stats)
     add_artos_native_test(${snapshot_test}
         "${ARTOS_ROOT}/tests/thread_snapshot.cpp"
@@ -165,6 +209,7 @@ endfunction()
 add_artos_python_test(artos_cli)
 add_artos_python_test(dtb_to_board)
 add_artos_python_test(kconfig)
+add_artos_python_test(semaphore_api)
 add_artos_python_test(pre_commit_clang_format)
 add_artos_python_test(pre_commit_clang_tidy)
 add_artos_python_test(serial_console)

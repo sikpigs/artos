@@ -149,6 +149,10 @@ or flashing. Its `build/debug/` ELF must match the firmware already on the
 board. To debug startup, change `runToEntryPoint` to `Reset_Handler` in
 `.vscode/launch.json`.
 
+For status-bar buttons, ST-LINK selection, and automatic target inference, use
+the local [ARTOS Board Tools extension](vscode-extension/README.md). Open its
+`vscode-extension/` directory in VS Code and press **F5** to try it.
+
 **Tasks: Run Task > Flash configured board** builds/flashes the Debug preset.
 The regular **CMake: build** task still follows the selected CMake preset.
 

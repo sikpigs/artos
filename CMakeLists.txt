@@ -113,9 +113,18 @@ add_custom_command(TARGET firmware POST_BUILD
 # OpenOCD is optional for building firmware. Override with -DOPENOCD_EXECUTABLE=...
 # when it is installed outside PATH.
 find_program(OPENOCD_EXECUTABLE NAMES openocd)
+set(OPENOCD_SERIAL "" CACHE STRING "ST-LINK USB serial number (empty selects any probe)")
+set(openocd_probe_args)
+if(OPENOCD_SERIAL)
+    if(NOT OPENOCD_SERIAL MATCHES "^[a-zA-Z0-9]+$")
+        message(FATAL_ERROR "OPENOCD_SERIAL must be an alphanumeric USB serial number")
+    endif()
+    list(APPEND openocd_probe_args -c "adapter serial ${OPENOCD_SERIAL}")
+endif()
 if(OPENOCD_EXECUTABLE)
     add_custom_target(flash
         COMMAND "${OPENOCD_EXECUTABLE}" -f "${BSP_OPENOCD_CONFIG}"
+            ${openocd_probe_args}
             -c "program {$<TARGET_FILE:firmware>} verify reset exit"
         DEPENDS firmware
         USES_TERMINAL
@@ -124,6 +133,7 @@ if(OPENOCD_EXECUTABLE)
     )
     add_custom_target(debug-server
         COMMAND "${OPENOCD_EXECUTABLE}" -f "${BSP_OPENOCD_CONFIG}"
+            ${openocd_probe_args}
         USES_TERMINAL
         VERBATIM
         COMMENT "Starting OpenOCD; connect GDB to localhost:3333 (Ctrl-C to stop)"

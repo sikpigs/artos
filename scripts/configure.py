@@ -23,6 +23,8 @@ def main():
     parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--defconfig", type=Path, required=True)
     parser.add_argument("--build-type", default="Release")
+    parser.add_argument("--board", choices=("nucleo_f411re", "nucleo_f439zi"),
+                        help="change only the board choice, retaining saved software settings")
     parser.add_argument("--menuconfig", action="store_true")
     parser.add_argument("--savedefconfig", action="store_true")
     args = parser.parse_args()
@@ -35,6 +37,8 @@ def main():
     kconf = kconfiglib.Kconfig(str(source / "Kconfig"), warn_to_stderr=False)
     kconf.warn_assign_undef = True
     kconf.load_config(str(config if config.exists() else args.defconfig.resolve()))
+    if args.board:
+        kconf.syms[f"BOARD_{args.board.upper()}"].set_value(2)
     # Force evaluation before checking warnings (e.g. invalid numeric ranges).
     for symbol in kconf.unique_defined_syms:
         _ = symbol.str_value
