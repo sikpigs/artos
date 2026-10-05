@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "Run ARTOS extension",
+    "type": "extensionHost",
+    "request": "launch",
+    "args": [
+      "--new-window",
+      "--user-data-dir=${workspaceFolder}/.dev-host",
+      "--extensionDevelopmentPath=${workspaceFolder}",
+      "${workspaceFolder}/.."
+    ]
+  }]
+}

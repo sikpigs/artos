@@ -1,0 +1,6 @@
+.vscode/**
+.dev-host/**
+test/**
+__pycache__/**
+*.vsix
+.gitignore

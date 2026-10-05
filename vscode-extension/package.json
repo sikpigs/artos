@@ -1,0 +1,92 @@
+{
+  "name": "artos-board-tools",
+  "displayName": "ARTOS Board Tools",
+  "description": "Select an ST-LINK, infer the supported Nucleo target, and build, flash or debug ARTOS.",
+  "version": "0.1.2",
+  "publisher": "artos-local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "workspaceContains:artos.py",
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "package": "vsce package --no-dependencies --allow-missing-repository"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "artos.showControls",
+        "title": "ARTOS: Show Controls"
+      },
+      {
+        "command": "artos.selectProbe",
+        "title": "ARTOS: Select ST-LINK Probe"
+      },
+      {
+        "command": "artos.detectTarget",
+        "title": "ARTOS: Detect Selected Target"
+      },
+      {
+        "command": "artos.selectBoard",
+        "title": "ARTOS: Select Board Configuration"
+      },
+      {
+        "command": "artos.selectPreset",
+        "title": "ARTOS: Select Build Mode"
+      },
+      {
+        "command": "artos.build",
+        "title": "ARTOS: Build"
+      },
+      {
+        "command": "artos.flash",
+        "title": "ARTOS: Flash"
+      },
+      {
+        "command": "artos.flashMonitor",
+        "title": "ARTOS: Flash and Monitor"
+      },
+      {
+        "command": "artos.debug",
+        "title": "ARTOS: Build and Debug Selected Probe"
+      }
+    ],
+    "configuration": {
+      "title": "ARTOS Board Tools",
+      "properties": {
+        "artos.projectRoot": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Project directory containing artos.py. Relative paths resolve against the workspace folder."
+        },
+        "artos.pythonPath": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Python executable. Defaults to the project's .venv, then python3 (python on Windows)."
+        },
+        "artos.openocdPath": {
+          "type": "string",
+          "default": "openocd",
+          "scope": "resource",
+          "description": "OpenOCD executable used for detection, flashing and debugging."
+        }
+      }
+    }
+  },
+  "license": "MIT"
+}
