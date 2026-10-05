@@ -1,5 +1,8 @@
 #include <build_config.h>
 
+#include <cstddef>
+#include <defs.h>
+#include <internal/container_of.h>
 #include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
@@ -8,11 +11,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cerrno>
+#include <intrusive_list.h>
 #include <new>
 
 #include <artos.h>
 #include <artos_port.h>
 #include <cpu_port.h>
+#include <optional>
 #include <wait_queue.h>
 
 using namespace build_config::artos;
@@ -148,13 +153,24 @@ namespace artos::thread {
         internal::sleep_until(tick_time);
     }
 
-    extern "C" [[noreturn]] void thread_exit() noexcept
+    void finish_thread(tcb_base_t* thread) noexcept
+    {
+        if (thread->state == thread::state_t::finished)
+        {
+            return;
+        }
+
+        thread->state = thread::state_t::finished;
+        locked::wake_all(thread->joiners);
+        sched();
+    }
+
+    [[noreturn]] void exit() noexcept
     {
         assert(current_thread);
 
-        auto* thread = current_thread;
-        thread->state = thread::state_t::finished;
-        sched();
+        const critical_section_t cs {};
+        finish_thread(current_thread);
 
         for (;;)
         {
@@ -162,9 +178,144 @@ namespace artos::thread {
         }
     }
 
-    [[noreturn]] void exit() noexcept
+    extern "C" [[noreturn]] void thread_exit() noexcept
     {
-        thread_exit();
+        exit();
+    }
+
+    kill_result_t kill(id_t id) noexcept
+    {
+        const auto ix = tcb_t::id_layout::extract_id(id);
+        if (ix >= threads.size() || ix == 0)
+        {
+            return kill_result_t::invalid_thread;
+        }
+
+        const critical_section_t cs {};
+
+        auto* thread = threads[ix];
+        if (thread == nullptr || thread->id != id)
+        {
+            return kill_result_t::invalid_thread;
+        }
+
+        if (thread == current_thread)
+        {
+            finish_thread(thread);
+        }
+        else
+        {
+            if (thread->ready.queue)
+            {
+                auto* queue = thread->ready.queue;
+                queue->remove(thread->ready);
+                if (queue->empty())
+                {
+                    clear_priority_ready(thread->priority);
+                }
+            }
+
+            if (thread->waiter.queue)
+            {
+                auto* queue = thread->waiter.queue;
+                queue->remove(thread->waiter);
+                thread->waiter.wake = wake_reason_t::cancelled;
+                if (thread->waiting_mutex)
+                {
+                    prioritize(thread->waiting_mutex);
+                    thread->waiting_mutex = nullptr;
+                }
+            }
+
+            if (thread->block_sleep.queue)
+            {
+                thread->block_sleep.queue->remove(thread->block_sleep);
+            }
+
+            thread->state = thread::state_t::finished;
+            locked::wake_all(thread->joiners);
+            sched();
+        }
+
+        return kill_result_t::success;
+    }
+
+    join_result_t join(id_t id, std::optional<tick_t> ticks_to_wait) noexcept
+    {
+        const auto ix = tcb_t::id_layout::extract_id(id);
+        if (ix >= threads.size())
+        {
+            return join_result_t::invalid_thread;
+        }
+
+        critical_section_t cs {};
+
+        auto* thread = threads[ix];
+        if (thread == nullptr || thread->id != id)
+        {
+            return join_result_t::invalid_thread;
+        }
+
+        if (current_thread == nullptr)
+        {
+            return join_result_t::deadlock_detected;
+        }
+
+        if (thread->state == thread::state_t::finished)
+        {
+            return join_result_t::success;
+        }
+
+        if (thread == current_thread)
+        {
+            return join_result_t::deadlock_detected;
+        }
+
+        intrusive_list_t stack {};
+        stack.push_front(current_thread->join_hook);
+
+        while (!stack.empty())
+        {
+            auto* hook = stack.pop_front();
+            auto* waiting_thread = ARTOS_CONTAINER_OF(hook, tcb_base_t, join_hook);
+            for (auto it = waiting_thread->joiners.begin(); it != waiting_thread->joiners.end(); ++it)
+            {
+                if (it->thread == thread)
+                {
+                    while (!stack.empty())
+                    {
+                        (void)stack.pop_front();
+                    }
+                    return join_result_t::deadlock_detected;
+                }
+
+                stack.push_front(it->hook);
+            }
+        }
+
+        const auto deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
+
+        wake_reason_t reason;
+        if (ticks_to_wait)
+        {
+            reason = locked::block_current(thread->joiners, deadline, std::move(cs));
+        }
+        else
+        {
+            reason = locked::block_current(thread->joiners, wait_forever, std::move(cs));
+        }
+
+        return reason == wake_reason_t::timeout ? join_result_t::timeout : join_result_t::success;
+    }
+
+    join_result_t join(id_t id, tick_t ticks_to_wait) noexcept
+    {
+        return join(id, std::make_optional(ticks_to_wait));
+    }
+
+    join_result_t join(id_t id, wait_forever_t) noexcept
+    {
+        return join(id, std::nullopt);
     }
 
     [[nodiscard]] std::size_t get_high_watermark() noexcept

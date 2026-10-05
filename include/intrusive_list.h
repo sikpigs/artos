@@ -34,6 +34,30 @@ namespace artos {
             link_before(root, node);
         }
 
+        list_hook_t* pop_front() noexcept
+        {
+            if (empty())
+            {
+                return nullptr;
+            }
+
+            auto* front = root.next;
+            erase(*front);
+            return front;
+        }
+
+        list_hook_t* pop_back() noexcept
+        {
+            if (empty())
+            {
+                return nullptr;
+            }
+
+            auto* end = root.prev;
+            erase(*end);
+            return end;
+        }
+
         void erase(list_hook_t& node) noexcept
         {
             unlink(node);
@@ -75,6 +99,21 @@ namespace artos {
             root.prev->next = std::addressof(node);
             root.prev = std::addressof(node);
             node.next = std::addressof(root);
+        }
+
+        void clear() noexcept
+        {
+            auto* p = front();
+            while (p != end())
+            {
+                auto* n = p->next;
+                p->next = nullptr;
+                p->prev = nullptr;
+                p = n;
+            }
+
+            root.next = std::addressof(root);
+            root.prev = std::addressof(root);
         }
 
     private:

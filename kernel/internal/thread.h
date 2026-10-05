@@ -139,6 +139,9 @@ namespace artos::thread::internal {
         thread_queue_node_t block_sleep;
         wait_queue_node_t   waiter;
 
+        wait_queue_t joiners {};
+        list_hook_t  join_hook {};
+
         mutexes_held_t mutexes {};
         mutex_t*       waiting_mutex {};
 

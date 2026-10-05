@@ -170,6 +170,24 @@ foreach(snapshot_test IN ITEMS thread_snapshot thread_snapshot_stats)
 endforeach()
 target_compile_definitions(thread_snapshot_stats_tests PRIVATE ARTOS_TEST_THREAD_STATS=1)
 
+add_artos_native_test(thread_lifecycle
+    "${ARTOS_ROOT}/tests/thread_lifecycle.cpp"
+    "${ARTOS_ROOT}/kernel/thread.cpp"
+    "${ARTOS_ROOT}/kernel/blocking.cpp"
+    "${ARTOS_ROOT}/kernel/scheduler.cpp"
+    "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+    "${ARTOS_ROOT}/kernel/thread_util.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+    "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+    "${ARTOS_ROOT}/kernel/mutex.cpp"
+)
+target_include_directories(thread_lifecycle_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/kernel"
+)
+set_tests_properties(thread_lifecycle PROPERTIES TIMEOUT 30)
+
 # Exercise the same automatic selection used by firmware consumers.
 add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")
 target_compile_definitions(expected_auto_tests PRIVATE ARTOS_TEST_AUTO_EXPECTED=1)

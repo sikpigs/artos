@@ -204,6 +204,20 @@ namespace artos {
             low = build_config::artos::priority_levels - 1
         };
 
+        enum class kill_result_t
+        {
+            success,
+            invalid_thread
+        };
+
+        enum class join_result_t : std::uint8_t
+        {
+            success,
+            deadlock_detected,
+            invalid_thread,
+            timeout
+        };
+
         struct statistics_t
         {
             std::size_t execution_count {};
@@ -267,6 +281,8 @@ namespace artos {
                 layout.append<stack_word_t*>(3); // SP, stack begin and end.
                 layout.append(thread_queue_storage_layout.padded_size(), thread_queue_storage_layout.alignment, 2);
                 layout.append<wait_queue_node_t>();
+                layout.append<wait_queue_t>();
+                layout.append<list_hook_t>();
                 layout.append<intrusive_list_t>(); // Owned mutexes.
                 layout.append<void*>();            // Waiting mutex.
                 layout.append<tick_time_t>();
@@ -410,6 +426,9 @@ namespace artos {
         [[nodiscard]] std::size_t get_high_watermark() noexcept;
 
         [[noreturn]] void exit() noexcept;
+        kill_result_t     kill(id_t id) noexcept;
+        join_result_t     join(id_t id, tick_t ticks_to_wait) noexcept;
+        join_result_t     join(id_t id, wait_forever_t) noexcept;
 
         void get_statistics(statistics_t& statistics) noexcept;
 
