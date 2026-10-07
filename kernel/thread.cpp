@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <defs.h>
+#include <expected_compat.h>
 #include <internal/container_of.h>
 #include <internal/kernel_state.h>
 #include <internal/scheduler.h>
@@ -29,15 +30,52 @@ namespace artos::thread {
     using namespace kernel::internal;
 
     namespace internal {
-        start_result_t create(func_t              func,
-                              std::string_view    name,
-                              std::uint32_t       stack_size_bytes,
-                              void*               parameters,
-                              priority_t          priority,
-                              std::byte* const    tcb,
-                              stack_word_t* const canary,
-                              stack_word_t* const stack,
-                              bool                start) noexcept
+        [[nodiscard]]
+        create_result_t set_idle(func_t func, idle_thread_storage_t& storage) noexcept
+        {
+            const critical_section_t cs {};
+
+            if (threads[0])
+            {
+                return artos::unexpected(EEXIST);
+            }
+
+            const auto stack_word_count = idle_thread_storage_t::stack_size / sizeof(stack_word_t);
+            auto*      stack = storage.stack.data();
+
+            if constexpr (tcb_t::high_watermark_enabled)
+            {
+                std::fill_n(stack, stack_word_count, stack_fill_pattern);
+            }
+
+            auto* canary = storage.canary.data();
+            if constexpr (thread_stack_canary)
+            {
+                std::fill_n(canary, canary_word_count, stack_fill_pattern);
+            }
+
+            auto* sp = port::initialize_stack(stack + stack_word_count, func, nullptr);
+
+            auto* tcb = storage.tcb.data();
+
+            threads[0] = ::new (static_cast<void*>(tcb))
+                tcb_t { "IDLE", priority_t::low, sp, stack, stack_word_count, canary };
+
+            threads[0]->id = 0;
+            ++thread_count;
+
+            return 0;
+        }
+
+        create_result_t create(func_t              func,
+                               std::string_view    name,
+                               std::uint32_t       stack_size_bytes,
+                               void*               parameters,
+                               priority_t          priority,
+                               std::byte* const    tcb,
+                               stack_word_t* const canary,
+                               stack_word_t* const stack,
+                               bool                create_suspended) noexcept
         {
             const critical_section_t cs {};
 
@@ -51,6 +89,7 @@ namespace artos::thread {
             {
                 return artos::unexpected(EEXIST);
             }
+
             if (thread_count == threads.size())
             {
                 return artos::unexpected(EAGAIN);
@@ -80,14 +119,8 @@ namespace artos::thread {
             ++thread_count;
             *tcb_it = thread;
 
-            if (start)
-            {
-                make_thread_ready(thread);
-            }
-            else
-            {
-                thread->state = thread::state_t::suspended;
-            }
+            thread->suspended = create_suspended;
+            make_thread_ready(thread);
 
             const auto index = std::distance(threads.begin(), tcb_it);
             return thread->make_thread_id(static_cast<std::size_t>(index));
@@ -243,7 +276,7 @@ namespace artos::thread {
     join_result_t join(id_t id, std::optional<tick_t> ticks_to_wait) noexcept
     {
         const auto ix = tcb_t::id_layout::extract_id(id);
-        if (ix >= threads.size())
+        if (ix >= threads.size() || ix == 0)
         {
             return join_result_t::invalid_thread;
         }
@@ -318,6 +351,132 @@ namespace artos::thread {
         return join(id, std::nullopt);
     }
 
+    suspend_result_t suspend(id_t id) noexcept
+    {
+        if (cpu::port::is_in_irq())
+        {
+            return suspend_result_t::unsupported;
+        }
+
+        const auto ix = tcb_t::id_layout::extract_id(id);
+        if (ix >= threads.size() || ix == 0)
+        {
+            return suspend_result_t::invalid_thread;
+        }
+
+        const critical_section_t cs {};
+
+        auto* thread = threads[ix];
+        if (thread == nullptr || thread->id != id || thread->state == state_t::finished)
+        {
+            return suspend_result_t::invalid_thread;
+        }
+
+        if (thread->suspended)
+        {
+            return suspend_result_t::success;
+        }
+
+        thread->suspended = true;
+
+        if (thread->ready.queue)
+        {
+            auto* queue = thread->ready.queue;
+            queue->remove(thread->ready);
+            if (queue->empty())
+            {
+                clear_priority_ready(thread->priority);
+            }
+        }
+
+        if (thread == current_thread)
+        {
+            sched();
+        }
+
+        return suspend_result_t::success;
+    }
+
+    resume_result_t resume(id_t id) noexcept
+    {
+        if (cpu::port::is_in_irq())
+        {
+            return resume_result_t::unsupported;
+        }
+
+        const auto ix = tcb_t::id_layout::extract_id(id);
+        if (ix >= threads.size() || ix == 0)
+        {
+            return resume_result_t::invalid_thread;
+        }
+
+        const critical_section_t cs {};
+
+        auto* thread = threads[ix];
+        if (thread == nullptr || thread->id != id || thread->state == state_t::finished)
+        {
+            return resume_result_t::invalid_thread;
+        }
+
+        if (!thread->suspended)
+        {
+            return resume_result_t::success;
+        }
+
+        thread->suspended = false;
+
+        if (thread->state == state_t::ready)
+        {
+            make_thread_ready(thread);
+            if (current_thread && thread->priority < current_thread->priority)
+            {
+                sched();
+            }
+        }
+
+        return resume_result_t::success;
+    }
+
+    resume_result_t resume_from_isr(id_t id, bool* higher_priority_task_woken) noexcept
+    {
+        const auto ix = tcb_t::id_layout::extract_id(id);
+        if (ix >= threads.size() || ix == 0)
+        {
+            return resume_result_t::invalid_thread;
+        }
+
+        if (current_thread == nullptr)
+        {
+            return resume_result_t::unsupported;
+        }
+
+        const critical_section_t cs {};
+
+        auto* thread = threads[ix];
+        if (thread == nullptr || thread->id != id || thread->state == state_t::finished)
+        {
+            return resume_result_t::invalid_thread;
+        }
+
+        if (!thread->suspended)
+        {
+            return resume_result_t::success;
+        }
+
+        thread->suspended = false;
+
+        if (thread->state == state_t::ready)
+        {
+            make_thread_ready(thread);
+            if (thread->priority < current_thread->priority && higher_priority_task_woken)
+            {
+                *higher_priority_task_woken = true;
+            }
+        }
+
+        return resume_result_t::success;
+    }
+
     [[nodiscard]] std::size_t get_high_watermark() noexcept
     {
         if constexpr (tcb_t::high_watermark_enabled)
@@ -356,6 +515,7 @@ namespace artos::thread {
             entry.name = thread->name;
             entry.priority = thread->priority;
             entry.state = thread->state;
+            entry.suspended = thread->suspended;
             entry.statistics = {};
             thread->get_statistics(entry.statistics);
         }

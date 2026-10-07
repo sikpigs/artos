@@ -38,7 +38,7 @@ namespace artos::kernel {
 
         // Slot zero is reserved by init(). This stack is for the idle loop;
         // exception handlers execute on MSP. Revisit its budget as the port grows.
-        thread::storage_t<thread::minimum_stack_bytes> idle_storage {};
+        thread::internal::idle_thread_storage_t idle_storage {};
 
         [[noreturn]] void idle_entry(void*) noexcept
         {
@@ -206,7 +206,8 @@ namespace artos::kernel {
 
         // Idle is the fallback, even when an application uses priority_t::low.
         // Future selection must consider ready application threads first.
-        const auto idle = thread::create(idle_entry, "IDLE", nullptr, thread::priority_t::low, idle_storage, false);
+        const auto idle = thread::internal::set_idle(idle_entry, idle_storage);
+
         if (!idle || *idle != 0)
         {
             cpu::port::fatal_trap();
@@ -278,7 +279,7 @@ namespace artos::kernel {
         init();
 
         [[maybe_unused]] const auto main_thread = thread::create<main_thread_stack_size>(
-            main, "MAIN", nullptr, thread::make_priority<main_thread_priority>(), true);
+            main, "MAIN", nullptr, thread::make_priority<main_thread_priority>());
 
         start();
     }

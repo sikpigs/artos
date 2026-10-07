@@ -172,7 +172,7 @@ namespace artos {
         using id_t = std::uintptr_t;
         using name_t = std::array<char, build_config::artos::max_thread_name_length + 1>;
         using func_t = void (*)(void*);
-        using start_result_t = artos::expected<id_t, err_t>;
+        using create_result_t = artos::expected<id_t, err_t>;
         using stack_word_t = port::stack_word_t;
 
         inline constexpr auto canary_word_count = build_config::artos::thread_stack_canary ? 2 : 0;
@@ -193,7 +193,6 @@ namespace artos {
             running,
             blocked,
             indefinite,
-            suspended,
             sleeping,
             finished
         };
@@ -218,6 +217,20 @@ namespace artos {
             timeout
         };
 
+        enum class suspend_result_t : std::uint8_t
+        {
+            success,
+            invalid_thread,
+            unsupported
+        };
+
+        enum class resume_result_t : std::uint8_t
+        {
+            success,
+            invalid_thread,
+            unsupported,
+        };
+
         struct statistics_t
         {
             std::size_t execution_count {};
@@ -231,6 +244,7 @@ namespace artos {
             name_t       name;
             state_t      state;
             priority_t   priority;
+            bool         suspended;
             statistics_t statistics;
         };
 
@@ -278,6 +292,7 @@ namespace artos {
                 layout.append<name_t>();
                 layout.append<priority_t>(2); // Effective and base priorities.
                 layout.append<state_t>();
+                layout.append<bool>();
                 layout.append<stack_word_t*>(3); // SP, stack begin and end.
                 layout.append(thread_queue_storage_layout.padded_size(), thread_queue_storage_layout.alignment, 2);
                 layout.append<wait_queue_node_t>();
@@ -344,23 +359,24 @@ namespace artos {
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
         struct storage_t
         {
+            static constexpr auto stack_size = StackSize;
             alignas(tcb_alignment) std::array<std::byte, tcb_size> tcb {};
             [[no_unique_address]] canary_storage_t<build_config::artos::thread_stack_canary> canary {};
             alignas(port::stack_alignment) std::array<stack_word_t, StackSize / sizeof(stack_word_t)> stack {};
         };
 
         namespace internal {
-            void on_exit(id_t thread_id, func_t at_exit = nullptr, void* ctx = nullptr) noexcept;
+            void on_exit(id_t thread_id, func_t at_exit, void* ctx = nullptr) noexcept;
 
-            start_result_t create(func_t              func,
-                                  std::string_view    name,
-                                  std::uint32_t       stack_size_bytes,
-                                  void*               parameters,
-                                  priority_t          priority,
-                                  std::byte* const    tcb,
-                                  stack_word_t* const canary,
-                                  stack_word_t* const stack,
-                                  bool                start) noexcept;
+            create_result_t create(func_t              func,
+                                   std::string_view    name,
+                                   std::uint32_t       stack_size_bytes,
+                                   void*               parameters,
+                                   priority_t          priority,
+                                   std::byte* const    tcb,
+                                   stack_word_t* const canary,
+                                   stack_word_t* const stack,
+                                   bool                create_suspended = false) noexcept;
         }
 
         template<std::uint8_t Priority>
@@ -370,11 +386,22 @@ namespace artos {
             return static_cast<priority_t>(Priority);
         }
 
+        struct create_options_t
+        {
+            bool create_suspended;
+        };
+
+        inline constexpr create_options_t create_suspended = { .create_suspended = true };
+        inline constexpr create_options_t make_ready = { .create_suspended = false };
+
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
         [[nodiscard]]
-        start_result_t create(
-            func_t func, std::string_view name, void* parameters, priority_t priority, bool start) noexcept
+        create_result_t create(func_t           func,
+                               std::string_view name,
+                               void*            parameters,
+                               priority_t       priority,
+                               create_options_t options = make_ready) noexcept
         {
             using storage_t = thread::storage_t<StackSize>;
             auto storage = std::make_unique_for_overwrite<storage_t>();
@@ -387,7 +414,7 @@ namespace artos {
                                            storage->tcb.data(),
                                            storage->canary.data(),
                                            storage->stack.data(),
-                                           start);
+                                           options.create_suspended);
 
             if (result)
             {
@@ -397,19 +424,19 @@ namespace artos {
             }
             else
             {
-                return result.error();
+                return artos::unexpected(result.error());
             }
         }
 
         template<std::uint32_t StackSize>
         requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
         [[nodiscard]]
-        start_result_t create(func_t                func,
-                              std::string_view      name,
-                              void*                 parameters,
-                              priority_t            priority,
-                              storage_t<StackSize>& storage,
-                              bool                  start = true) noexcept
+        create_result_t create(func_t                func,
+                               std::string_view      name,
+                               void*                 parameters,
+                               priority_t            priority,
+                               storage_t<StackSize>& storage,
+                               create_options_t      options = make_ready) noexcept
         {
             return internal::create(func,
                                     name,
@@ -419,7 +446,7 @@ namespace artos {
                                     storage.tcb.data(),
                                     storage.canary.data(),
                                     storage.stack.data(),
-                                    start);
+                                    options.create_suspended);
         }
 
         [[nodiscard]] id_t        get_current_thread() noexcept;
@@ -429,6 +456,9 @@ namespace artos {
         kill_result_t     kill(id_t id) noexcept;
         join_result_t     join(id_t id, tick_t ticks_to_wait) noexcept;
         join_result_t     join(id_t id, wait_forever_t) noexcept;
+        suspend_result_t  suspend(id_t id) noexcept;
+        resume_result_t   resume(id_t id) noexcept;
+        resume_result_t   resume_from_isr(id_t id, bool* higher_priority_thread_woken = nullptr) noexcept;
 
         void get_statistics(statistics_t& statistics) noexcept;
 

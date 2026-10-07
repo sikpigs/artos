@@ -28,7 +28,8 @@ static_assert(build_config::artos::priority_levels == 256
 
 // Instantiate the body, not just its declaration: catches forwarding mistakes
 // that the monitor-only firmware build otherwise does not exercise.
-artos::thread::start_result_t check_thread_create(artos::thread::storage_t<artos::thread::minimum_stack_bytes>& storage)
+artos::thread::create_result_t check_thread_create(
+    artos::thread::storage_t<artos::thread::minimum_stack_bytes>& storage)
 {
     return artos::thread::create(+[](void*) {}, "check", nullptr, artos::thread::make_priority<0>(), storage);
 }

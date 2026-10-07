@@ -188,6 +188,27 @@ target_include_directories(thread_lifecycle_tests PRIVATE
 )
 set_tests_properties(thread_lifecycle PROPERTIES TIMEOUT 30)
 
+foreach(suspend_test IN ITEMS thread_suspend thread_suspend_aging)
+    add_artos_native_test(${suspend_test}
+        "${ARTOS_ROOT}/tests/thread_suspend.cpp"
+        "${ARTOS_ROOT}/kernel/thread.cpp"
+        "${ARTOS_ROOT}/kernel/blocking.cpp"
+        "${ARTOS_ROOT}/kernel/scheduler.cpp"
+        "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+        "${ARTOS_ROOT}/kernel/thread_util.cpp"
+        "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+        "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+        "${ARTOS_ROOT}/kernel/mutex.cpp"
+    )
+    target_include_directories(${suspend_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    set_tests_properties(${suspend_test} PROPERTIES TIMEOUT 30)
+endforeach()
+target_compile_definitions(thread_suspend_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
+
 # Exercise the same automatic selection used by firmware consumers.
 add_artos_native_test(expected_auto "${ARTOS_ROOT}/tests/expected.cpp")
 target_compile_definitions(expected_auto_tests PRIVATE ARTOS_TEST_AUTO_EXPECTED=1)

@@ -107,7 +107,9 @@ namespace artos::kernel::internal {
     {
         if (current_thread != nullptr && current_thread != threads[0])
         {
-            if (current_thread->state == thread::state_t::running || current_thread->state == thread::state_t::ready)
+            if (!current_thread->suspended
+                && (current_thread->state == thread::state_t::running
+                    || current_thread->state == thread::state_t::ready))
             {
                 current_thread->ready.queue->rotate_after(current_thread->ready);
             }
@@ -160,7 +162,7 @@ namespace artos::kernel::internal {
                     continue;
                 }
 
-                if (threads[ix]->state == thread::state_t::ready)
+                if (threads[ix]->state == thread::state_t::ready && !threads[ix]->suspended)
                 {
                     reinterpret_cast<tcb_t*>(threads[ix])->age();
                 }

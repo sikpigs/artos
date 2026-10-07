@@ -83,7 +83,7 @@ namespace {
     void test_sparse_registry_and_owned_names()
     {
         reset();
-        auto&                 idle = install(0, "IDLE", artos::thread::state_t::suspended);
+        auto&                 idle = install(0, "IDLE", artos::thread::state_t::ready);
         auto&                 worker = install(3, "worker", artos::thread::state_t::running);
         artos::thread::name_t long_name {};
         long_name.fill('x');

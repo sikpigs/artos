@@ -78,7 +78,7 @@ namespace {
         }
     }
 
-    tcb_t& install(std::size_t slot, std::uint8_t priority_value, state_t state)
+    tcb_t& install(std::size_t slot, std::uint8_t priority_value, state_t state, bool suspended = false)
     {
         using namespace artos::thread::internal;
 
@@ -87,12 +87,13 @@ namespace {
         auto& thread = tcbs[slot].emplace("test", priority(priority_value), &stacks[slot], &stacks[slot], 1);
         (void)thread.make_thread_id(slot);
         thread.state = state;
+        thread.suspended = suspended;
         thread.deadline = {};
         thread.waiter.wake = artos::wake_reason_t::none;
         artos::kernel::internal::threads[slot] = &thread;
         ++artos::kernel::internal::thread_count;
 
-        if (is_runnable(state))
+        if (slot != 0 && is_runnable(state) && !suspended)
         {
             enqueue_ready(thread);
         }
@@ -148,7 +149,7 @@ namespace {
         now = {};
         pendsv_count = 0;
         cycles_remaining = 16000;
-        (void)install(0, 15, state_t::suspended);
+        (void)install(0, 15, state_t::ready);
     }
 
     void test_thread_name_is_owned_and_terminated()
@@ -198,7 +199,7 @@ namespace {
         reset_scheduler();
         auto& current = install(1, 7, state_t::running);
         auto& blocked = install(2, 0, state_t::indefinite);
-        auto& suspended = install(3, 1, state_t::suspended);
+        auto& suspended = install(3, 1, state_t::ready, true);
         auto& finished = install(4, 2, state_t::finished);
         set_current(current);
 

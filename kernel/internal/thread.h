@@ -19,6 +19,7 @@
 #include <internal/thread_queue.h>
 
 namespace artos::thread::internal {
+    using namespace build_config::artos;
 
     class mutexes_held_t
     {
@@ -130,6 +131,7 @@ namespace artos::thread::internal {
         priority_t priority;
         priority_t base_priority;
         state_t    state { state_t::inactive };
+        bool       suspended { false };
 
         stack_word_t* sp;
         stack_word_t* stack_begin;
@@ -374,4 +376,9 @@ namespace artos::thread::internal {
     static_assert(alignof(thread_queue_node_t) == thread_queue_storage_layout.alignment);
     static_assert(sizeof(tcb_t) == tcb_size);
     static_assert(alignof(tcb_t) <= tcb_alignment);
+
+    using idle_thread_storage_t = thread::storage_t<thread::minimum_stack_bytes>;
+
+    [[nodiscard]]
+    create_result_t set_idle(func_t func, idle_thread_storage_t& storage) noexcept;
 }

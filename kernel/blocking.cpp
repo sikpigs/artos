@@ -117,14 +117,14 @@ namespace artos::kernel {
             selected->wake = wake_reason_t::signaled;
             thread->waiting_mutex = nullptr;
 
-            thread::internal::make_thread_ready(thread);
-
             if (thread->block_sleep.queue)
             {
                 thread->block_sleep.queue->remove(thread->block_sleep);
             }
 
-            return thread->priority < current_thread->priority;
+            thread::internal::make_thread_ready(thread);
+
+            return !thread->suspended && thread->priority < current_thread->priority;
         }
 
         bool wake_all(wait_queue_t& queue, wake_reason_t reason) noexcept
@@ -147,14 +147,13 @@ namespace artos::kernel {
                 it->wake = reason;
                 thread->waiting_mutex = nullptr;
 
-                thread::internal::make_thread_ready(thread);
-
                 if (thread->block_sleep.queue)
                 {
                     thread->block_sleep.queue->remove(thread->block_sleep);
                 }
 
-                higher_priority_thread_woken |= thread->priority < current_thread->priority;
+                thread::internal::make_thread_ready(thread);
+                higher_priority_thread_woken |= !thread->suspended && thread->priority < current_thread->priority;
 
                 ++it;
             }
@@ -164,5 +163,4 @@ namespace artos::kernel {
             return higher_priority_thread_woken;
         }
     }
-
 }

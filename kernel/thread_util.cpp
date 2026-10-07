@@ -72,8 +72,11 @@ namespace artos::thread::internal {
     void make_thread_ready(tcb_base_t* thread) noexcept
     {
         thread->state = thread::state_t::ready;
-        ready_queue[std::to_underlying(thread->priority)].push_back(thread->ready);
-        set_priority_ready(thread->priority);
+        if (!thread->suspended)
+        {
+            ready_queue[std::to_underlying(thread->priority)].push_back(thread->ready);
+            set_priority_ready(thread->priority);
+        }
     }
 
     void block_sleep_thread(tcb_base_t* thread) noexcept
