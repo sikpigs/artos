@@ -16,9 +16,9 @@
 #include <new>
 
 #include <artos.h>
-#include <artos_port.h>
-#include <cpu_port.h>
 #include <optional>
+#include <port/artos_port.h>
+#include <port/cpu_port.h>
 #include <wait_queue.h>
 
 using namespace build_config::artos;
@@ -30,18 +30,40 @@ namespace artos::thread {
     using namespace kernel::internal;
 
     namespace internal {
+
+        [[nodiscard]]
+        bool validate_stack([[maybe_unused]] stack_word_t* stack_begin,
+                            [[maybe_unused]] stack_word_t* stack_end) noexcept
+        {
+            if constexpr (thread_stack_protection)
+            {
+                const auto stack_validation = port::validate_state_protection(
+                    { reinterpret_cast<std::byte*>(stack_begin), reinterpret_cast<std::byte*>(stack_end) });
+
+                return stack_validation == port::validate_stack_protection_result_t::success;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         [[nodiscard]]
         create_result_t set_idle(func_t func, idle_thread_storage_t& storage) noexcept
         {
             const critical_section_t cs {};
 
+            const auto stack_word_count = idle_thread_storage_t::stack_size / sizeof(stack_word_t);
+            auto*      stack = storage.usable_stack_begin();
+            if (!validate_stack(stack, stack + stack_word_count))
+            {
+                return artos::unexpected(EINVAL);
+            }
+
             if (threads[0])
             {
                 return artos::unexpected(EEXIST);
             }
-
-            const auto stack_word_count = idle_thread_storage_t::stack_size / sizeof(stack_word_t);
-            auto*      stack = storage.stack.data();
 
             if constexpr (tcb_t::high_watermark_enabled)
             {
@@ -79,6 +101,12 @@ namespace artos::thread {
         {
             const critical_section_t cs {};
 
+            const auto stack_word_count = stack_size_bytes / sizeof(stack_word_t);
+            if (!validate_stack(stack, stack + stack_word_count))
+            {
+                return artos::unexpected(EINVAL);
+            }
+
             if (name.size() > max_thread_name_length)
             {
                 return artos::unexpected(ENAMETOOLONG);
@@ -101,7 +129,6 @@ namespace artos::thread {
                 return artos::unexpected(EAGAIN);
             }
 
-            const auto stack_word_count = stack_size_bytes / sizeof(stack_word_t);
             if constexpr (tcb_t::high_watermark_enabled)
             {
                 std::fill_n(stack, stack_word_count, stack_fill_pattern);

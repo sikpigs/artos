@@ -4,8 +4,8 @@
 #include <build_config.h>
 
 #include <artos.h>
-#include <artos_port.h>
 #include <mutex.h>
+#include <port/artos_port.h>
 #include <wait_queue.h>
 
 #include <internal/kernel_state.h>

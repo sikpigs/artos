@@ -1,10 +1,15 @@
 config SOC_STM32F411
     bool
     select CPU_CORTEX_M4F
+    select CPU_HAS_STACK_PROTECTION
 
 config SOC_STM32F439
     bool
     select CPU_CORTEX_M4F
+    select CPU_HAS_STACK_PROTECTION
+
+config CPU_HAS_STACK_PROTECTION
+    bool
 
 config CPU_CORTEX_M4F
     bool

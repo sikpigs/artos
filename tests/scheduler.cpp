@@ -7,7 +7,7 @@
 #include <internal/thread_queue.h>
 
 #include <artos.h>
-#include <artos_port.h>
+#include <port/artos_port.h>
 #include <wait_queue.h>
 
 #include <array>

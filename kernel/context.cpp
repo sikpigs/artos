@@ -4,7 +4,7 @@
 #include <artos.h>
 
 #ifdef CONFIG_ARTOS_THREAD_STACK_CANARY
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 #include <stack_overflow.h>
 
 extern "C"

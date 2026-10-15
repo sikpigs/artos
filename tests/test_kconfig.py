@@ -146,6 +146,40 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("#define CONFIG_ARTOS_THREAD_STACK_HWM 1",
                       (self.build / "generated/autoconf.h").read_text())
 
+    def test_thread_stack_protection_layout(self):
+        cases = (
+            ("", False),
+            ("CONFIG_ARTOS_THREAD_STACK_PROTECTION=y\n", True),
+            ("CONFIG_BOARD_NUCLEO_F439ZI=y\n", False),
+            ("CONFIG_BOARD_NUCLEO_F439ZI=y\nCONFIG_ARTOS_THREAD_STACK_PROTECTION=y\n", True),
+            ("CONFIG_ARTOS=n\nCONFIG_ARTOS_THREAD_STACK_PROTECTION=y\n", False),
+        )
+        for seed, enabled in cases:
+            with self.subTest(seed=seed):
+                (self.build / ".config").unlink(missing_ok=True)
+                self.generate(seed)
+                self.assertIn(f"thread_stack_protection = {str(enabled).lower()}",
+                              (self.build / "generated/build_config.h").read_text())
+                autoconf = (self.build / "generated/autoconf.h").read_text()
+                self.assertEqual("#define CONFIG_ARTOS_THREAD_STACK_PROTECTION 1" in autoconf,
+                                 enabled)
+                alignment = 32 if enabled else 8
+                prefix = 32 if enabled else 0
+                probe = (
+                    "#include <artos.h>\n"
+                    "using storage = artos::thread::storage_t<1024>;\n"
+                    f"static_assert(storage::guard_words * sizeof(artos::thread::stack_word_t) == {prefix});\n"
+                    "static_assert(storage::usable_words * sizeof(artos::thread::stack_word_t) == 1024);\n"
+                    f"static_assert(alignof(storage) >= {alignment});\n"
+                    f"static_assert((offsetof(storage, stack_allocation) + {prefix}) % {alignment} == 0);\n"
+                )
+                result = subprocess.run(
+                    ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
+                     "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
+                    input=probe, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_thread_stats_config(self):
         self.generate("")
         self.assertIn("thread_stats = false",

@@ -1,9 +1,9 @@
 #include <board_devices.h>
 
 #include <artos.h>
-#include <cpu_port.h>
 #include <deferred.h>
 #include <irq.h>
+#include <port/cpu_port.h>
 
 #include <console/console.h>
 

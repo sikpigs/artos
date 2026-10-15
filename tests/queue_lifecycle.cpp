@@ -244,7 +244,7 @@ namespace {
         auto& waiter = install(slot, priority_value);
         auto& fiber = fibers[slot];
         fiber.action = [&queue, operation, timed] {
-            int        element = 42;
+            int        element = 42; // NOLINT(misc-const-correctness): queue operations take int&.
             const auto result = timed ? operate(queue, operation, element, tick_t { 100 })
                                       : operate(queue, operation, element, wait_forever);
             check(result == queue_result_t::closed, "cancelled push/pop did not return closed");
@@ -398,7 +398,7 @@ namespace {
         queue_storage_t<int, 1> storage {};
         auto*                   queue = new observed_queue_t { storage };
         watch(queue);
-        int element = 7;
+        int element = 7; // NOLINT(misc-const-correctness): pop operations update the element.
         for (auto operation :
              { operation_t::push_front, operation_t::pop_back, operation_t::push_back, operation_t::pop_front })
         {

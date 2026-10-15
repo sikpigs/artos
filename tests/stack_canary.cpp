@@ -13,21 +13,16 @@ int main()
 
     storage_t   storage {};
     auto* const guard = storage.canary.data();
-    auto* const stack_bytes = reinterpret_cast<std::byte*>(storage.stack.data());
-    auto* const guard_end = reinterpret_cast<std::byte*>(guard + artos::thread::canary_word_count);
-    if (guard_end != stack_bytes)
-    {
-        std::puts("canary is not adjacent to the stack");
-        return 1;
-    }
-
     for (std::size_t index = 0; index < artos::thread::canary_word_count; ++index)
     {
         guard[index] = stack_fill_pattern;
     }
-    const tcb_t thread {
-        "test", artos::thread::priority_t::low, storage.stack.data(), storage.stack.data(), storage.stack.size(), guard
-    };
+    const tcb_t thread { "test",
+                         artos::thread::priority_t::low,
+                         storage.usable_stack_begin(),
+                         storage.usable_stack_begin(),
+                         storage_t::usable_words,
+                         guard };
     if (!thread.canary_intact())
     {
         std::puts("intact canary was rejected");

@@ -2,7 +2,7 @@
 
 #include <board_devices.h>
 #include <build_config.h>
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 
 #ifdef CONFIG_ARTOS
 #include <artos.h>

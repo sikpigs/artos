@@ -1,4 +1,6 @@
 CompileFlags:
+  # GCC accepts this firmware-only flag; Clang's ARM frontend does not.
+  Remove: [-mgeneral-regs-only]
   # Allow intentional anonymous register layouts without extension warnings.
   Add: [-Wno-gnu-anonymous-struct, -Wno-nested-anon-types]
 

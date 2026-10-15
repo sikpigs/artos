@@ -53,6 +53,13 @@ Disabling the monitor alone leaves the console available. Disabled-kernel typed
 defaults support compile-only declarations; they do not supply kernel
 implementations.
 
+`CONFIG_ARTOS_THREAD_STACK_PROTECTION` defaults to off. Enabling it uses the
+port's stack layout requirements for every thread, including idle. The current
+Cortex-M4 port reserves a 32-byte guard prefix and aligns the usable stack bottom
+to 32 bytes; the requested usable stack size stays unchanged. This option
+currently controls storage layout only: MPU enforcement and fault reporting
+are not yet integrated. It does not protect the main interrupt stack.
+
 ## Startup and source layout
 
 `app/main.cpp` initializes board hardware, then the static system console, then

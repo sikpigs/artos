@@ -16,6 +16,7 @@ namespace build_config::artos {
     inline constexpr std::size_t   max_threads = 8;
     inline constexpr std::size_t   max_thread_name_length = 15;
     inline constexpr bool          thread_stack_hwm = false;
+    inline constexpr bool          thread_stack_protection = false;
 #if defined(ARTOS_TEST_THREAD_CANARY)
     inline constexpr bool thread_stack_canary = true;
 #else

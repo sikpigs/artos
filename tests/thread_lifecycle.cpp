@@ -6,8 +6,8 @@
 #include <utility>
 
 #include <artos.h>
-#include <artos_port.h>
-#include <cpu_port.h>
+#include <port/artos_port.h>
+#include <port/cpu_port.h>
 
 #include <internal/kernel_state.h>
 #include <internal/scheduler.h>

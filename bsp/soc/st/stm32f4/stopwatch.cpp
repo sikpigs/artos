@@ -1,7 +1,7 @@
 #include <board_services.h>
 
 #include <board_devices.h>
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 #include <stm32/timer.h>
 
 void board::stopwatch::init() noexcept

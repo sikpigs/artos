@@ -8,7 +8,7 @@
 
 #include <artos.h>
 #include <bits.h>
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 #include <wait_queue.h>
 
 namespace {

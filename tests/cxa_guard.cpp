@@ -1,5 +1,5 @@
 #include <artos.h>
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 #include <wait.h>
 
 #include <array>

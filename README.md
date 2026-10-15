@@ -356,7 +356,7 @@ This exports a minimal configuration to `build/debug/defconfig`. Copy it into
 fresh configuration. The seed does not overwrite an existing `.config`.
 
 ARTOS accesses CPU-specific timer and stack operations through
-`include/artos_port.h`. See [configuration boundaries](docs/configuration.md)
+`port/include/port/artos_port.h`. See [configuration boundaries](docs/configuration.md)
 and the [NUCLEO-F411RE BSP](bsp/boards/st/nucleo_f411re/README.md) for details.
 
 The optional [monitor module](modules/monitor/README.md) contains its implementation,

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <optional>
 
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 
 #include <artos.h>
 #include <mutex.h>

@@ -1,4 +1,6 @@
 #include <atomic>
+#include <cstddef>
+#include <cstring>
 #include <limits>
 #include <memory>
 
@@ -6,19 +8,90 @@
 #include <board_services.h>
 #include <build_config.h>
 
-#include <cpu_port.h>
+#include <port/artos_port.h>
+#include <port/cpu_port.h>
 
 #ifdef CONFIG_CONSOLE
 #include <console/console.h>
 #endif
 
 #include <artos.h>
-#include <artos_port.h>
+#include <fault.h>
 
 #include <internal/deferred.h>
 #include <internal/kernel_state.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
+
+namespace artos::kernel::fault {
+    using namespace artos::thread::internal;
+    using namespace artos::kernel::internal;
+    using namespace build_config::artos;
+
+    enum class cause_t : std::uint8_t
+    {
+        stack_overflow,
+        unknown
+    };
+
+    struct info_t
+    {
+        cause_t cause;
+        tcb_t*  faulting_thread;
+        bool    faulting_thread_valid;
+        bool    complete = false;
+    };
+
+    volatile info_t fault_info;
+
+    [[noreturn]] void handle(const ::fault::info_t& info) noexcept
+    {
+        fault_info.complete = false;
+        fault_info.cause = cause_t::unknown;
+        fault_info.faulting_thread = nullptr;
+        fault_info.faulting_thread_valid = false;
+
+        if constexpr (thread_stack_protection)
+        {
+            if (info.origin == ::fault::origin_t::thread && current_thread)
+            {
+                auto guard_end = reinterpret_cast<std::uintptr_t>(current_thread->stack_bottom);
+                auto guard_begin
+                    = reinterpret_cast<std::uintptr_t>(reinterpret_cast<std::byte*>(current_thread->stack_bottom)
+                                                       - thread::stack_layout.reserved_prefix_bytes);
+
+                const auto stack_access = info.cause == ::fault::cause_t::memory_access && info.address.has_value()
+                                          && guard_begin <= info.address.value() && info.address.value() < guard_end;
+
+                const auto& range = info.exception_stack_access_range;
+
+                const bool exception_stack_access = info.cause == ::fault::cause_t::exception_stack_access
+                                                    && info.stack_type == ::fault::stack_type_t::process
+                                                    && range.has_value() && range->begin < range->end
+                                                    && range->begin < guard_end && guard_begin < range->end;
+
+                if (stack_access || exception_stack_access)
+                {
+                    fault_info.cause = cause_t::stack_overflow;
+                    fault_info.faulting_thread = reinterpret_cast<tcb_t*>(current_thread);
+                    fault_info.faulting_thread_valid = true;
+                }
+            }
+        }
+
+        fault_info.complete = true;
+
+        cpu::port::fatal_trap();
+    }
+}
+
+namespace fault {
+
+    [[noreturn]] void dispatch(const info_t& info) noexcept
+    {
+        artos::kernel::fault::handle(info);
+    }
+}
 
 namespace artos::kernel {
     using namespace build_config::artos;

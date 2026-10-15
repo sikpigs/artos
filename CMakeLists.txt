@@ -48,9 +48,17 @@ target_include_directories(firmware_headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${ARCH_DIR}/include
 )
+
+# Port contracts are shared by the kernel and selected port implementations,
+# but are not part of the public application header directory.
+add_library(port_headers INTERFACE)
+target_include_directories(port_headers INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/port/include
+)
 add_subdirectory(bsp)
 
 add_executable(firmware)
+target_link_libraries(firmware PRIVATE port_headers)
 
 add_subdirectory(app)
 add_subdirectory("${ARCH_DIR}" arch)
@@ -142,7 +150,7 @@ endif()
 
 # Compile the configuration contract and otherwise-unused thread API on demand.
 add_library(configuration-checks OBJECT EXCLUDE_FROM_ALL tests/configuration.cpp tests/fault_capture.cpp tests/board_contract.cpp)
-target_link_libraries(configuration-checks PRIVATE bsp::headers)
+target_link_libraries(configuration-checks PRIVATE bsp::headers port_headers)
 target_compile_options(configuration-checks PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 add_library(regmap-layout-checks OBJECT EXCLUDE_FROM_ALL tests/regmap.cpp tests/regmap_f439.cpp)

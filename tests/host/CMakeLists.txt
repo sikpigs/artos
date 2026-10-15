@@ -2,7 +2,10 @@ set(ARTOS_ROOT "${CMAKE_SOURCE_DIR}")
 
 function(add_artos_native_test name source)
     add_executable(${name}_tests "${source}" ${ARGN})
-    target_include_directories(${name}_tests PRIVATE "${ARTOS_ROOT}/include")
+    target_include_directories(${name}_tests PRIVATE
+        "${ARTOS_ROOT}/include"
+        "${ARTOS_ROOT}/port/include"
+    )
     target_compile_definitions(${name}_tests PRIVATE ARTOS_HOST_TEST=1)
     target_compile_features(${name}_tests PRIVATE cxx_std_23)
     target_compile_options(${name}_tests PRIVATE

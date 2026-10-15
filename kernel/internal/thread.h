@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <optional>
+#include <port/artos_port.h>
 #include <utility>
 
 #include <board_services.h>
@@ -109,8 +110,8 @@ namespace artos::thread::internal {
             : priority { thread_priority }
             , base_priority { priority }
             , sp { stack_pointer }
-            , stack_begin { stack_start }
-            , stack_end { stack_start + stack_word_count }
+            , stack_bottom { stack_start }
+            , stack_top { stack_start + stack_word_count }
             , ready { this }
             , block_sleep { this }
             , waiter { this }
@@ -134,8 +135,8 @@ namespace artos::thread::internal {
         bool       suspended { false };
 
         stack_word_t* sp;
-        stack_word_t* stack_begin;
-        stack_word_t* stack_end;
+        stack_word_t* stack_bottom;
+        stack_word_t* stack_top;
 
         thread_queue_node_t ready;
         thread_queue_node_t block_sleep;
@@ -300,6 +301,13 @@ namespace artos::thread::internal {
                 const auto now = board::stopwatch::count();
                 this->execution_start = now;
             }
+
+            if constexpr (thread_stack_protection)
+            {
+                const global_interrupt_guard_t gig {};
+                port::activate_stack_protection(
+                    { reinterpret_cast<std::byte*>(stack_bottom), reinterpret_cast<std::byte*>(stack_top) });
+            }
         }
 
         void post_run() noexcept
@@ -334,13 +342,13 @@ namespace artos::thread::internal {
         {
             if constexpr (high_watermark_enabled)
             {
-                stack_word_t* hwm = this->stack_begin;
-                while (hwm < this->stack_end && *hwm == stack_fill_pattern)
+                stack_word_t* hwm = this->stack_bottom;
+                while (hwm < this->stack_top && *hwm == stack_fill_pattern)
                 {
                     ++hwm;
                 }
 
-                const auto used_bytes = static_cast<std::size_t>(this->stack_end - hwm) * sizeof(stack_word_t);
+                const auto used_bytes = static_cast<std::size_t>(this->stack_top - hwm) * sizeof(stack_word_t);
                 this->max_observed_bytes = std::max(this->max_observed_bytes, used_bytes);
 
                 return this->max_observed_bytes;

@@ -1,6 +1,6 @@
 #include <cassert>
-#include <cpu_port.h>
 #include <optional>
+#include <port/cpu_port.h>
 
 #include <artos.h>
 #include <defs.h>

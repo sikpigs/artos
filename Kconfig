@@ -96,6 +96,19 @@ config ARTOS_THREAD_STACK_CANARY
       switches. On damage, record the affected thread and halt. This does
       not protect the main interrupt stack.
 
+config ARTOS_THREAD_STACK_PROTECTION
+    bool "Enable hardware thread stack protection"
+    depends on ARTOS && CPU_HAS_STACK_PROTECTION
+    default n
+    help
+      Use the CPU port's hardware stack-boundary protection mechanism.
+      The port determines stack alignment and any reserved guard space.
+      This applies to thread stacks, including idle, and does not protect
+      the main interrupt stack.
+
+      Currently this option configures stack storage layout only.
+      Hardware enforcement and fault reporting are not yet integrated.
+
 config ARTOS_THREAD_STATS
     bool "Enable thread statistics"
     depends on ARTOS

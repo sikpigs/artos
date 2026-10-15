@@ -11,12 +11,12 @@
 #include <build_config.h>
 
 #include <arch/artos.h>
-#include <cpu_port.h>
+#include <port/cpu_port.h>
 
-#include <artos_port.h>
 #include <defs.h>
 #include <expected_compat.h>
 #include <intrusive_list.h>
+#include <port/artos_port.h>
 #include <wait_queue.h>
 
 namespace artos {
@@ -308,7 +308,7 @@ namespace artos {
 
                 if constexpr (build_config::artos::scheduler.priority_aging_ticks.has_value())
                 {
-                    storage_layout_t aging;
+                    storage_layout_t aging; // NOLINT(misc-const-correctness)
                     aging.append<std::optional<priority_t>>();
                     aging.append<tick_t>();
                     layout.append(aging.padded_size(), aging.alignment);
@@ -323,7 +323,7 @@ namespace artos {
                 }
                 if constexpr (build_config::artos::thread_stats)
                 {
-                    storage_layout_t stats;
+                    storage_layout_t stats; // NOLINT(misc-const-correctness)
                     stats.append<std::uint32_t>();
                     stats.append<statistics_t>();
                     layout.append(stats.padded_size(), stats.alignment);
@@ -355,14 +355,32 @@ namespace artos {
             }
         };
 
+        inline constexpr auto stack_layout = build_config::artos::thread_stack_protection
+                                                 ? port::stack_layout_requirements()
+                                                 : port::stack_layout_requirements_t {
+                                                       .usable_bottom_alignment = port::stack_alignment,
+                                                       .reserved_prefix_bytes = 0,
+                                                       .usable_size_alignment = port::stack_alignment,
+                                                   };
+
         template<std::uint32_t StackSize>
-        requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0)
+        requires(StackSize >= minimum_stack_bytes && StackSize % port::stack_alignment == 0
+                 && StackSize % stack_layout.usable_size_alignment == 0)
         struct storage_t
         {
-            static constexpr auto stack_size = StackSize;
+            static constexpr auto        stack_size = StackSize;
+            static constexpr std::size_t guard_words = stack_layout.reserved_prefix_bytes / sizeof(stack_word_t);
+            static constexpr std::size_t usable_words = stack_size / sizeof(stack_word_t);
+
             alignas(tcb_alignment) std::array<std::byte, tcb_size> tcb {};
             [[no_unique_address]] canary_storage_t<build_config::artos::thread_stack_canary> canary {};
-            alignas(port::stack_alignment) std::array<stack_word_t, StackSize / sizeof(stack_word_t)> stack {};
+            alignas(stack_layout.usable_bottom_alignment)
+                std::array<stack_word_t, guard_words + usable_words> stack_allocation {};
+
+            stack_word_t* usable_stack_begin() noexcept
+            {
+                return stack_allocation.data() + guard_words;
+            }
         };
 
         namespace internal {
@@ -413,7 +431,7 @@ namespace artos {
                                            priority,
                                            storage->tcb.data(),
                                            storage->canary.data(),
-                                           storage->stack.data(),
+                                           storage->usable_stack_begin(),
                                            options.create_suspended);
 
             if (result)
@@ -445,7 +463,7 @@ namespace artos {
                                     priority,
                                     storage.tcb.data(),
                                     storage.canary.data(),
-                                    storage.stack.data(),
+                                    storage.usable_stack_begin(),
                                     options.create_suspended);
         }
 

@@ -5,8 +5,8 @@
 #include <internal/thread.h>
 
 #include <artos.h>
-#include <artos_port.h>
-#include <cpu_port.h>
+#include <port/artos_port.h>
+#include <port/cpu_port.h>
 
 #include <array>
 #include <cstdint>

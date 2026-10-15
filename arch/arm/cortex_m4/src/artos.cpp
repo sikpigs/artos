@@ -1,11 +1,14 @@
-#include <arch/regmap.h>
+#include <arch/artos.h>
 #include <build_config.h>
 
+#include <arch/fault_capture.h>
+#include <arch/regmap.h>
+
 #include <artos.h>
-#include <artos_port.h>
 #include <bits.h>
 #include <board.h>
-#include <mmio.h>
+#include <port/artos_port.h>
+#include <port/cpu_port.h>
 
 namespace artos::port {
     namespace {
@@ -17,52 +20,7 @@ namespace artos::port {
         static_assert(reload > 0 && reload <= 0x00FFFFFF, "SysTick reload must fit 24 bits");
         static_assert(build_config::artos::scheduler_min_cycles_remaining < reload,
                       "scheduler cutoff must be shorter than a SysTick period");
-
-        namespace systick_regmap {
-            namespace tags {
-                struct ctrl;
-                struct load;
-                struct val;
-            }
-
-            using CTRL = artos::mmio::register_t<tags::ctrl>;
-            using LOAD = artos::mmio::register_t<tags::load>;
-            using VAL = artos::mmio::register_t<tags::val>;
-
-            namespace ctrl {
-                inline constexpr artos::mmio::field_t<tags::ctrl, 0>  enable {};
-                inline constexpr artos::mmio::field_t<tags::ctrl, 1>  tickint {};
-                inline constexpr artos::mmio::field_t<tags::ctrl, 2>  clocksource {};
-                inline constexpr artos::mmio::field_t<tags::ctrl, 16> countflag {}; // NOLINT
-            }
-
-            namespace load {
-                inline constexpr artos::mmio::field_t<tags::load, 0, 24> load {}; // NOLINT
-            }
-
-            namespace val {
-                inline constexpr artos::mmio::field_t<tags::val, 0, 24> val {}; // NOLINT
-            }
-
-            // Preserve the hardware register names used by the Cortex-M documentation.
-            // NOLINTBEGIN(readability-identifier-naming)
-            struct registers_t
-            {
-                systick_regmap::CTRL CTRL;
-                systick_regmap::LOAD LOAD;
-                systick_regmap::VAL  VAL;
-            };
-
-            // NOLINTEND(readability-identifier-naming)
-
-            static_assert(alignof(registers_t) == alignof(std::uint32_t));
-            static_assert(offsetof(registers_t, CTRL) == 0x00);
-            static_assert(offsetof(registers_t, LOAD) == 0x04);
-            static_assert(offsetof(registers_t, VAL) == 0x08);
-
-            static constexpr auto     systick_address = board::chosen::kernel_tick::address;
-            inline registers_t* const SYSTICK = reinterpret_cast<registers_t*>(systick_address);
-        }
+        auto* const systick_registers = regmap::systick::at(board::chosen::kernel_tick::address);
     }
 
     void init() noexcept
@@ -76,16 +34,16 @@ namespace artos::port {
 
     void start_tick() noexcept
     {
-        systick_regmap::SYSTICK->CTRL.write(0);
-        systick_regmap::SYSTICK->LOAD.write(reload);
-        systick_regmap::SYSTICK->VAL.write(0);
-        systick_regmap::SYSTICK->CTRL.set(
-            systick_regmap::ctrl::enable, systick_regmap::ctrl::tickint, systick_regmap::ctrl::clocksource);
+        systick_registers->CTRL.write(0);
+        systick_registers->LOAD.write(reload);
+        systick_registers->VAL.write(0);
+        systick_registers->CTRL.set(
+            regmap::systick::ctrl::enable, regmap::systick::ctrl::tickint, regmap::systick::ctrl::clocksource);
     }
 
     std::uint32_t get_cycles_remaining() noexcept
     {
-        return systick_regmap::SYSTICK->VAL.read();
+        return systick_registers->VAL.read();
     }
 
     void pendsvset() noexcept
@@ -118,6 +76,60 @@ namespace artos::port {
         *(--sp) = 0;                                            // R4
 
         return sp;
+    }
+
+    validate_stack_protection_result_t validate_state_protection(stack_bounds_t stack_bounds) noexcept
+    {
+        if (stack_bounds.bottom >= stack_bounds.top)
+        {
+            return validate_stack_protection_result_t::invalid;
+        }
+
+        if ((reinterpret_cast<std::uint32_t>(stack_bounds.top) % 8) != 0)
+        {
+            return validate_stack_protection_result_t::invalid;
+        }
+
+        if ((reinterpret_cast<std::uint32_t>(stack_bounds.bottom) % stack_layout_requirements().usable_bottom_alignment)
+            != 0)
+        {
+            return validate_stack_protection_result_t::invalid;
+        }
+
+        return validate_stack_protection_result_t::success;
+    }
+
+    void activate_stack_protection(stack_bounds_t stack_bounds) noexcept
+    {
+        using namespace regmap;
+
+        const auto guard_end = reinterpret_cast<std::uintptr_t>(stack_bounds.bottom);
+        const auto guard_begin = guard_end - stack_layout_requirements().reserved_prefix_bytes;
+
+        cpu::port::data_memory_barrier();
+
+        MPU->CTRL.write(0);
+        MPU->RNR.write(0);
+
+        const auto rbar_value = mpu::rbar::address((reinterpret_cast<std::uintptr_t>(stack_bounds.bottom)
+                                                    - stack_layout_requirements().reserved_prefix_bytes)
+                                                   >> 5)
+                                    .encoded_value
+                                | mpu::rbar::valid(1).encoded_value;
+        MPU->RBAR.write(rbar_value);
+
+        constexpr auto rasr_value
+            = mpu::rasr::enable(1).encoded_value | mpu::rasr::size(4).encoded_value | mpu::rasr::xn(1).encoded_value;
+        MPU->RASR.write(rasr_value);
+
+        constexpr auto ctrl_value = mpu::ctrl::enable(1).encoded_value | mpu::ctrl::privdefena(1).encoded_value;
+        MPU->CTRL.write(ctrl_value);
+        SCB->SHCSR.set(scb::shcsr::memfaultena);
+
+        __asm volatile("dsb" ::: "memory");
+        __asm volatile("isb" ::: "memory");
+
+        ::fault::set_active_stack_guard(guard_begin, guard_end);
     }
 }
 
