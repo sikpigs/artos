@@ -31,6 +31,7 @@ void destroy(artos::semaphore_t* semaphore) {
             [compiler, "-std=c++23", "-fsyntax-only", "-x", "c++",
              "-I", str(SOURCE / "tests/host/support"),
              "-I", str(SOURCE / "include"),
+             "-I", str(SOURCE / "port/include"),
              "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
             input=probe, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)

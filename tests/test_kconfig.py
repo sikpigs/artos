@@ -95,6 +95,7 @@ class ConfigurationTests(unittest.TestCase):
         result = subprocess.run(
             ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
              "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+             "-I", str(SOURCE / "port/include"),
              "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
             input=probe, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -121,6 +122,7 @@ class ConfigurationTests(unittest.TestCase):
                      "-fsyntax-only", "-x", "c++",
                      "-I", str(self.build / "generated"),
                      "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "port/include"),
                      "-I", str(SOURCE / "arch/arm/cortex_m4/include"),
                      "-I", str(SOURCE / "kernel"), "-"],
                     input=probe, capture_output=True, text=True)
@@ -176,6 +178,7 @@ class ConfigurationTests(unittest.TestCase):
                 result = subprocess.run(
                     ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
                      "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "port/include"),
                      "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
                     input=probe, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -216,6 +219,7 @@ static_assert(std::is_same_v<
                 result = subprocess.run(
                     ["c++", "-std=c++23", "-fsyntax-only", "-x", "c++",
                      "-I", str(self.build / "generated"), "-I", str(SOURCE / "include"),
+                     "-I", str(SOURCE / "port/include"),
                      "-I", str(SOURCE / "arch/arm/cortex_m4/include"), "-"],
                     input=probe, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, result.stderr)

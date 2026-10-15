@@ -196,7 +196,7 @@ extern "C" [[noreturn]] void fault_capture(std::uint32_t sp,
 
     if (exc_return_valid && entry_stacking_fault && !unstacking_fault && !lazy_fp_fault)
     {
-        const bool basic_frame = (exc_return & 0x10U) != 0;
+        const bool basic_frame = (exc_return & 0x00000010U) != 0;
         const auto frame_bytes = basic_frame ? sizeof(core_frame_t) : sizeof(fpu_frame_t);
         const auto end = static_cast<std::uint64_t>(sp) + frame_bytes;
 
