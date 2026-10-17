@@ -29,6 +29,38 @@ add_artos_native_test(wait
     "${ARTOS_ROOT}/tests/wait.cpp"
     "${ARTOS_ROOT}/kernel/wait_queue.cpp"
 )
+add_artos_native_test(event
+    "${ARTOS_ROOT}/tests/event.cpp"
+    "${ARTOS_ROOT}/kernel/event.cpp"
+)
+target_include_directories(event_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/port/include"
+    "${ARTOS_ROOT}/kernel"
+)
+add_artos_native_test(event_blocking
+    "${ARTOS_ROOT}/tests/event_blocking.cpp"
+    "${ARTOS_ROOT}/kernel/event.cpp"
+    "${ARTOS_ROOT}/kernel/thread.cpp"
+    "${ARTOS_ROOT}/kernel/blocking.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+    "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+    "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+    "${ARTOS_ROOT}/kernel/scheduler.cpp"
+    "${ARTOS_ROOT}/kernel/thread_util.cpp"
+    "${ARTOS_ROOT}/kernel/mutex.cpp"
+)
+target_include_directories(event_blocking_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/support"
+    "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+    "${ARTOS_ROOT}/port/include"
+    "${ARTOS_ROOT}/kernel"
+)
+# Keep unrelated thread entry/port functions out of this host executable.
+target_compile_options(event_blocking_tests PRIVATE -ffunction-sections -fdata-sections)
+target_link_options(event_blocking_tests PRIVATE -Wl,--gc-sections)
+set_tests_properties(event_blocking PROPERTIES TIMEOUT 30)
 add_artos_native_test(queue
     "${ARTOS_ROOT}/tests/queue.cpp"
     "${ARTOS_ROOT}/kernel/queue.cpp"
@@ -95,6 +127,7 @@ set_tests_properties(scheduler scheduler_aging scheduler_stats PROPERTIES TIMEOU
 set(ARTOS_MUTEX_TEST_SOURCES
     "${ARTOS_ROOT}/tests/mutex.cpp"
     "${ARTOS_ROOT}/kernel/mutex.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/support/event_stub.cpp"
     "${ARTOS_ROOT}/kernel/blocking.cpp"
     "${ARTOS_ROOT}/kernel/scheduler.cpp"
     "${ARTOS_ROOT}/kernel/kernel_state.cpp"
@@ -117,6 +150,7 @@ foreach(semaphore_test IN ITEMS semaphore semaphore_aging)
     add_artos_native_test(${semaphore_test}
         "${ARTOS_ROOT}/tests/semaphore.cpp"
         "${ARTOS_ROOT}/kernel/semaphore.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/support/event_stub.cpp"
         "${ARTOS_ROOT}/kernel/mutex.cpp"
         "${ARTOS_ROOT}/kernel/blocking.cpp"
         "${ARTOS_ROOT}/kernel/scheduler.cpp"
@@ -138,6 +172,7 @@ foreach(queue_lifecycle_test IN ITEMS queue_lifecycle queue_lifecycle_aging)
     add_artos_native_test(${queue_lifecycle_test}
         "${ARTOS_ROOT}/tests/queue_lifecycle.cpp"
         "${ARTOS_ROOT}/kernel/queue.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/support/event_stub.cpp"
         "${ARTOS_ROOT}/kernel/mutex.cpp"
         "${ARTOS_ROOT}/kernel/blocking.cpp"
         "${ARTOS_ROOT}/kernel/scheduler.cpp"
@@ -176,6 +211,7 @@ target_compile_definitions(thread_snapshot_stats_tests PRIVATE ARTOS_TEST_THREAD
 add_artos_native_test(thread_lifecycle
     "${ARTOS_ROOT}/tests/thread_lifecycle.cpp"
     "${ARTOS_ROOT}/kernel/thread.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/support/event_stub.cpp"
     "${ARTOS_ROOT}/kernel/blocking.cpp"
     "${ARTOS_ROOT}/kernel/scheduler.cpp"
     "${ARTOS_ROOT}/kernel/kernel_state.cpp"
@@ -195,6 +231,7 @@ foreach(suspend_test IN ITEMS thread_suspend thread_suspend_aging)
     add_artos_native_test(${suspend_test}
         "${ARTOS_ROOT}/tests/thread_suspend.cpp"
         "${ARTOS_ROOT}/kernel/thread.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/support/event_stub.cpp"
         "${ARTOS_ROOT}/kernel/blocking.cpp"
         "${ARTOS_ROOT}/kernel/scheduler.cpp"
         "${ARTOS_ROOT}/kernel/kernel_state.cpp"
@@ -252,6 +289,7 @@ add_artos_python_test(artos_cli)
 add_artos_python_test(dtb_to_board)
 add_artos_python_test(kconfig)
 add_artos_python_test(semaphore_api)
+add_artos_python_test(event_api)
 add_artos_python_test(pre_commit_clang_format)
 add_artos_python_test(pre_commit_clang_tidy)
 add_artos_python_test(serial_console)

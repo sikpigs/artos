@@ -15,5 +15,6 @@ if(CONFIG_ARTOS)
         service_call.cpp
         mutex.cpp
         semaphore.cpp
+        event.cpp
     )
 endif()

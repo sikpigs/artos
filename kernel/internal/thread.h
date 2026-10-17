@@ -3,16 +3,18 @@
 #include <algorithm>
 #include <cstring>
 #include <optional>
-#include <port/artos_port.h>
 #include <utility>
 
 #include <board_services.h>
 #include <build_config.h>
 
 #include <artos.h>
+#include <event.h>
 #include <intrusive_list.h>
 #include <mutex.h>
 #include <wait_queue.h>
+
+#include <port/artos_port.h>
 
 #include <internal/container_of.h>
 #include <internal/kernel_state.h>
@@ -120,6 +122,7 @@ namespace artos::thread::internal {
             {
                 std::memcpy(name.data(), thread_name.data(), thread_name.size());
             }
+
             name[thread_name.size()] = '\0';
         }
 
@@ -147,6 +150,9 @@ namespace artos::thread::internal {
 
         mutexes_held_t mutexes {};
         mutex_t*       waiting_mutex {};
+
+        event_t*     waiting_event {};
+        any_or_all_t waiting_for {};
 
         tick_time_t deadline {};
 

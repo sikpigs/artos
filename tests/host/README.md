@@ -21,6 +21,23 @@ select the **Host Tests** configure preset before choosing a test preset, or use
 a **Tests:** task to configure, build, and run tests without changing the active
 CMake Tools preset.
 
+To debug a host test in VS Code, choose the **Host Tests** configure preset and
+select the desired executable as the CMake launch target. Then choose **Debug
+selected host test** in Run and Debug. This builds the host test preset before
+launching the selected binary under GDB and pausing at `main`.
+
+**Debug event tests (all cases)** runs the event API cases. **Debug event
+blocking tests (all cases)** runs the waiter, scheduler, lifecycle, and thread
+termination cases with the real kernel implementations; the ordinary event
+suite stubs blocking. Both profiles pass `--debug`, which runs cases sequentially
+in the same process and continues after a failed check. Native assertions and
+fatal signals still stop execution. The CTest timeout applies when launched by
+CTest; directly launching a binary under the debugger does not use that timeout.
+
+To debug a single case, replace `--debug` with `--case` and its case name in
+the launch profile's arguments. Set a breakpoint in `host_tests::check` to
+inspect failed checks; they do not raise `SIGABRT`.
+
 Run `ctest --test-dir build/host-tests --show-only` to list tests, use `-R` to
 select by name, or use `-L native`, `-L python`, or `-L hooks` to select a label.
 `build/host-tests/tests/host/intrusive_list_tests` can also be run directly for
@@ -155,3 +172,37 @@ generation, the serial terminal, and staged-tree hooks. DTS tests require `dtc`
 and `fdtget`; hook tests use temporary repositories. Firmware compile/link checks
 remain separate; see the
 [configuration guide](../../docs/configuration.md#verification).
+
+## Event review and regressions
+
+See [the event review](../event_review.md) for findings, recommendations,
+reproduction commands, and the distinction between bugs and proposed broadcast
+semantics. The suites deliberately remain failing where they expose an issue.
+
+`event` covers immediate waits, full-width masks, reset, replacement versus OR,
+ISR rejection and wake flags, closure, empty-mask behavior, and object identity.
+`event_blocking` links production event, blocking, scheduler, thread, and mutex
+code. Queue seeding tests selection separately; public wait/resume tests and
+separate host stacks exercise actual suspended calls and operation guards.
+The host port also injects actions at critical-section boundaries. These tests
+cover simulated interleavings, not arbitrary ARM instruction preemption or NVIC
+priority enforcement.
+
+Cases prefixed `recommended` specify the proposed broadcast snapshot contract:
+all currently matching blocked calls receive the notification even if another
+recipient resets its bits or the producer replaces the state before resumption.
+They currently fail where the implementation rechecks shared bits on resume.
+The contract remains a recommendation pending agreement.
+
+`python.event_api` compiles API/TCB checks with native GCC, ARM GCC, Clang 18,
+and Clang 21 when available. Eight native feature combinations exercise aging,
+statistics, and stack-canary layouts. Clang 18 API and implementation probes
+currently expose direct standard expected/unexpected usage that bypasses the
+project's compatibility aliases. Missing compilers cause explicit skips.
+
+```sh
+cmake --build --preset host-tests
+ctest --test-dir build/host-tests -R '^(event|event_blocking|python.event_api)$' --output-on-failure
+build/host-tests/tests/host/event_blocking_tests --debug
+build/host-tests/tests/host/event_blocking_tests --case 'kill timed event waiter releases operation'
+```

@@ -299,7 +299,8 @@ namespace artos {
                 layout.append<wait_queue_t>();
                 layout.append<list_hook_t>();
                 layout.append<intrusive_list_t>(); // Owned mutexes.
-                layout.append<void*>();            // Waiting mutex.
+                layout.append<void*>(2);           // Waiting mutex, event
+                layout.append<stack_word_t>(2);
                 layout.append<tick_time_t>();
                 layout.append<id_t>();
                 layout.append<func_t>();

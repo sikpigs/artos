@@ -83,6 +83,8 @@ namespace artos::kernel::internal {
                             prioritize(thread->waiting_mutex);
                             thread->waiting_mutex = nullptr;
                         }
+
+                        thread->waiting_event = nullptr;
                     }
 
                     make_thread_ready(thread);

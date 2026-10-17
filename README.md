@@ -23,8 +23,8 @@ code --install-extension marus25.cortex-debug
 CMake 3.24 or newer is required. Install the other recommended VS Code
 extensions when opening the folder. On other platforms, install GNU Arm
 Embedded including `arm-none-eabi-gdb`, plus OpenOCD and Ninja, on `PATH`.
-Linux launch configurations use `gdb-multiarch` and explicitly select
-`arm-none-eabi-objdump`; Cortex-Debug finds `arm-none-eabi-nm` beside it.
+The firmware debugger uses `gdb-multiarch` on Linux. Host-test debugging uses
+the system `gdb`.
 
 Connect a USB data cable to the board's **ST-LINK USB connector**, with the board’s ST-LINK-to-target connections in their default configuration.
 
@@ -133,34 +133,29 @@ compiler for the target and system include paths. Update that path in
 
 ## VS Code debugging
 
-1. Open this folder and select **Debug NUCLEO-F411RE (ST-LINK/OpenOCD)**
-   in Run and Debug.
-2. Press **F5**. This configures and builds the Debug preset, flashes the ELF,
-   resets the board and stops at `main`, regardless of the preset selected
-   in CMake Tools.
-3. Set source breakpoints, use **F10** to step over, **F11** to step into,
-   and **F5** to continue. Cortex-Debug provides registers and memory views.
+Use the local [ARTOS Board Tools extension](vscode-extension/README.md) to
+select a board and ST-LINK, then choose **ARTOS: Build and Debug Selected
+Probe** from the status bar or Command Palette. It builds the selected mode,
+flashes the matching ELF, resets the board and stops at `main`. Set source
+breakpoints, use **F10** to step over, **F11** to step into, and **F5** to
+continue. Cortex-Debug provides registers and memory views.
 
-Select the launch configuration matching the board chosen in `build/debug/.config`;
-the Debug build produces an ELF only for that configured board.
+To run the extension from this checkout, open `vscode-extension/` in VS Code
+and press **F5** to launch its Extension Development Host, then open this
+project there.
 
-**Attach NUCLEO-F411RE (ST-LINK/OpenOCD)** connects and halts without building
-or flashing. Its `build/debug/` ELF must match the firmware already on the
-board. To debug startup, change `runToEntryPoint` to `Reset_Handler` in
-`.vscode/launch.json`.
-
-For status-bar buttons, ST-LINK selection, and automatic target inference, use
-the local [ARTOS Board Tools extension](vscode-extension/README.md). Open its
-`vscode-extension/` directory in VS Code and press **F5** to try it.
+For host tests, select a test executable as the CMake launch target, then choose
+**Debug selected host test** in Run and Debug. The launch target picker lets
+this single configuration debug any host-test executable.
 
 **Tasks: Run Task > Flash configured board** builds/flashes the Debug preset.
 The regular **CMake: build** task still follows the selected CMake preset.
 
 ### Peripheral registers
 
-During either debug session, expand **XPERIPHERALS** in Run and Debug to inspect
-named registers and bitfields. Each board’s launch/attach configurations use its bundled
-SoC SVD; no download is needed at debug time. Install the recommended
+During firmware debugging, expand **XPERIPHERALS** in Run and Debug to inspect
+named registers and bitfields. The extension selects the board's bundled SoC
+SVD; no download is needed at debug time. Install the recommended
 `mcu-debug.peripheral-viewer` extension if this panel is missing.
 See the [SVD source and license](bsp/soc/st/stm32f4/stm32f411/svd/README.md).
 Peripheral reads can have side effects (for example, reading USART data consumes
@@ -294,9 +289,9 @@ and use 950 kHz, supported by the connected ST-LINK/V2.1. Reset hooks keep this 
 and leave clock initialization to firmware instead of applying the stock
 STM32F4 script's PLL changes.
 
-- **`objdump-multiarch` / `nm-multiarch` ENOENT:** use the explicit
-  `arm-none-eabi-objdump` override in both Linux launch configurations.
-  Verify `arm-none-eabi-objdump` and `arm-none-eabi-nm` are on `PATH`.
+- **Cortex-Debug cannot find GNU Arm tools:** verify `arm-none-eabi-objdump`
+  and `arm-none-eabi-nm` are on `PATH`; set `cortex-debug.armToolchainPath` if
+  the toolchain is installed elsewhere.
 - **GDB missing:** install `gdb-multiarch` on Ubuntu; the native `gdb` may
   support only the host architecture.
 - **OpenOCD `open failed`:** check the cable, ST-LINK connector and CN2
@@ -305,8 +300,7 @@ STM32F4 script's PLL changes.
   reloading rules. Run the debugger as your normal user.
 - **Missing newlib source:** packaged libraries contain references to their
   original build paths. This warning does not indicate a connection failure;
-  continue to `main` or step over library calls. An attach session also needs
-  an ELF matching the flashed image to show reliable source locations.
+  continue to `main` or step over library calls.
 - **Multiple probes:** add `adapter serial YOUR_STLINK_SERIAL` to the selected
   board's `openocd.cfg` to select one.
 

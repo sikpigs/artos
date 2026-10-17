@@ -1,9 +1,11 @@
 #include <cassert>
+#include <event.h>
 #include <optional>
 #include <utility>
 
 #include <artos.h>
 #include <defs.h>
+#include <event.h>
 #include <mutex.h>
 
 #include <internal/kernel_state.h>
@@ -14,6 +16,11 @@ namespace artos::kernel {
     using namespace internal;
 
     namespace locked {
+        bool event_satistifed(event_t* event, any_or_all_t bits) noexcept
+        {
+            return event->satisfied(bits);
+        }
+
         void block_current(wait_queue_t& queue, std::optional<tick_time_t> deadline) noexcept
         {
             auto* thread = current_thread;
@@ -96,16 +103,27 @@ namespace artos::kernel {
 
             auto it = queue.begin();
 
-            wait_queue_node_t* selected = &*it;
+            wait_queue_node_t* selected = nullptr;
 
             while (it != queue.end())
             {
-                if (selected->thread->priority > it->thread->priority)
+                if (it->thread->waiting_event && !event_satistifed(it->thread->waiting_event, it->thread->waiting_for))
+                {
+                    ++it;
+                    continue;
+                }
+
+                if (!selected || selected->thread->priority > it->thread->priority)
                 {
                     selected = &*it;
                 }
 
                 ++it;
+            }
+
+            if (!selected)
+            {
+                return false;
             }
 
             auto* thread = selected->thread;
@@ -115,6 +133,7 @@ namespace artos::kernel {
 
             queue.remove(*selected);
             selected->wake = wake_reason_t::signaled;
+            thread->waiting_event = nullptr;
             thread->waiting_mutex = nullptr;
 
             if (thread->block_sleep.queue)
@@ -144,8 +163,16 @@ namespace artos::kernel {
                 assert(thread->state == thread::state_t::blocked || thread->state == thread::state_t::indefinite);
                 assert(it->wake == wake_reason_t::none);
 
+                if (reason == wake_reason_t::signaled && thread->waiting_event
+                    && !event_satistifed(thread->waiting_event, thread->waiting_for))
+                {
+                    ++it;
+                    continue;
+                }
+
                 it->wake = reason;
                 thread->waiting_mutex = nullptr;
+                thread->waiting_event = nullptr;
 
                 if (thread->block_sleep.queue)
                 {
@@ -155,10 +182,10 @@ namespace artos::kernel {
                 thread::internal::make_thread_ready(thread);
                 higher_priority_thread_woken |= !thread->suspended && thread->priority < current_thread->priority;
 
+                auto& node = *it;
                 ++it;
+                queue.remove(node);
             }
-
-            queue.clear();
 
             return higher_priority_thread_woken;
         }
