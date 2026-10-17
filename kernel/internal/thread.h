@@ -151,8 +151,11 @@ namespace artos::thread::internal {
         mutexes_held_t mutexes {};
         mutex_t*       waiting_mutex {};
 
-        event_t*     waiting_event {};
-        any_or_all_t waiting_for {};
+        event_t*             waiting_event {};
+        any_or_all_t         waiting_for {};
+        stack_word_t         event_snapshot {};
+        bool                 event_reset { false };
+        operation_cleanup_t* active_operations {};
 
         tick_time_t deadline {};
 

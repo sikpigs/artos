@@ -100,8 +100,8 @@ namespace artos {
                 }
 
             private:
-                queue_core_t& queue;
-                bool          active { false };
+                thread::internal::operation_cleanup_t cleanup {};
+                bool                                  active { false };
             };
 
             void finish_operation() noexcept;

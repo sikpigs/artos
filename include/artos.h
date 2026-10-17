@@ -206,7 +206,9 @@ namespace artos {
         enum class kill_result_t
         {
             success,
-            invalid_thread
+            invalid_thread,
+            busy,
+            unsupported
         };
 
         enum class join_result_t : std::uint8_t
@@ -251,6 +253,19 @@ namespace artos {
         using snapshot_array_t = std::array<snapshot_t, build_config::artos::max_threads>;
 
         namespace internal {
+
+            struct tcb_base_t;
+
+            // Stack-owned registration shared by guarded kernel objects. Its
+            // implementation stays in the kernel's private include directory.
+            struct operation_cleanup_t
+            {
+                operation_cleanup_t* next {};
+                tcb_base_t*          thread {};
+                void*                context {};
+                void (*finish)(void*) noexcept {};
+            };
+
             // Describe storage without including kernel-private TCB or queue
             // headers. Kernel assertions verify this model against real types.
             struct storage_layout_t
@@ -300,7 +315,10 @@ namespace artos {
                 layout.append<list_hook_t>();
                 layout.append<intrusive_list_t>(); // Owned mutexes.
                 layout.append<void*>(2);           // Waiting mutex, event
-                layout.append<stack_word_t>(2);
+                layout.append<stack_word_t>(2);    // Requested event mask and variant discriminator.
+                layout.append<stack_word_t>();     // Delivered event snapshot.
+                layout.append<bool>();             // Reset request for an event wait.
+                layout.append<void*>();            // Active operation registrations.
                 layout.append<tick_time_t>();
                 layout.append<id_t>();
                 layout.append<func_t>();
@@ -472,12 +490,24 @@ namespace artos {
         [[nodiscard]] std::size_t get_high_watermark() noexcept;
 
         [[noreturn]] void exit() noexcept;
-        kill_result_t     kill(id_t id) noexcept;
-        join_result_t     join(id_t id, tick_t ticks_to_wait) noexcept;
-        join_result_t     join(id_t id, wait_forever_t) noexcept;
-        suspend_result_t  suspend(id_t id) noexcept;
-        resume_result_t   resume(id_t id) noexcept;
-        resume_result_t   resume_from_isr(id_t id, bool* higher_priority_thread_woken = nullptr) noexcept;
+        // Nonblocking termination admission check. Returns busy without
+        // changing the target if it has active guarded kernel operations or
+        // owns mutexes. Does not check application resources. Thread context
+        // only; ISR callers return unsupported. Idle/stale IDs are invalid.
+        kill_result_t try_kill(id_t id) noexcept;
+
+        // Forces termination and discharges registered kernel operations,
+        // including calls already signaled but not yet returned. Does not
+        // unwind C++ stacks, release held mutexes, or free application resources.
+        // Arrange application cleanup before killing mutex owners; their mutexes
+        // must not subsequently be used. Thread/context ID rules match try_kill.
+        // Both APIs are idempotent for finished tasks until their IDs are reaped.
+        kill_result_t    kill(id_t id) noexcept;
+        join_result_t    join(id_t id, tick_t ticks_to_wait) noexcept;
+        join_result_t    join(id_t id, wait_forever_t) noexcept;
+        suspend_result_t suspend(id_t id) noexcept;
+        resume_result_t  resume(id_t id) noexcept;
+        resume_result_t  resume_from_isr(id_t id, bool* higher_priority_thread_woken = nullptr) noexcept;
 
         void get_statistics(statistics_t& statistics) noexcept;
 

@@ -277,7 +277,7 @@ namespace {
         }
     }
 
-    // Recommended broadcast contract: every matching blocked call receives
+    // Broadcast contract: every matching blocked call receives
     // the notification snapshot, including when another recipient resets bits.
     template<bool FirstReset, bool SecondReset, bool FromISR = false>
     void test_broadcast_snapshot()
@@ -317,6 +317,109 @@ namespace {
         finish_ready_workers();
         check(delivered, "a signaled wait reblocked when producer replaced the bits before resume");
         value(*fibers[2].result, 1, "wait did not retain the notification snapshot");
+    }
+
+    template<bool FromISR, bool Replace>
+    void test_overlapping_broadcast_reset_union()
+    {
+        const fixture_t fixture;
+        event_t         event;
+        start_waiter(event, 2, 1, any_t { 1 }, true, true);
+        start_waiter(event, 3, 2, all_t { 3 }, true, false);
+        start_waiter(event, 4, 3, any_t { 2 }, false, true);
+        start_waiter(event, 5, 4, all_t { 12 }, true, false);
+        const auto previous = [&] {
+            if constexpr (FromISR)
+            {
+                const auto requests = scheduling_requests;
+                bool       woken = false;
+                const auto result = interrupt_update<Replace>(event, 7, &woken);
+                check(woken && scheduling_requests == requests, "ISR broadcast did not defer scheduling");
+                return result;
+            }
+            else
+            {
+                return Replace ? event.set(7) : event.post(7);
+            }
+        }();
+        value(previous, 0, "broadcast update changed its old-state return value");
+        check(tcbs[5]->waiter.queue == &event.waiters, "an unsatisfied reset waiter was delivered");
+        // Clearing the union (1 | 3) leaves bit 4; the unmatched mask 12 must
+        // not clear it. All selected tasks still retain the full snapshot 7.
+        value(event.set(0), 4, "broadcast did not clear exactly the union of matched reset masks");
+        value(event.post(1), 0, "a new notification saw stale reset bits");
+        switch_fiber(*tcbs[2]);
+        const bool delivered = fibers[2].finished && fibers[3].finished && fibers[4].finished;
+        event.close();
+        finish_ready_workers();
+        check(delivered, "an overlapping broadcast recipient reblocked");
+        for (std::size_t slot = 2; slot <= 4; ++slot)
+        {
+            value(*fibers[slot].result, 7, "recipient lost the full original broadcast snapshot");
+        }
+        error(*fibers[5].result, event_error_t::closed, "unmatched wait was not left pending until close");
+        // Inspect the state directly after closure; successful reset recipients
+        // must not consume the new post when they resume.
+        check(event.bitset == 1, "a resumed recipient consumed a newer post");
+        check(block_sleep_queue.empty(), "broadcast or cancellation retained a deadline");
+    }
+
+    template<bool Delete>
+    void test_delivered_snapshot_precedes_close()
+    {
+        const fixture_t fixture;
+        auto*           event = new event_t;
+        watched_allocation = event;
+        start_waiter(*event, 2, 1, any_t { 1 }, true, true);
+        start_waiter(*event, 3, 2, all_t { 2 }, false, false);
+        (void)event->post(1);
+        if constexpr (Delete)
+        {
+            event->close_and_delete();
+        }
+        else
+        {
+            event->close();
+        }
+        finish_ready_workers();
+        value(*fibers[2].result, 1, "closure cancelled an already delivered notification");
+        error(*fibers[3].result, event_error_t::closed, "closure failed to cancel an undelivered wait");
+        if constexpr (!Delete)
+        {
+            delete event;
+        }
+        check(watched_deallocations == 1, "close and delivery did not delete exactly once");
+        watched_allocation = nullptr;
+    }
+
+    void test_suspended_recipient_keeps_snapshot()
+    {
+        const fixture_t fixture;
+        event_t         event;
+        start_waiter(event, 2, 1, any_t { 1 }, true, false);
+        check(thread::suspend(tcbs[2]->id) == thread::suspend_result_t::success, "could not suspend waiter");
+        bool woken = false;
+        (void)interrupt_update<false>(event, 1, &woken);
+        check(!woken && tcbs[2]->waiter.queue == nullptr && tcbs[2]->suspended,
+              "delivery to a suspended recipient requested preemption or retained its wait link");
+        value(event.post(2), 0, "suspended delivery deferred clearing until resume");
+        check(thread::resume(tcbs[2]->id) == thread::resume_result_t::success, "could not resume delivered waiter");
+        switch_fiber(*tcbs[2]);
+        check(fibers[2].finished, "suspended broadcast recipient reblocked");
+        value(*fibers[2].result, 1, "suspended recipient observed a newer snapshot");
+        value(event.wait_for(any_t { 2 }, false, tick_t { 0 }), 2, "resumed reset removed later events");
+    }
+
+    void test_timeout_precedes_later_post()
+    {
+        const fixture_t fixture;
+        event_t         event;
+        start_waiter(event, 2, 1, any_t { 1 }, true, true);
+        expire(*tcbs[2]);
+        (void)event.post(1);
+        switch_fiber(*tcbs[2]);
+        error(*fibers[2].result, event_error_t::timeout, "a later post replaced an already decided timeout");
+        value(event.wait_for(any_t { 1 }, false, tick_t { 0 }), 1, "timed-out reset waiter consumed a later post");
     }
 
     template<bool Delete>
@@ -859,6 +962,20 @@ namespace board::stopwatch {
 int main(int argc, char** argv)
 {
     const std::array cases {
+        host_tests::test_case_t { "thread post overlapping broadcast reset union",
+                                  test_overlapping_broadcast_reset_union<false, false> },
+        host_tests::test_case_t { "thread set overlapping broadcast reset union",
+                                  test_overlapping_broadcast_reset_union<false, true> },
+        host_tests::test_case_t { "ISR post overlapping broadcast reset union",
+                                  test_overlapping_broadcast_reset_union<true, false> },
+        host_tests::test_case_t { "ISR set overlapping broadcast reset union",
+                                  test_overlapping_broadcast_reset_union<true, true> },
+        host_tests::test_case_t { "delivered snapshot precedes close", test_delivered_snapshot_precedes_close<false> },
+        host_tests::test_case_t { "delivered snapshot precedes deferred deletion",
+                                  test_delivered_snapshot_precedes_close<true> },
+        host_tests::test_case_t { "suspended recipient keeps original snapshot",
+                                  test_suspended_recipient_keeps_snapshot },
+        host_tests::test_case_t { "timeout precedes later post", test_timeout_precedes_later_post },
         host_tests::test_case_t { "wake_one preserves eligible FIFO", test_wake_one_eligible_fifo<true> },
         host_tests::test_case_t { "wake_one preserves all-unmatched queue", test_wake_one_eligible_fifo<false> },
         host_tests::test_case_t { "kill timed event waiter releases operation",
@@ -870,16 +987,12 @@ int main(int argc, char** argv)
         host_tests::test_case_t { "close between operation entry and decision", test_close_between_entry_and_decision },
         host_tests::test_case_t { "new post after atomic reset", test_post_after_atomic_reset },
         host_tests::test_case_t { "delete after final wait guard", test_delete_after_final_wait_guard },
-        host_tests::test_case_t { "recommended broadcast snapshot both reset", test_broadcast_snapshot<true, true> },
-        host_tests::test_case_t { "recommended broadcast snapshot reset then nonreset",
-                                  test_broadcast_snapshot<true, false> },
-        host_tests::test_case_t { "recommended broadcast snapshot nonreset then reset",
-                                  test_broadcast_snapshot<false, true> },
-        host_tests::test_case_t { "recommended broadcast snapshot neither reset",
-                                  test_broadcast_snapshot<false, false> },
-        host_tests::test_case_t { "recommended ISR broadcast snapshot both reset",
-                                  test_broadcast_snapshot<true, true, true> },
-        host_tests::test_case_t { "recommended signaled snapshot survives replacement",
+        host_tests::test_case_t { "broadcast snapshot both reset", test_broadcast_snapshot<true, true> },
+        host_tests::test_case_t { "broadcast snapshot reset then nonreset", test_broadcast_snapshot<true, false> },
+        host_tests::test_case_t { "broadcast snapshot nonreset then reset", test_broadcast_snapshot<false, true> },
+        host_tests::test_case_t { "broadcast snapshot neither reset", test_broadcast_snapshot<false, false> },
+        host_tests::test_case_t { "ISR broadcast snapshot both reset", test_broadcast_snapshot<true, true, true> },
+        host_tests::test_case_t { "signaled snapshot survives replacement",
                                   test_signaled_snapshot_survives_replacement },
         host_tests::test_case_t { "close_and_wait drains mixed active waits", test_close_multiple_active_waits<false> },
         host_tests::test_case_t { "close_and_delete drains mixed active waits",

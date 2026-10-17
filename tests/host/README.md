@@ -82,6 +82,42 @@ disabled, four thread name lengths, and optional TCB extensions enabled and
 disabled. Native builds also enforce their own TCB size assertions. ARM checks
 skip if `arm-none-eabi-g++` is unavailable.
 
+## Task termination
+
+`thread::try_kill(id)` returns `busy` without changing a task that has active
+registered kernel operations or owns mutexes. Otherwise it terminates the task.
+`thread::kill(id)` forces termination and releases registered operation counts,
+including waits already signaled or timed out but not yet resumed. Both reject
+ISR context with `unsupported` and idle/invalid/stale IDs with `invalid_thread`.
+An unreaped finished ID returns `success` on repeated termination.
+
+Forced termination does not unwind C++ application stacks, release held mutexes,
+or free application allocations. Arrange resource cleanup before termination.
+A mutex retained by a forcibly killed owner must not subsequently be used; there
+is no owner-death recovery. `try_kill` checks tracked kernel obligations only.
+
+Events, semaphores, and queue operations register stack-owned cleanup records
+against their running task. Registration and removal are masked; ISR operations
+do not register against the interrupted task. Forced termination removes kernel
+queue links, drains the records, then wakes joiners. The registration lasts
+through the complete operation, independently of its wait-queue membership.
+Each TCB stores a cleanup-list pointer plus the event snapshot and reset request;
+the public storage calculation and native and ARM layout checks account for them. Cleanup records allocate no heap memory.
+
+`thread_kill` and `thread_kill_aging` each run 32 cases against real kernel code
+with separate host execution stacks. They cover busy checks without mutation,
+blocked/signaled/timed-out calls, deferred deletion with one or multiple users,
+normal deregistration, nested registration, cleanup before join completion,
+mutex donation and ownership, self-termination, suspended tasks, IDs, and IRQ
+rejection. `python.thread_kill_api` checks both public signatures and eight TCB
+feature combinations with native and ARM compilers. Missing compilers skip.
+
+```sh
+cmake --build --preset host-tests
+ctest --test-dir build/host-tests -R '^thread_kill(_aging)?$|^python.thread_kill_api$' --output-on-failure
+build/host-tests/tests/host/thread_kill_tests --debug
+```
+
 ## Semaphore tests
 
 `semaphore` and `semaphore_aging` link the production semaphore, blocking,
@@ -176,8 +212,8 @@ remain separate; see the
 ## Event review and regressions
 
 See [the event review](../event_review.md) for findings, recommendations,
-reproduction commands, and the distinction between bugs and proposed broadcast
-semantics. The suites deliberately remain failing where they expose an issue.
+reproduction commands, and the original findings. The reported bugs and the
+accepted broadcast contract now have passing regressions.
 
 `event` covers immediate waits, full-width masks, reset, replacement versus OR,
 ISR rejection and wake flags, closure, empty-mask behavior, and object identity.
@@ -188,17 +224,24 @@ The host port also injects actions at critical-section boundaries. These tests
 cover simulated interleavings, not arbitrary ARM instruction preemption or NVIC
 priority enforcement.
 
-Cases prefixed `recommended` specify the proposed broadcast snapshot contract:
-all currently matching blocked calls receive the notification even if another
-recipient resets its bits or the producer replaces the state before resumption.
-They currently fail where the implementation rechecks shared bits on resume.
-The contract remains a recommendation pending agreement.
+The 58 blocking cases exercise broadcast snapshots: all currently matching
+blocked calls receive the full notification state. Reset masks are combined and
+cleared after selecting recipients, under the same kernel mask. Resuming a
+recipient does not clear bits again or recheck mutable event state. Later posts,
+state replacement, and close cannot revoke a delivered result; an already
+decided timeout also wins over a later post. Close cancels undelivered waits.
+
+Additional regressions cover overlapping any/all masks, all four thread/ISR
+update routines, unmatched reset masks, newer posts before recipient resumption,
+suspended recipients, and deferred deletion after delivery. Eight new cases
+extend the original 50; the old `recommended` prefixes were removed after the
+contract was accepted and implemented.
 
 `python.event_api` compiles API/TCB checks with native GCC, ARM GCC, Clang 18,
 and Clang 21 when available. Eight native feature combinations exercise aging,
 statistics, and stack-canary layouts. Clang 18 API and implementation probes
-currently expose direct standard expected/unexpected usage that bypasses the
-project's compatibility aliases. Missing compilers cause explicit skips.
+verify that expected/unexpected use the project's compatibility aliases.
+Missing compilers cause explicit skips.
 
 ```sh
 cmake --build --preset host-tests

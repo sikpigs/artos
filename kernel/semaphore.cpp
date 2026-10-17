@@ -1,4 +1,5 @@
 #include <cassert>
+#include <internal/operation.h>
 #include <optional>
 #include <port/cpu_port.h>
 
@@ -12,13 +13,15 @@
 
 namespace artos {
     semaphore_t::operation_guard_t::operation_guard_t(semaphore_t& owner) noexcept
-        : sem { owner }
     {
         const critical_section_t cs {};
         if (owner.state == state_t::open)
         {
             ++owner.active_operations;
             active = true;
+            thread::internal::register_operation(cleanup, &owner, [](void* context) noexcept {
+                static_cast<semaphore_t*>(context)->finish_operation();
+            });
         }
     }
 
@@ -26,7 +29,7 @@ namespace artos {
     {
         if (active)
         {
-            sem.finish_operation();
+            thread::internal::complete_operation(cleanup);
         }
     }
 

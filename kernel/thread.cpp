@@ -5,6 +5,7 @@
 #include <expected_compat.h>
 #include <internal/container_of.h>
 #include <internal/kernel_state.h>
+#include <internal/operation.h>
 #include <internal/scheduler.h>
 #include <internal/thread.h>
 #include <internal/time.h>
@@ -220,7 +221,39 @@ namespace artos::thread {
             return;
         }
 
+        // The caller holds the kernel mask. Remove all scheduler/wait links
+        // before cleanup can destroy an object containing one of those queues.
         thread->state = thread::state_t::finished;
+        if (thread->ready.queue)
+        {
+            auto* queue = thread->ready.queue;
+            queue->remove(thread->ready);
+            if (queue->empty())
+            {
+                clear_priority_ready(thread->priority);
+            }
+        }
+        if (thread->waiter.queue)
+        {
+            thread->waiter.queue->remove(thread->waiter);
+            thread->waiter.wake = wake_reason_t::cancelled;
+        }
+        if (thread->block_sleep.queue)
+        {
+            thread->block_sleep.queue->remove(thread->block_sleep);
+        }
+        if (thread->waiting_mutex)
+        {
+            auto* mutex = std::exchange(thread->waiting_mutex, nullptr);
+            prioritize(mutex);
+        }
+        thread->waiting_event = nullptr;
+
+        while (thread->active_operations)
+        {
+            complete_operation(*thread->active_operations);
+        }
+
         locked::wake_all(thread->joiners);
         sched();
     }
@@ -243,61 +276,48 @@ namespace artos::thread {
         exit();
     }
 
+    namespace {
+        kill_result_t terminate(id_t id, bool force) noexcept
+        {
+            if (cpu::port::is_in_irq())
+            {
+                return kill_result_t::unsupported;
+            }
+
+            const auto ix = tcb_t::id_layout::extract_id(id);
+            if (ix >= threads.size() || ix == 0)
+            {
+                return kill_result_t::invalid_thread;
+            }
+
+            const critical_section_t cs {};
+            auto*                    thread = threads[ix];
+            if (thread == nullptr || thread->id != id)
+            {
+                return kill_result_t::invalid_thread;
+            }
+            if (thread->state == state_t::finished)
+            {
+                return kill_result_t::success;
+            }
+            if (!force && (thread->active_operations || !thread->mutexes.empty()))
+            {
+                return kill_result_t::busy;
+            }
+
+            finish_thread(thread);
+            return kill_result_t::success;
+        }
+    }
+
+    kill_result_t try_kill(id_t id) noexcept
+    {
+        return terminate(id, false);
+    }
+
     kill_result_t kill(id_t id) noexcept
     {
-        const auto ix = tcb_t::id_layout::extract_id(id);
-        if (ix >= threads.size() || ix == 0)
-        {
-            return kill_result_t::invalid_thread;
-        }
-
-        const critical_section_t cs {};
-
-        auto* thread = threads[ix];
-        if (thread == nullptr || thread->id != id)
-        {
-            return kill_result_t::invalid_thread;
-        }
-
-        if (thread == current_thread)
-        {
-            finish_thread(thread);
-        }
-        else
-        {
-            if (thread->ready.queue)
-            {
-                auto* queue = thread->ready.queue;
-                queue->remove(thread->ready);
-                if (queue->empty())
-                {
-                    clear_priority_ready(thread->priority);
-                }
-            }
-
-            if (thread->waiter.queue)
-            {
-                auto* queue = thread->waiter.queue;
-                queue->remove(thread->waiter);
-                thread->waiter.wake = wake_reason_t::cancelled;
-                if (thread->waiting_mutex)
-                {
-                    prioritize(thread->waiting_mutex);
-                    thread->waiting_mutex = nullptr;
-                }
-            }
-
-            if (thread->block_sleep.queue)
-            {
-                thread->block_sleep.queue->remove(thread->block_sleep);
-            }
-
-            thread->state = thread::state_t::finished;
-            locked::wake_all(thread->joiners);
-            sched();
-        }
-
-        return kill_result_t::success;
+        return terminate(id, true);
     }
 
     join_result_t join(id_t id, std::optional<tick_t> ticks_to_wait) noexcept

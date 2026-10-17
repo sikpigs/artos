@@ -57,11 +57,20 @@ namespace artos {
         event_t(const event_t&) = delete;
         event_t& operator=(const event_t&) = delete;
 
+        // post ORs bits into the state; set replaces it. Both return the old
+        // state. Every currently matching blocked wait receives the full updated
+        // snapshot, then the union of those recipients' reset masks is cleared.
         event_result_t post(bits_t bits) noexcept;
         event_result_t set(bits_t bits) noexcept;
         event_result_t post_from_isr(bits_t bits, bool* higher_priority_thread_woken = nullptr) noexcept;
         event_result_t set_from_isr(bits_t bits, bool* higher_priority_thread_woken = nullptr) noexcept;
 
+        // Returns the full snapshot that satisfied this call. reset clears the
+        // requested mask atomically with delivery, including immediate success.
+        // Signaled calls retain their snapshot across later posts, resets, or
+        // closure; close cancels only waits that have not yet been delivered.
+        // Bits coalesce: repeated posts are not counted. Empty all masks match
+        // immediately; empty any masks never match. Thread context only.
         [[nodiscard]] event_result_t wait_for(any_t bits, bool reset, tick_t ticks_to_wait) noexcept;
         [[nodiscard]] event_result_t wait_for(any_t bits, bool reset, wait_forever_t) noexcept;
         [[nodiscard]] event_result_t wait_for(all_t bits, bool reset, tick_t ticks_to_wait) noexcept;
@@ -87,17 +96,18 @@ namespace artos {
             }
 
         private:
-            event_t& event;
-            bool     active { false };
+            thread::internal::operation_cleanup_t cleanup {};
+            bool                                  active { false };
         };
 
         friend bool kernel::locked::event_satistifed(event_t* event, any_or_all_t bits) noexcept;
 
+        bool notify_waiters() noexcept;
         void finish_operation() noexcept;
         bool satisfied(any_or_all_t bits) noexcept;
         void clear(any_or_all_t bits) noexcept;
 
-        event_result_t wait(any_or_all_t bits, bool clear, std::optional<tick_t> ticks_to_wait) noexcept;
+        event_result_t wait(any_or_all_t bits, bool reset, std::optional<tick_t> ticks_to_wait) noexcept;
 
         bits_t bitset;
 

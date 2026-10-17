@@ -11,6 +11,11 @@ namespace {
 }
 
 namespace cpu::port {
+    bool is_in_irq() noexcept
+    {
+        return false;
+    }
+
     basepri_t irq_save_raise_mask(basepri_t priority) noexcept
     {
         return priority;
@@ -63,6 +68,8 @@ namespace artos::kernel {
     }
 
     namespace internal {
+        thread::internal::tcb_base_t* current_thread {};
+
         void sched() noexcept
         {
         }

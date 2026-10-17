@@ -32,6 +32,7 @@ add_artos_native_test(wait
 add_artos_native_test(event
     "${ARTOS_ROOT}/tests/event.cpp"
     "${ARTOS_ROOT}/kernel/event.cpp"
+    "${ARTOS_ROOT}/kernel/wait_queue.cpp"
 )
 target_include_directories(event_tests PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/support"
@@ -227,6 +228,31 @@ target_include_directories(thread_lifecycle_tests PRIVATE
 )
 set_tests_properties(thread_lifecycle PROPERTIES TIMEOUT 30)
 
+foreach(kill_test IN ITEMS thread_kill thread_kill_aging)
+    add_artos_native_test(${kill_test}
+        "${ARTOS_ROOT}/tests/thread_kill.cpp"
+        "${ARTOS_ROOT}/kernel/thread.cpp"
+        "${ARTOS_ROOT}/kernel/event.cpp"
+        "${ARTOS_ROOT}/kernel/semaphore.cpp"
+        "${ARTOS_ROOT}/kernel/queue.cpp"
+        "${ARTOS_ROOT}/kernel/blocking.cpp"
+        "${ARTOS_ROOT}/kernel/scheduler.cpp"
+        "${ARTOS_ROOT}/kernel/kernel_state.cpp"
+        "${ARTOS_ROOT}/kernel/thread_util.cpp"
+        "${ARTOS_ROOT}/kernel/wait_queue.cpp"
+        "${ARTOS_ROOT}/kernel/thread_queue.cpp"
+        "${ARTOS_ROOT}/kernel/mutex.cpp"
+    )
+    target_include_directories(${kill_test}_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/support"
+        "${ARTOS_ROOT}/arch/arm/cortex_m4/include"
+        "${ARTOS_ROOT}/kernel"
+    )
+    set_tests_properties(${kill_test} PROPERTIES TIMEOUT 30)
+endforeach()
+target_compile_definitions(thread_kill_aging_tests PRIVATE ARTOS_TEST_PRIORITY_AGING=1)
+
+
 foreach(suspend_test IN ITEMS thread_suspend thread_suspend_aging)
     add_artos_native_test(${suspend_test}
         "${ARTOS_ROOT}/tests/thread_suspend.cpp"
@@ -290,6 +316,7 @@ add_artos_python_test(dtb_to_board)
 add_artos_python_test(kconfig)
 add_artos_python_test(semaphore_api)
 add_artos_python_test(event_api)
+add_artos_python_test(thread_kill_api)
 add_artos_python_test(pre_commit_clang_format)
 add_artos_python_test(pre_commit_clang_tidy)
 add_artos_python_test(serial_console)

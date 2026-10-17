@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstring>
+#include <internal/operation.h>
 #include <optional>
 #include <utility>
 
@@ -358,13 +359,15 @@ namespace artos::internal {
     }
 
     queue_core_t::operation_guard_t::operation_guard_t(queue_core_t& owner) noexcept
-        : queue { owner }
     {
         const critical_section_t cs {};
         if (owner.state == state_t::open)
         {
             ++owner.active_operations;
             active = true;
+            thread::internal::register_operation(cleanup, &owner, [](void* context) noexcept {
+                static_cast<queue_core_t*>(context)->finish_operation();
+            });
         }
     }
 
@@ -372,7 +375,7 @@ namespace artos::internal {
     {
         if (active)
         {
-            queue.finish_operation();
+            thread::internal::complete_operation(cleanup);
         }
     }
 

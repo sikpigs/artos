@@ -1,5 +1,6 @@
 #include <cassert>
 #include <expected>
+#include <internal/operation.h>
 #include <optional>
 #include <variant>
 
@@ -52,6 +53,29 @@ namespace artos {
         }
     }
 
+    bool event_t::notify_waiters() noexcept
+    {
+        // All recipients must be selected against the same state. Preserve
+        // their results before making them ready, and clear only after the
+        // wake helper has checked every predicate against that state.
+        bits_t reset_mask = 0;
+        for (auto& waiter : waiters)
+        {
+            auto* thread = waiter.thread;
+            if (satisfied(thread->waiting_for))
+            {
+                thread->event_snapshot = bitset;
+                if (thread->event_reset)
+                {
+                    reset_mask |= std::visit([](auto requested) { return requested.bits; }, thread->waiting_for);
+                }
+            }
+        }
+        const bool woken = wake_all(waiters);
+        bitset &= ~reset_mask;
+        return woken;
+    }
+
     event_result_t event_t::post(bits_t bits) noexcept
     {
         if (cpu::port::is_in_irq())
@@ -70,7 +94,7 @@ namespace artos {
 
         bitset |= bits;
 
-        if (wake_all(waiters))
+        if (notify_waiters())
         {
             sched();
         }
@@ -96,7 +120,7 @@ namespace artos {
 
         bitset = bits;
 
-        if (wake_all(waiters))
+        if (notify_waiters())
         {
             sched();
         }
@@ -116,7 +140,7 @@ namespace artos {
 
         bitset |= bits;
 
-        const bool woken = wake_all(waiters);
+        const bool woken = notify_waiters();
         if (woken && higher_priority_thread_woken)
         {
             *higher_priority_thread_woken = true;
@@ -137,7 +161,7 @@ namespace artos {
 
         bitset = bits;
 
-        const bool woken = wake_all(waiters);
+        const bool woken = notify_waiters();
         if (woken && higher_priority_thread_woken)
         {
             *higher_priority_thread_woken = true;
@@ -159,58 +183,43 @@ namespace artos {
             return artos::unexpected(event_error_t::closed);
         }
 
-        bits_t result = 0;
-
-        tick_time_t deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
-
-        while (true)
+        tick_time_t        deadline = kernel::tick_time() + ticks_to_wait.value_or(0);
+        critical_section_t cs {};
+        if (state == state_t::closed)
         {
-            critical_section_t cs {};
-
-            if (state == state_t::closed)
+            return artos::unexpected(event_error_t::closed);
+        }
+        if (satisfied(bits))
+        {
+            const auto result = bitset;
+            if (reset)
             {
-                return artos::unexpected(event_error_t::closed);
+                clear(bits);
             }
-
-            if (!satisfied(bits))
-            {
-                if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
-                {
-                    return artos::unexpected(event_error_t::timeout);
-                }
-
-                current_thread->waiting_event = this;
-                current_thread->waiting_for = bits;
-
-                wake_reason_t reason;
-                if (ticks_to_wait)
-                {
-                    reason = kernel::locked::block_current(waiters, deadline, std::move(cs));
-                }
-                else
-                {
-                    reason = kernel::locked::block_current(waiters, wait_forever, std::move(cs));
-                }
-
-                if (reason != wake_reason_t::signaled)
-                {
-                    return artos::unexpected(reason == wake_reason_t::cancelled ? event_error_t::closed
-                                                                                : event_error_t::timeout);
-                }
-            }
-            else
-            {
-                result = bitset;
-                if (reset)
-                {
-                    clear(bits);
-                }
-
-                break;
-            }
+            return result;
+        }
+        if (ticks_to_wait && !kernel::internal::update_deadline(deadline))
+        {
+            return artos::unexpected(event_error_t::timeout);
         }
 
-        return result;
+        auto* waiter = current_thread;
+        assert(waiter);
+        waiter->waiting_event = this;
+        waiter->waiting_for = bits;
+        waiter->event_reset = reset;
+
+        const auto reason = ticks_to_wait ? kernel::locked::block_current(waiters, deadline, std::move(cs))
+                                          : kernel::locked::block_current(waiters, wait_forever, std::move(cs));
+        if (reason != wake_reason_t::signaled)
+        {
+            return artos::unexpected(reason == wake_reason_t::cancelled ? event_error_t::closed
+                                                                        : event_error_t::timeout);
+        }
+
+        // Delivery has already captured the result and applied any reset.
+        // Rechecking shared state here could lose it or consume a newer post.
+        return waiter->event_snapshot;
     }
 
     event_result_t event_t::wait_for(any_t bits, bool reset, tick_t ticks_to_wait) noexcept
@@ -218,9 +227,9 @@ namespace artos {
         return wait(any_or_all_t(bits), reset, std::make_optional(ticks_to_wait));
     }
 
-    event_result_t event_t::wait_for(any_t bits, bool reest, wait_forever_t) noexcept
+    event_result_t event_t::wait_for(any_t bits, bool reset, wait_forever_t) noexcept
     {
-        return wait(any_or_all_t(bits), reest, std::nullopt);
+        return wait(any_or_all_t(bits), reset, std::nullopt);
     }
 
     event_result_t event_t::wait_for(all_t bits, bool reset, tick_t ticks_to_wait) noexcept
@@ -234,13 +243,14 @@ namespace artos {
     }
 
     event_t::operation_guard_t::operation_guard_t(event_t& owner) noexcept
-        : event { owner }
     {
         const critical_section_t cs {};
         if (owner.state == state_t::open)
         {
             ++owner.active_operations;
             active = true;
+            thread::internal::register_operation(
+                cleanup, &owner, [](void* context) noexcept { static_cast<event_t*>(context)->finish_operation(); });
         }
     }
 
@@ -248,7 +258,7 @@ namespace artos {
     {
         if (active)
         {
-            event.finish_operation();
+            thread::internal::complete_operation(cleanup);
         }
     }
 
